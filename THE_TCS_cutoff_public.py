@@ -4,6 +4,13 @@ import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 
+try:
+    from astropy import units as u
+    from astropy.coordinates import SkyCoord
+    module_warning = False
+except ModuleNotFoundError:
+    module_warning = True
+
 ##########################
 ####### IMPORT TAB #######
 ##########################
@@ -11,7 +18,7 @@ import pandas as pd
 cwd = os.getcwd()
 
 #table = pd.read_csv(cwd+'done_the_isochrones.csv',index_col=0) #no more used
-table = pd.read_csv(cwd+'Master_table.csv',index_col=0)
+table = pd.read_csv(cwd+'/Master_table.csv',index_col=0)
 
 ##########################
 ####### TAB EXTENT #######
@@ -39,6 +46,16 @@ table.loc[(table['Teff']<4500)&(table['Teff']<5300)&(table['dist']<5),'HWO'] = 1
 ####### FUNCTIONS #######
 ##########################
 
+def find_cutoff(table,parameter,N):
+    if N>len(table):
+        N = len(table)
+    
+    if parameter[-1]=='<':
+        return np.sort(table[parameter[:-1]])[N]
+    else:
+        return np.sort(table[parameter[:-1]])[-N]
+
+
 def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',''], par_crit=''):
     'par_space format : P1 & P2'
     'par_box format : P1_min -> P1_max & P2_min -> P2_max'
@@ -47,6 +64,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     count=0
     nb_rows = (len(cutoff)-1)//4+1
     old_value = np.nan
+    old_value2 = len(table)
     for kw in cutoff.keys():
         count+=1
         value = cutoff[kw]
@@ -79,7 +97,8 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
                 else:
                     plt.subplot(nb_rows,4,count,sharex=ax1,sharey=ax1)
                 plt.scatter(table[p1],table[p2],color='k',alpha=0.1,marker='.')
-                plt.scatter(table2[p1],table2[p2],color='r',ec='k',marker='.',label='%.0f'%(len(table2)))
+                plt.scatter(table2[p1],table2[p2],color='r',ec='k',marker='.',label='%.0f (-%.0f)'%(len(table2),old_value2-len(table2)))
+                old_value2 = len(table2)
                 if (par_box[0]!='')|(par_box[1]!=''):
                     p1x = np.array(par_box[0].split('->')).astype('float')
                     p2y = np.array(par_box[1].split('->')).astype('float')
@@ -95,7 +114,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
 
                 plt.xlabel(p1)
                 plt.ylabel(p2)
-                plt.legend()
+                plt.legend(loc=1)
                 plt.title(kw+str(value))
 
     if plot:
@@ -104,7 +123,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
         if par_space!='':
             plt.figure('para'+tagname,figsize=(18,4*nb_rows))
             plt.subplots_adjust(hspace=0.3,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
-
+        plt.show()
     table2 = table2.sort_values(by='HZ_mp_min_osc+gr_texp15')
     
     
@@ -120,9 +139,49 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     
     return table2
 
+def plot_sky(table, color='k', alpha=1.0, s=5, fig=None, ax=None, plato=False, kepler=False):
+
+    if module_warning:
+        print(' [ERROR] Astropy Python library is not installed')
+    else:
+        ra = np.array(table['ra_j2000'])
+        dec = np.array(table['dec_j2000'])
+        dist = np.array(table['dist'])
+
+        stars = SkyCoord(ra,dec,dist, unit=(u.deg, u.deg, u.pc)) 
+        sph = stars.spherical
+
+        first_fig = False
+        if fig is None:
+            first_fig = True
+            fig, ax = plt.subplots(1,1,figsize=(12, 6), 
+                                subplot_kw=dict(projection="aitoff"))
+
+        ax.scatter(-sph.lon.wrap_at(180*u.deg).radian,
+                        sph.lat.radian,s=s,alpha=alpha,
+                        color=color)
+        
+        if plato: #TO BE CHECKED
+            plato = SkyCoord([60,100,100,60,60],[0,0,45,45,0],[10,10,10,10,10], unit=(u.deg, u.deg, u.pc)).spherical
+            plt.plot(-plato.lon.wrap_at(180*u.deg).radian,plato.lat.radian,color='k',ls='-.')
+            plato = SkyCoord([70,80,90,80,70],[23,15,23,32,23],[10,10,10,10,10], unit=(u.deg, u.deg, u.pc)).spherical
+            plt.plot(-plato.lon.wrap_at(180*u.deg).radian,plato.lat.radian,color='k',ls='-')
+
+        if kepler: #TO BE CHECKED
+            kepler = SkyCoord([360-285,360-299,360-299,360-285,360-285],[38,38,50,50,38],[10,10,10,10,10], unit=(u.deg, u.deg, u.pc)).spherical
+            plt.plot(-kepler.lon.wrap_at(180*u.deg).radian,kepler.lat.radian,color='b',ls='-')
+
+        #pcolormesh
+
+        if first_fig:
+            plt.grid()
+        plt.show()
+
+        return fig, ax
+
 
 ##########################
-####### MAIN CODE #######
+####### MAIN CODE #######  <---------------------------------------------------------
 ##########################
 
 """
@@ -160,7 +219,6 @@ HZ_mp_min_osc_texp15: --- the minimum mass planet that can be detected in the in
 HZ_mp_min_osc+gr_texp15: --- the minimum mass planet that can be detected in the inner HZ if observed every night (photo noise + p-mode + granulation)
 """
 
-
 # example1 of classical cutoff parameters
 # use a < or > sign after the parameter name
 # the cutoff are applied in the list order of the cutoff0 dictionnary
@@ -187,7 +245,8 @@ table_filtered = func_cutoff(table,cutoff0,tagname='')
 
 # example2 following a peculiar parameter space box statistic
 # let's define a cutoff list
-cutoff0 = {
+
+cutoff1 = {
     'Teff<':6000,
     'logg>':4.0,
     'vsini<':8,
@@ -198,14 +257,20 @@ cutoff0 = {
     'dist>':0,
     }
 
-# we want to follow the stastistic in a Teff vs dist box
+# we want to follow the stastistic in a 'Teff' vs 'dist' box
 # let's focus on the K-dwarf sample of nearby star
-# par_space = parameter1&parameter2
-# par_box = ['lim1->lim2','lim1->lim2']
-table_filtered = func_cutoff(table,cutoff0,par_space='Teff&dist',par_box=['4500->5300','0->30'])
+# par_space = parameter1&parameter2 (name convention)
+# par_box = ['lim1->lim2','lim1->lim2'] (name convention)
+
+table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])
 
 # we can also follow a binary flag column e.g the target list of HWO
-table_filtered = func_cutoff(table,cutoff0,par_space='Teff&dist',par_crit='HWO==1')
+
+table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_crit='HWO==1')
+
+# we can also visualize them in the sky
+
+table_filtered = func_cutoff(table,cutoff1,par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
 
 
 # example of the Tim 33 stars sample
@@ -223,11 +288,8 @@ cutoff_tim = {
     'logRHK<':-4.8,
     'logg>':2.0,
     'eff_nights>':0,
-    'sig_rv_texp15>':0,
-    'sig_rv_osc_texp15>':0,
-    'sig_rv_osc+gr_texp15>':0,
-    'HZ_mp_min_texp15>':0,
     'HZ_mp_min_osc+gr_texp15>':0,
     }
 
-table_filtered = func_cutoff(table,cutoff_tim,tagname='_Tim')
+table_filtered = func_cutoff(table,cutoff_tim,tagname='_Tim',par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
+
