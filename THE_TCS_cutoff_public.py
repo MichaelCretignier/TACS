@@ -33,6 +33,7 @@ table.loc[table['logg']!=table['logg'],'logg'] = table.loc[table['logg']!=table[
 table['dist'] = 1000/table['parallax']
 table['log_ruwe'] = np.log10(table['ruwe'])
 table.loc[table['logRHK']!=table['logRHK'],'logRHK'] = -6.0
+table.loc[table['vsini']!=table['vsini'],'vsini'] = 0.0
 #airmass = pd.read_pickle('/Users/cretignier/Documents/THE/Airmass_gr8.p')
 table['index'] = np.arange(len(table))
 
