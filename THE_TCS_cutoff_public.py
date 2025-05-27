@@ -27,8 +27,8 @@ table = pd.read_csv(cwd+'/Master_table.csv',index_col=0)
 table['Teff'] = table['Teff_spec']
 table.loc[table['Teff']!=table['Teff'],'Teff'] = table.loc[table['Teff']!=table['Teff'],'Teff_gspphot']
 
-table['logg'] = table['logg_spec']
-table.loc[table['logg']!=table['logg'],'logg'] = table.loc[table['logg']!=table['logg'],'logg_gspphot']
+table['logg'] = table['MIST logg']
+table.loc[table['logg']!=table['logg'],'logg'] = table.loc[table['logg']!=table['logg'],'logg_spec']
 
 table['dist'] = 1000/table['parallax']
 table['log_ruwe'] = np.log10(table['ruwe'])
@@ -69,9 +69,9 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
         count+=1
         value = cutoff[kw]
         if kw[-1]=='<':
-            mask = table2[kw[0:-1]]<value
+            mask = table2[kw[0:-1]]<=value
         else:
-            mask = table2[kw[0:-1]]>value
+            mask = table2[kw[0:-1]]>=value
         
         if plot:
             plt.figure('cumulative'+tagname,figsize=(16,4*nb_rows))
@@ -287,9 +287,8 @@ cutoff_tim = {
     'vsini_spec<':3,
     'logRHK<':-4.8,
     'logg>':2.0,
-    'eff_nights>':0,
+    'sig_rv_osc+gr_texp15>':0,
     'HZ_mp_min_osc+gr_texp15>':0,
     }
 
 table_filtered = func_cutoff(table,cutoff_tim,tagname='_Tim',par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
-
