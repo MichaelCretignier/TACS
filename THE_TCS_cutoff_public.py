@@ -30,10 +30,14 @@ table.loc[table['Teff']!=table['Teff'],'Teff'] = table.loc[table['Teff']!=table[
 table['logg'] = table['MIST logg']
 table.loc[table['logg']!=table['logg'],'logg'] = table.loc[table['logg']!=table['logg'],'logg_spec']
 
+table.loc[table['Fe/H']!=table['Fe/H'],'Fe/H'] = 2
+
 table['dist'] = 1000/table['parallax']
 table['log_ruwe'] = np.log10(table['ruwe'])
 table.loc[table['logRHK']!=table['logRHK'],'logRHK'] = -6.0
+table.loc[table['RHK']!=table['RHK'],'RHK'] = -6.0
 table.loc[table['vsini']!=table['vsini'],'vsini'] = 0.0
+table.loc[table['vsini']>50,'vsini'] = 50
 #airmass = pd.read_pickle('/Users/cretignier/Documents/THE/Airmass_gr8.p')
 table['index'] = np.arange(len(table))
 
@@ -192,19 +196,20 @@ gmag: --- Gaia G magnitude
 dist: --- Distance in parsec
 Teff: --- Effective temperature of the star
 logg: --- Surface gravity in cgs
-Fe/H: --- Stellar mettalicity 
+Fe/H: --- Stellar mettalicity (spec), otherwise GAIA, otherwise -2.0 (no NaN)
+Fe/H_spec: --- Stellar mettalicity (spectroscopy)
 vsini: --- projected equatorial velocity in kms
 log_ruwe: --- Log10 of the GAIA RUWE value (binaries cutoff)
 airmass_min: --- minimum airmass along the year
-tyr_rise: --- Decimal year start of the season
-tyr_set: --- Decimal year end of the season
+tyr_rise: --- Decimal year start of the season (airmass of 1.5)
+tyr_set: --- Decimal year end of the season (airmass of 1.5)
 NIGHTS: --- geometrical season length at La Palma above airmass of 1.75 (Tim version)
 season_length: --- geometrical season length at La Palma above airmass of 1.75
 eff_nights: --- Effective number of nights (Product of weather forecast with geometrical season length)
 eff_airmass_mean: --- Mean optimal airmass value (Product of weather forecast with visibility curve)
 eff_seeing: --- Mean expected seeing value (Function of mean_airmass and seasonal seeing)
 nb_subexp: --- Number of subexp required to not saturate the detector on 15 minutes exposures
-snr_550: 
+snr_550: --- Expected SNR at 550 nm for each subexposure (Clark ETC + Atmos parameters)
 snr_550_texp550: --- Expected SNR at 550 nm for 15min exposure (Clark ETC + Atmos parameters)
 sig_rv_texp15: --- Expected RV precision at 550 nm for 15min exposure (Clark ETC + Atmos parameters)
 texp_snr_250: --- Required exposure time to reach a SNR=250 at 550 nm
@@ -229,17 +234,14 @@ cutoff0 = {
     'logg>':4.0,
     'vsini<':8,
     'Fe/H>':-0.4,
-    'airmass_min>':0.99,
     'eff_nights>':160,
     'NIGHTS>':240,
-    'gmag<':7.0,
     'log_ruwe<':np.round(np.log10(1.2),3),
+    'HJ<':0.5,
+    'BDW<':0.5,
+    'RHK<':-4.8,
     'dist>':0,
-    'sig_rv_texp15>':0,
-    'sig_rv_osc_texp15>':0,
-    'sig_rv_osc+gr_texp15>':0,
-    'HZ_mp_min_texp15>':0,
-    'HZ_mp_min_osc+gr_texp15<':20,
+    'gmag<':7.0,
     }
 
 table_filtered = func_cutoff(table,cutoff0,tagname='')
@@ -272,24 +274,3 @@ table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_crit='HWO==
 # we can also visualize them in the sky
 
 table_filtered = func_cutoff(table,cutoff1,par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
-
-
-# example of the Tim 33 stars sample
-# Note there are now 47 stars since those without RHK values are no more rejected
-
-cutoff_tim = {
-    'gmag<':7,
-    'NIGHTS>':240,
-    'Teff_phot<':6000,
-    'Teff_spec<':6000,
-    'Fe/H_spec>':-0.4,
-    'parallax>':25,
-    'log_ruwe<':np.round(np.log10(1.2),3),
-    'vsini_spec<':3,
-    'logRHK<':-4.8,
-    'logg>':2.0,
-    'sig_rv_osc+gr_texp15>':0,
-    'HZ_mp_min_osc+gr_texp15>':0,
-    }
-
-table_filtered = func_cutoff(table,cutoff_tim,tagname='_Tim',par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
