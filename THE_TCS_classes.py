@@ -607,10 +607,26 @@ class tcs(object):
             airmass_max=1.8,
             alpha_step=1, 
             dec_step=1,
-            cutoff=None):
+            cutoff=None,
+            selection=None):
         
-        if cutoff is None:
-            cutoff = self.info_TA_cutoff['presurvey']
+        if selection is not None:
+            table_gr8 = self.info_TA_stars_selected[selection].data
+            self.info_TA_cutoff['SG'] = cutoff
+            self.info_TA_stars_selected['SG'] = table_star(table_gr8.copy())
+        else:
+            if cutoff is None:
+                cutoff = self.info_TA_cutoff['presurvey']
+            
+            table_gr8 = gr8.copy() 
+            for kw in cutoff.keys():
+                if kw[-1]=='<':
+                    table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]<cutoff[kw]]
+                else:
+                    table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]>cutoff[kw]]
+
+            self.info_TA_cutoff['SG'] = cutoff
+            self.info_TA_stars_selected['SG'] = table_star(table_gr8.copy())
 
         self.compute_night_length(sun_elevation=sun_elevation) 
         
@@ -654,16 +670,6 @@ class tcs(object):
         plt.subplots_adjust(left=0.05,right=0.98,top=0.94,bottom=0.05,hspace=0.30,wspace=0.30)
 
         downtime = np.array([32., 31., 31., 27., 15.,  4.,  3.,  8., 19., 30., 37., 38., 32.])
-
-        table_gr8 = gr8.copy() 
-        for kw in cutoff.keys():
-            if kw[-1]=='<':
-                table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]<cutoff[kw]]
-            else:
-                table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]>cutoff[kw]]
-
-        self.info_TA_cutoff['SG'] = cutoff
-        self.info_TA_stars_selected['SG'] = table_star(table_gr8.copy())
 
         for j in range(12):
             plt.subplot(3,4,j+1)
