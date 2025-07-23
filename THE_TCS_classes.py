@@ -13,7 +13,8 @@ import THE_TCS_variables as tcsv
 print("""\n[INFO USER] READ ME CAREFULLY 
 [INFO USER] The RUWE is currently disabled for stars brighter than mv<5 
 [INFO USER] Atmospheric parameters are still in validation phase.
-""")
+[INFO USER] An issue or an upgrade? Contact me at:  michael.cretignier@physics.ox.ac.uk
+      """)
 
 
 cwd = os.getcwd()
@@ -94,6 +95,7 @@ def dropout_year():
     return save
 
 def query_table(ra,dec,table):
+    table = table.reset_index(drop=True)
     dist = abs(table['dec_j2000']-dec) + abs(table['ra_j2000']-ra)
     return table.loc[np.argmin(dist)]
 
@@ -135,7 +137,7 @@ def get_starname(entry):
 def star_info(entry, format='v1'):
     name, ID = get_starname(entry)
     if format=='v1':
-        info = ' ID : %.0f \n Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f \n FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
+        info = ' ID : %.0f \n Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f   FeH = %.2f    RHK = %.2f   Vsini = %.1f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     else:
         info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
@@ -363,24 +365,58 @@ class table_star(object):
     def print_columns(self):
         print(list(self.data.keys()))
 
-    def plot(self,x,y,c=None,s=None,print_names=False,figure=None):
-        if figure is not None:
-            if type(figure)==str:
-                plt.figure(figure)
+    def plot(self, x, y, c=None, s=None, print_names=False):
         
-        xval = np.array(self.data[x])
-        yval = np.array(self.data[y])
+        fig = plt.figure(figsize=(10,10))
+        plt.axes([0.1,0.1,0.85,0.75])
+        
+        dataframe = self.data
+        xval = np.array(dataframe[x])
+        yval = np.array(dataframe[y])
         if c is None:
             for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
-                mask3 = np.array((self.data[Teff_var]>t1)&(self.data[Teff_var]<=t2))
+                mask3 = np.array((dataframe[Teff_var]>t1)&(dataframe[Teff_var]<=t2))
                 plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30)   
         if print_names:
-            index = np.array(list(self.data.index))
+            index = np.array(list(dataframe.index))
             n = np.array(db_starname.loc[index,'HD'])
             for xi,yi,ti in zip(xval,yval,n):
                 plt.text(xi,yi,ti,ha='center',va='bottom',fontsize=7)
         plt.xlabel(x,fontsize=14)
         plt.ylabel(y,fontsize=14)
+
+        ax = plt.gca()
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+
+        info_text = plt.text(xlim[0]+0.03*(xlim[1]-xlim[0]),ylim[1]+0.15*(ylim[1]-ylim[0]),'Double click somewhere',fontsize=13,ha='left',va='top')
+        l, = plt.plot([xlim[0]],[ylim[0]],marker='x',color='k',markersize=10)
+
+        class Index(object):
+            def __init__(self):
+                self.info_text = ''
+                self.marker = None
+            def update(self,newx,newy):
+                dist = abs((xval-newx)/np.nanstd(xval))+abs((yval-newy)/np.nanstd(yval))
+                loc = np.array(dataframe.index)[np.argmin(dist)]
+                print(dataframe,loc)
+                new_star = dataframe.loc[loc]
+                text_fmt = star_info(new_star)
+                self.info_text.set_text(text_fmt)
+                self.marker.set_data([new_star[x],new_star[y]])
+                
+                plt.draw()
+                fig.canvas.draw_idle()
+                
+        t = Index()
+        t.info_text = info_text
+        t.marker = l
+        
+        def onclick(event):
+            if event.dblclick:
+                t.update(event.xdata,event.ydata)
+
+        plt.gcf().canvas.mpl_connect('button_press_event', onclick)
 
 class tcs(object):
     
@@ -728,7 +764,7 @@ class tcs(object):
             plt.colorbar(pad=0)  
             plt.subplots_adjust(left=0.05,right=1.1)          
 
-            info_text = plt.text(0,107,'Info Star',fontsize=13,ha='left',va='top')
+            info_text = plt.text(0,107,'Double click somewhere',fontsize=13,ha='left',va='top')
             l, = plt.plot([-5],[130],marker='x',color='k',markersize=10)
 
             class Index(object):
@@ -767,7 +803,7 @@ class tcs(object):
                 np.array(db_exoplanets.loc[found,y_var]),
                 marker='x',color='k',markersize=10)
         else:
-            init_text = 'Info Star'
+            init_text = 'Double click somewhere'
             l, = plt.plot([0.3],[1000],marker='x',color='k',markersize=10)
         
         info_text = plt.text(0.5,{'k':3000,'mass':30000}[y_var],init_text,fontsize=13,ha='left',va='top')

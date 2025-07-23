@@ -40,8 +40,8 @@ star3.compute_SG_calendar(
 star3.compute_SG_month(month=1, plot=False, selection='SG') #january
 star3.compute_SG_month(month=2, plot=False, selection='SG') #february
 
-plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jan',print_names=True)
-plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Feb',print_names=True)
+star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jan',print_names=True)
+star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Feb',print_names=True)
 
 # you can also start with your own hardcoded list of stars
 star4 = tcsc.tcs()
@@ -57,6 +57,6 @@ star4.compute_SG_calendar(
     selection='my_selection')
 
 star4.compute_SG_month(month=1, plot=False, selection='my_selection') #january
-plt.figure(figsize=(10,10)) ; star4.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
+star4.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
 
 
