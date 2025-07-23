@@ -120,7 +120,7 @@ def resolve_starname(name,verbose=True):
             print(output,'\n')
         return output
     else:
-        print(' [INFO] Starname has not been found')
+        print(' [INFO] Starname %s has not been found'%(name))
         return None
 
 
@@ -137,7 +137,7 @@ def star_info(entry, format='v1'):
     if format=='v1':
         info = ' ID : %.0f \n Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f \n FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
     else:
-        info = ' ID : %.0f   Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
+        info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
 
 def plot_TESS_CVZ():
@@ -161,6 +161,8 @@ def plot_exoplanets(y_var='k'):
         plt.ylabel('K semi-amplitude [m/s]',fontsize=14)
         plt.ylim(0.1,1000)
     else:
+        for j in [10,30,4000]:
+            plt.axhline(y=j,color='C0',alpha=0.5)
         plt.ylabel(r'Planetary mass [$M_{\oplus}$]',fontsize=14)       
         plt.ylim(1,10000)
     plt.axvspan(xmin=60,xmax=400,ymin=0,ymax=0.25,color='g',alpha=0.2) 
@@ -216,9 +218,15 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
         plt.scatter(syst['period'],syst['period']*0+count,s=syst['marker'],c=syst['radius'],cmap='brg',vmin=1,vmax=8,zorder=10,edgecolor='k')
         condition1 = np.sum((syst['p_eccmin']<400)&(syst['mass']>mcrit_inf)).astype('bool')
         condition2 = np.sum((syst['mass']>mcrit_sup)).astype('bool')
-        condition = condition1|condition2
-        summary.append([system,int(condition1),int(condition2)])       
-        color_condition = ['k','r'][int(condition)]
+        condition_GZ = np.sum((syst['mass']>30)&(syst['mass']<=mcrit_sup)).astype('int')
+        condition_NE = np.sum((syst['mass']>10)&(syst['mass']<=30)).astype('int')
+        condition_SE = np.sum((syst['mass']<=10)).astype('int')
+        condition_transit = np.sum(syst['radius']==syst['radius'])
+
+        summary.append([system,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit)])       
+
+        condition_rejected = condition1|condition2
+        color_condition = ['k','r'][int(condition_rejected)]
         indicator = ['x','•'][np.array(syst['pre_survey'])[0]]
         plt.text(100000,count,indicator+' '+db_starname.loc[db_starname['GAIA']==system,'PRIMARY'].values[0],va='center',ha='left',color=color_condition,alpha=[0.25,1][np.array(syst['pre_survey'])[0]])
         for p1,p2 in zip(syst['p_eccmin'],syst['p_eccmax']):
@@ -229,7 +237,7 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
             elif mass>mcrit_inf:
                 plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color=['white','r'][int(p1<400)],va='center',ha='center',zorder=1000)
     summary = np.array(summary)
-    summary = pd.DataFrame(summary,columns=['GAIA','HJ','BDW'])
+    summary = pd.DataFrame(summary,columns=['GAIA','HJ','BDW','GZ','NEP','SE','TRNS'])
     plt.subplots_adjust(left=0.03,right=0.93,wspace=0.30)
     return summary
 
@@ -394,6 +402,18 @@ class tcs(object):
         if starname is not None:
             self.set_star(starname=starname)
             self.random_weather()
+
+    def create_star_selection(self,starnames,tagname='my_selection'):
+        gaia_names = []
+        for s in starnames:
+            output = resolve_starname(s,verbose=False)
+            if output is not None:
+                gaia_names.append(output['GAIA'])
+        gaia_names = np.array(gaia_names)
+        gaia_names = np.array([int(i.split(' ')[-1]) for i in gaia_names])
+        mask_star = np.in1d(np.array(gr8['gaiaedr3_source_id']),gaia_names)
+        self.info_TA_stars_selected[tagname] = table_star(gr8.loc[mask_star])
+    
 
     def compute_night_length(self, sun_elevation=-12, verbose=True):
         almanac_table = pd.read_pickle(cwd+'/TACS_Material/almanac.p')[self.info_SC_instrument]
@@ -662,7 +682,7 @@ class tcs(object):
             plot_TESS_CVZ()
             plot_KEPLER_CVZ()
 
-    def compute_SG_month(self,month=1,plot=False):
+    def compute_SG_month(self, month=1, plot=False, selection='SG'):
         
         params,output,RA,DEC = self.simu_SG_calendar['outputs']
         sun_elevation = self.simu_SG_calendar['param1']
@@ -671,7 +691,7 @@ class tcs(object):
         ra = np.ravel(RA)
         dec = np.ravel(DEC)
 
-        table = self.info_TA_stars_selected['SG'].data
+        table = self.info_TA_stars_selected[selection].data
 
         dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
         loc = np.argmin(dist,axis=0)
@@ -680,7 +700,7 @@ class tcs(object):
 
         table['night_length_%s'%(month_tag)] = output[loc][:,month-1]
 
-        self.info_TA_stars_selected['SG'] = table_star(table.copy())
+        self.info_TA_stars_selected[selection] = table_star(table.copy())
 
         if plot:
             fig = plt.figure(figsize=(18,12))
@@ -710,7 +730,7 @@ class tcs(object):
                     self.info_text = ''
                     self.marker = None
                 def update(self,newx,newy):
-                    new_star = query_table(newx/24*360,newy,table_gr8)
+                    new_star = query_table(newx/24*360,newy,table)
                     text_fmt = star_info(new_star)
                     self.info_text.set_text(text_fmt)
                     self.marker.set_data([new_star['ra_j2000']/360*24,new_star['dec_j2000']])
@@ -744,7 +764,7 @@ class tcs(object):
             init_text = 'Info Star'
             l, = plt.plot([0.3],[1000],marker='x',color='k',markersize=10)
         
-        info_text = plt.text(0.7,{'k':3000,'mass':30000}[y_var],init_text,fontsize=13,ha='left',va='top')
+        info_text = plt.text(0.5,{'k':3000,'mass':30000}[y_var],init_text,fontsize=13,ha='left',va='top')
 
         class Index(object):
             def __init__(self):

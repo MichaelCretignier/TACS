@@ -17,10 +17,10 @@ tutorial.func_cutoff(tagname='start',cutoff={
     'log_ruwe<':0.079,
     'HJ<': 0.5,
     'BDW<': 0.5,
-    'RHK<': -4.6,
+    'RHK<': -4.7,
     'gmag<':7.5,
     'HZ_mp_min_osc+gr_texp15>':0
-    }) # produce 260 stars in the pre-survey
+    }) # produce 250 stars in the pre-survey
 
 # let's compute the average season length of this sample
 
@@ -30,7 +30,7 @@ min_obs_per_year = np.mean(tutorial.info_TA_stars_selected['start'].data['season
 
 print(min_obs_per_year*0.5) #this is equal to 120 measurement per year
 
-# let's have a look on what is the exposure time to get 120 measurement for the final sample of 40 stars
+# let's have a look on what is the exposure time to get 120 measurement for the final sample (~40 stars)
 
 tutorial.plot_survey_stars(Nb_star=40) 
 
@@ -46,40 +46,24 @@ tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.55, budget='_
 tutorial.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', texp_crit=20, selection=tutorial.info_TA_stars_selected['start'].data)
 tutorial.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', texp_crit=20, selection=tutorial.info_TA_stars_selected['start'].data)
 
-tutorial.func_cutoff(cutoff={
-    'Teff<': 6000,
-    'logg>': 4.2,
-    'vsini<': 8,
-    'Fe/H>': -0.4,
-    'log_ruwe<': 0.079,
-    'HJ<': 0.5,
-    'BDW<': 0.5,
-    'RHK<': -4.7,
-    'snr_C22_texp15>':250, 
-    'sig_rv_phot_texp20<':0.30, 
-    },par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
+tutorial.func_cutoff(cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['start'],
+    {'snr_C22_texp15>':250, 
+    'sig_rv_phot_texp20<':0.30}),
+    par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
 
-tutorial.func_cutoff(cutoff={
-    'Teff<': 6000,
-    'logg>': 4.2,
-    'vsini<': 8,
-    'Fe/H>': -0.4,
-    'log_ruwe<': 0.079,
-    'HJ<': 0.5,
-    'BDW<': 0.5,
-    'RHK<': -4.7,
-    'snr_texp20>':250, 
-    'sig_rv_phot_texp20<':0.30, 
+tutorial.func_cutoff(tagname='final',
+    cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['start'],
+    {'snr_C22_texp15>':250, 
+    'sig_rv_phot_texp20<':0.30,
     'season_length_1.75>':240,
-    'HZ_mp_min_osc+gr_texp15<':10,
-    'vmag<':7.5,
-    },par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
+    'HZ_mp_min_osc+gr_texp15<':16}),
+    par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
 
-tutorial.func_cutoff(cutoff=tutorial.info_TA_my_cutoff,par_space='teff_mean&snr_C22_texp15')
+tutorial.func_cutoff(
+    cutoff=tutorial.info_TA_cutoff['final'],
+    par_space='teff_mean&snr_C22_texp15')
 
-tutorial.plot_survey_stars(Nb_star=113) 
-
-tutorial.plot_survey_snr_texp(tutorial.info_TA_stars_selected, snr_crit=0, sig_rv_crit=1.0, texp=10)
+tutorial.plot_survey_stars(Nb_star=76) 
 
 #toi4499
 table = pd.DataFrame({

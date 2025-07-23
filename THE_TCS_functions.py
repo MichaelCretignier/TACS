@@ -205,7 +205,6 @@ def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument=
     return hours, airmass
 
 
-
 def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',''], par_crit=''):
     'par_space format : P1 & P2'
     'par_box format : P1_min -> P1_max & P2_min -> P2_max'
@@ -269,10 +268,10 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
 
     if plot:
         plt.figure('cumulative'+tagname,figsize=(18,4*nb_rows))
-        plt.subplots_adjust(hspace=0.3,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
+        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
         if par_space!='':
             plt.figure('para'+tagname,figsize=(18,4*nb_rows))
-            plt.subplots_adjust(hspace=0.3,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
+            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
         plt.show()
     table2 = table2.sort_values(by='HZ_mp_min_osc+gr_texp15')
     

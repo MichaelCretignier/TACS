@@ -25,6 +25,8 @@ star1.info_XY_timestamps.subset.plot()
 #SG calendar
 star3 = tcsc.tcs()
 presurvey = star3.info_TA_cutoff['presurvey']
+
+#we can add or modify cutoff selection if needed
 cutoff = tcsc.mod_cutoff(presurvey,{'gmag<':7.5,'RHK_known<':4.8,'vsini_known<':8}) # 'known' means we want an existing value in the DB
 
 #compute the sky night length over the year
@@ -35,10 +37,16 @@ star3.compute_SG_calendar(
     dec_step = 1,
     cutoff = cutoff)
 
-star3.compute_SG_month(month=1, plot=False) #january
-star3.compute_SG_month(month=2, plot=False) #february
+star3.compute_SG_month(month=1, plot=False, selection='SG') #january
+star3.compute_SG_month(month=2, plot=False, selection='SG') #february
 
 plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jan',print_names=True)
 plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Feb',print_names=True)
+
+starnames = ['HD55575','HD89269','HD56124','HD90839','HD95128']
+
+star3.create_star_selection(starnames,tagname='my_selection')
+star3.compute_SG_month(month=1, plot=False, selection='my_selection') #january
+plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
 
 
