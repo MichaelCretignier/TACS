@@ -6,10 +6,13 @@ import pandas as pd
 from scipy.interpolate import interp1d
 
 import THE_TCS_functions as tcsf
+import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
 cwd = os.getcwd()
+
+Teff_var = 'teff_mean'
 
 gr8 = pd.read_csv(cwd+'/TACS_Material/Master_table.csv',index_col=0)
 db_starname = pd.read_csv(cwd+'/TACS_Material/simbad_name.csv',index_col=0)
@@ -37,28 +40,35 @@ db_exoplanets.loc[db_exoplanets['k']!=db_exoplanets['k'],'k'] = 0.1
 db_exoplanets = crossmatch_names(db_exoplanets,'host')
 db_exoplanets = db_exoplanets.sort_values(by='PRIMARY').reset_index(drop=True)
 
-gr8['Teff'] = gr8['Teff_spec']
-gr8.loc[gr8['Teff']!=gr8['Teff'],'Teff'] = gr8.loc[gr8['Teff']!=gr8['Teff'],'Teff_gspphot']
 
-gr8['logg'] = gr8['MIST logg']
-gr8.loc[gr8['logg']!=gr8['logg'],'logg'] = gr8.loc[gr8['logg']!=gr8['logg'],'logg_spec']
 
-gr8.loc[gr8['Fe/H']!=gr8['Fe/H'],'Fe/H'] = 2
 
 gr8['dist'] = 1000/gr8['parallax']
-gr8['log_ruwe'] = np.log10(gr8['ruwe'])
+gr8.loc[gr8['vsini']>50,'vsini'] = 50
+gr8['vsini_known'] = np.array(gr8['vsini'])
+gr8.loc[gr8['vsini_known']!=gr8['vsini_known'],'vsini_known'] = 50
+gr8.loc[gr8['vsini']!=gr8['vsini'],'vsini'] = 0.0
+
+gr8['RHK_known'] = np.array(gr8['RHK'])
+gr8.loc[gr8['RHK_known']!=gr8['RHK_known'],'RHK_known'] = -4.0
 gr8.loc[gr8['logRHK']!=gr8['logRHK'],'logRHK'] = -6.0
 gr8.loc[gr8['RHK']!=gr8['RHK'],'RHK'] = -6.0
-gr8.loc[gr8['vsini']!=gr8['vsini'],'vsini'] = 0.0
-gr8.loc[gr8['vsini']>50,'vsini'] = 50
 
 gr8['HWO'] = 0
-gr8.loc[(gr8['Teff']>5300)&(gr8['Teff']<6000)&(gr8['dist']<20),'HWO'] = 1
-gr8.loc[(gr8['Teff']>4500)&(gr8['Teff']<5300)&(gr8['dist']<12),'HWO'] = 1
-gr8.loc[(gr8['Teff']<4500)&(gr8['Teff']<5300)&(gr8['dist']<5),'HWO'] = 1
+gr8.loc[(gr8[Teff_var]>5300)&(gr8[Teff_var]<6000)&(gr8['dist']<20),'HWO'] = 1
+gr8.loc[(gr8[Teff_var]>4500)&(gr8[Teff_var]<5300)&(gr8['dist']<12),'HWO'] = 1
+gr8.loc[(gr8[Teff_var]<4500)&(gr8[Teff_var]<5300)&(gr8['dist']<5),'HWO'] = 1
 
+#based on Andreas comment, would be better to check RVs databases drift
+gr8.loc[gr8['vmag']<5,'ruwe'] = 0.1
+gr8['log_ruwe'] = np.log10(gr8['ruwe'])
 
 #FUNCTIONS
+
+def mod_cutoff(cutoff,new_cutoff):
+    for kw in new_cutoff:
+        cutoff[kw] = new_cutoff[kw]
+    return cutoff
 
 def auto_format(values):
     maxi = np.nanmax(values)
@@ -119,9 +129,9 @@ def get_starname(entry):
 def star_info(entry, format='v1'):
     name, ID = get_starname(entry)
     if format=='v1':
-        info = ' ID : %.0f \n Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f \n FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry['Teff'], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
+        info = ' ID : %.0f \n Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f \n FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
     else:
-        info = ' ID : %.0f   Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry['Teff'], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
+        info = ' ID : %.0f   Star : %s   Mv = %.2f \n Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'])
     return info
 
 def plot_TESS_CVZ():
@@ -246,7 +256,8 @@ class tableXY(object):
 
     def plot(self, alpha=0.5, label=None, ytext=60, figure=None, ls=None, subset=None):
         if figure is not None:
-            plt.figure(figure)
+            if type(figure)==str:
+                plt.figure(figure)
         if ls is None:
             ls = self.ls
         if subset is None:
@@ -294,7 +305,6 @@ class tableXY(object):
             self.create_subset(selection)
             return selection
 
-
 class image(object):
     def __init__(self,data,xlabel='',ylabel='',zlabel=''):
         self.data = data
@@ -326,6 +336,38 @@ class image(object):
                 plt.text(j-15,ytext,t,color='w')
             plt.xlim(0,365)
 
+class table_star(object):
+    def __init__(self,data):
+        self.data = data
+
+    def print(self,columns=[]):
+        if len(columns)==0:
+            print(self.data)
+        else:
+            print(self.data[['ra_j2000','dec_j2000','primary_name','vmag']+columns])
+
+    def print_columns(self):
+        print(list(self.data.keys()))
+
+    def plot(self,x,y,c=None,s=None,print_names=False,figure=None):
+        if figure is not None:
+            if type(figure)==str:
+                plt.figure(figure)
+        
+        xval = np.array(self.data[x])
+        yval = np.array(self.data[y])
+        if c is None:
+            for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
+                mask3 = np.array((self.data[Teff_var]>t1)&(self.data[Teff_var]<=t2))
+                plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30)   
+        if print_names:
+            index = np.array(list(self.data.index))
+            n = np.array(db_starname.loc[index,'HD'])
+            for xi,yi,ti in zip(xval,yval,n):
+                plt.text(xi,yi,ti,ha='center',va='top')
+        plt.xlabel(x,fontsize=14)
+        plt.ylabel(y,fontsize=14)
+
 class tcs(object):
     
     def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3'):    
@@ -333,23 +375,14 @@ class tcs(object):
         self.info_XY_downtime = tableXY(x=np.arange(365),y=table_time['downtime'])
         self.simu_SG_calendar = None
         self.simu_counter_survey = 0
+        self.simu_tag_survey = ''
         self.info_SC_starname = None
         self.info_SC_instrument = instrument
-        self.info_TA_cutoff = {
-            'Teff<':6000,
-            'logg>':4.2,
-            'vsini<':8,
-            'Fe/H>':-0.4,
-            'eff_nights_1.75>':180,
-            'season_length_1.75>':240,
-            'log_ruwe<':np.round(np.log10(1.2),3),
-            'HJ<':0.5,
-            'BDW<':0.5,
-            'RHK<':-4.8,
-            'dist>':0,
-            'gmag<':7.0,
-            }
+        self.info_TA_stars_selected = {'gr8':table_star(gr8)}
+        self.info_TA_cutoff = {}
 
+        self.info_TA_cutoff['presurvey'] = tcsv.cutoff_presurvey
+        
         if sun_elevation is not None:
             self.compute_night_length(sun_elevation=sun_elevation)
         if starname is not None:
@@ -551,7 +584,7 @@ class tcs(object):
             cutoff=None):
         
         if cutoff is None:
-            cutoff = self.info_TA_cutoff
+            cutoff = self.info_TA_cutoff['presurvey']
 
         self.compute_night_length(sun_elevation=sun_elevation) 
         
@@ -603,6 +636,9 @@ class tcs(object):
             else:
                 table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]>cutoff[kw]]
 
+        self.info_TA_cutoff['SG'] = cutoff
+        self.info_TA_stars_selected['SG'] = table_star(table_gr8.copy())
+
         for j in range(12):
             plt.subplot(3,4,j+1)
             plt.title(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][j]+' (Bad weather = %.0f%%)'%(downtime[j]))
@@ -613,75 +649,78 @@ class tcs(object):
             plt.ylim(-30,90)
             plt.xlabel('RA [hours]')
             plt.ylabel('Dec [deg]')
-            plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000)
-            plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000)
-            plt.scatter(table_gr8['ra_j2000']/360*24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
-            plt.scatter(table_gr8['ra_j2000']/360*24+24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
+            plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
+            plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
+            plt.scatter(table_gr8['ra_j2000']/360*24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
+            plt.scatter(table_gr8['ra_j2000']/360*24+24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
             plot_TESS_CVZ()
             plot_KEPLER_CVZ()
 
-    def commpute_SG_month(self,month=1,cutoff=None):
-        if cutoff is None:
-            cutoff = self.info_TA_cutoff
-        
-        table_gr8 = gr8.copy() 
-        for kw in cutoff.keys():
-            if kw[-1]=='<':
-                table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]<cutoff[kw]]
-            else:
-                table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]>cutoff[kw]]
-        table_gr8 = table_gr8.reset_index(drop=True)
+    def compute_SG_month(self,month=1,plot=False):
         
         params,output,RA,DEC = self.simu_SG_calendar['outputs']
         sun_elevation = self.simu_SG_calendar['param1']
         airmass_max = self.simu_SG_calendar['param2']
 
+        ra = np.ravel(RA)
+        dec = np.ravel(DEC)
+
+        table = self.info_TA_stars_selected['SG'].data
+
+        dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
+        loc = np.argmin(dist,axis=0)
+
         month_tag = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]
 
-        fig = plt.figure(figsize=(18,12))
-        fig.suptitle('Sun elevation = %.0f \nAirmass max = %.2f \nMonth = %s'%(sun_elevation,airmass_max,month_tag))
-        #plt.title()
-        cp = plt.contour(RA,DEC,np.reshape(output[:,month-1],np.shape(RA)),levels=[6,7,8,9,10])
-        plt.clabel(cp, inline=True, fontsize=8,fmt="%.0f")
-        plt.grid()
-        plt.xlim(0,24)
-        plt.ylim(-30,90)
-        plt.xlabel('RA [hours]')
-        plt.ylabel('Dec [deg]')
-        plot_TESS_CVZ()
-        plot_KEPLER_CVZ()
-        plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000)
-        plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000)
-        plt.scatter(table_gr8['ra_j2000']/360*24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
-        plt.scatter(table_gr8['ra_j2000']/360*24+24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8['Teff'],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
-        plt.colorbar(pad=0)  
-        plt.subplots_adjust(left=0.05,right=1.1)          
+        table['night_length_%s'%(month_tag)] = output[loc][month-1]
 
-        info_text = plt.text(0,107,'Info Star',fontsize=13,ha='left',va='top')
-        l, = plt.plot([-5],[130],marker='x',color='k',markersize=10)
+        self.info_TA_stars_selected['SG'] = table_star(table.copy())
 
-        class Index(object):
-            def __init__(self):
-                self.info_text = ''
-                self.marker = None
-            def update(self,newx,newy):
-                new_star = query_table(newx/24*360,newy,table_gr8)
-                text_fmt = star_info(new_star)
-                self.info_text.set_text(text_fmt)
-                self.marker.set_data([new_star['ra_j2000']/360*24,new_star['dec_j2000']])
-                
-                plt.draw()
-                fig.canvas.draw_idle()
-                
-        t = Index()
-        t.info_text = info_text
-        t.marker = l
-        
-        def onclick(event):
-            if event.dblclick:
-                t.update(event.xdata,event.ydata)
+        if plot:
+            fig = plt.figure(figsize=(18,12))
+            fig.suptitle('Sun elevation = %.0f \nAirmass max = %.2f \nMonth = %s'%(sun_elevation,airmass_max,month_tag))
+            #plt.title()
+            cp = plt.contour(RA,DEC,np.reshape(output[:,month-1],np.shape(RA)),levels=[6,7,8,9,10])
+            plt.clabel(cp, inline=True, fontsize=8,fmt="%.0f")
+            plt.grid()
+            plt.xlim(0,24)
+            plt.ylim(-30,90)
+            plt.xlabel('RA [hours]')
+            plt.ylabel('Dec [deg]')
+            plot_TESS_CVZ()
+            plot_KEPLER_CVZ()
+            plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
+            plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
+            plt.scatter(table['ra_j2000']/360*24,table['dec_j2000'],s=(7.5-table['vmag'])*30,c=table[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
+            plt.scatter(table['ra_j2000']/360*24+24,table['dec_j2000'],s=(7.5-table['vmag'])*30,c=table[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
+            plt.colorbar(pad=0)  
+            plt.subplots_adjust(left=0.05,right=1.1)          
 
-        plt.gcf().canvas.mpl_connect('button_press_event', onclick)
+            info_text = plt.text(0,107,'Info Star',fontsize=13,ha='left',va='top')
+            l, = plt.plot([-5],[130],marker='x',color='k',markersize=10)
+
+            class Index(object):
+                def __init__(self):
+                    self.info_text = ''
+                    self.marker = None
+                def update(self,newx,newy):
+                    new_star = query_table(newx/24*360,newy,table_gr8)
+                    text_fmt = star_info(new_star)
+                    self.info_text.set_text(text_fmt)
+                    self.marker.set_data([new_star['ra_j2000']/360*24,new_star['dec_j2000']])
+                    
+                    plt.draw()
+                    fig.canvas.draw_idle()
+                    
+            t = Index()
+            t.info_text = info_text
+            t.marker = l
+            
+            def onclick(event):
+                if event.dblclick:
+                    t.update(event.xdata,event.ydata)
+
+            plt.gcf().canvas.mpl_connect('button_press_event', onclick)
 
 
     def plot_exoplanets_db(self,y_var='k'):
@@ -788,79 +827,148 @@ class tcs(object):
                 plt.axhline(y=axhline,alpha=0.4,color='k',lw=1)
 
 
-    def plot_night_length(self):
+    def plot_night_length(self,figure='NightLength'):
         backup = np.array([self.info_SC_night_def]).copy()
         
         self.compute_night_length(sun_elevation=-12, verbose=False) 
         self.compute_nights(airmass_max=1.5, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure='NightLength',label='Z=1.5 | S=-12',ytext=-0.5) 
+        self.info_XY_night_duration.plot(figure=figure,label='Z=1.5 | S=-12',ytext=-0.5) 
         
         self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure='NightLength',label='Z=1.8 | S=-12') 
+        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-12') 
         
         self.compute_night_length(sun_elevation=-6, verbose=False) #change the sunset/rise parameter
         self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure='NightLength',label='Z=1.8 | S=-6')
+        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-6')
         plt.legend()
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
         plt.ylim(-1)
+
+    def compute_optimal_texp(self, selection=None, snr_crit=250, sig_rv_crit=0.30, texp_crit=20, budget='_phot'):
+        """ budget = '_arve_osc+gr' """
+        if selection is None:
+            selection = gr8.copy()    
+
+        snr_texp15 = np.array(0.5*(selection['snr_420_texp15']+selection['snr_550_texp15'])) #Cretignier et al. +22
+        texp_snr_crit = 15*(snr_crit/snr_texp15)**2
+
+        if budget!='_phot':
+            texp_tabulated = np.array([1,5,8,10,12,15,20,25,30])
+            kws = ['sig_rv'+budget+'_texp%.0f'%(j) for j in texp_tabulated]
+            sig_rv = np.array(selection[kws])<=sig_rv_crit
+            texp_sig_rv_crit = []
+            for s in sig_rv:
+                loc = np.where(s)[0]
+                if len(loc):
+                    texp_sig_rv_crit.append(texp_tabulated[loc[0]])
+                else:
+                    texp_sig_rv_crit.append(45)
+            texp_sig_rv_crit = np.array(texp_sig_rv_crit)
+        else:
+            sig_rv_texp15 = np.array(selection['sig_rv_phot_texp15'])
+            texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv_crit)**2
+
+        optimal_time = np.max([texp_snr_crit,texp_sig_rv_crit],axis=0)
+        statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
+
+        plt.figure(figsize=(18,6))
+        plt.axes([0.03,0.33,0.2,0.8])
+        plt.pie([np.sum(statistic==0),np.sum(statistic==1)],labels=['SNR \nlimited','Sig RV \nlimited'], autopct='%.0f%%')
+
+        plt.axes([0.32,0.1,0.65,0.8])
+        plt.scatter(np.arange(len(selection)),texp_snr_crit,label=r'SNR > %.0f'%(snr_crit))
+        plt.scatter(np.arange(len(selection)),texp_sig_rv_crit,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv_crit))
+        plt.scatter(np.arange(len(selection)),optimal_time,color='k',label='Optimal',marker='.')
+        plt.legend()
+        plt.ylabel('Texp [min]') ; plt.ylim(0,50)
+        plt.xlabel('Star ID')
+        plt.axhline(y=texp_crit,color='r',ls=':')
+        plt.title('Nb stars valid = %.0f / %.0f'%(np.sum(optimal_time<=texp_crit),len(selection)))
+
+        plt.axes([0.05,0.1,0.2,0.35])
+        plt.hist(texp_snr_crit,bins=np.arange(0,46,1),color='C0',alpha=0.4,label=r'SNR > %.0f'%(snr_crit))
+        plt.hist(texp_sig_rv_crit,bins=np.arange(0,46,1),color='C1',alpha=0.4,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv_crit))
+        plt.hist(optimal_time,bins=np.arange(0,46,1),color='k',alpha=0.4,label='Optimal')
+        plt.xlabel('Texp [min]') ; plt.xlim(0,50)
+
 
     def plot_survey_snr_texp(self, selection=None, texp=None, snr_crit=250, sig_rv_crit=0.30, budget='_phot'):
         
         if selection is None:
             selection = gr8.copy()
         
-        snr_texp15 = 0.5*(selection['snr_420_texp15']+selection['snr_550_texp15']) #Cretignier et al. +22
         #snr_texp15 = gr8['snr_550_texp15']
         texp_snr250 = selection['texp_snr_250']
         if budget=='_phot':
             sig_rv_texp15 = selection['sig_rv'+budget+'_texp15']
             sig_rv = sig_rv_texp15/(np.sqrt(texp/15))
+            sig_rv_gr8 = gr8['sig_rv'+budget+'_texp15']/(np.sqrt(texp/15))
         else:
-            texp = tcsf.find_nearest(np.array([1,5,10,12,15,20]),texp)[1][0]
+            texp = tcsf.find_nearest(np.array([1,5,8,10,12,15,20,25,30]),texp)[1][0]
             print(' [INFO] Closest Texp tabulated = %.0f min'%(texp))
             sig_rv = selection['sig_rv'+budget+'_texp%.0f'%(texp)]
+            sig_rv_gr8 = gr8['sig_rv'+budget+'_texp%.0f'%(texp)]
+        snr = (np.sqrt(texp/15))*selection['snr_C22_texp15'] #Cretignier et al. +22
 
-        snr = snr_texp15*(np.sqrt(texp/15))
         mask = (snr>snr_crit)&(sig_rv<sig_rv_crit)
-        plt.figure('SNR_SIGRV_TEXP%.0fMIN'%(texp),figsize=(8,8))
+        plt.figure('SNR_SIGRV_TEXP%.0fMIN_%s'%(texp,budget.split('_')[-1]),figsize=(8,8))
         plt.axes([0.12,0.12,0.7,0.7])
-        plt.scatter(snr,sig_rv,color='k',label='%.0f'%(len(mask)))
-        plt.scatter(snr[mask],sig_rv[mask],color='g',marker='.',label='%.0f'%(sum(mask)))
+        for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
+            mask2 = np.array((selection[Teff_var]>t1)&(selection[Teff_var]<=t2))
+            mask3 = np.array((gr8[Teff_var]>t1)&(gr8[Teff_var]<=t2))
+            plt.scatter((np.sqrt(texp/15))*gr8.loc[mask3,'snr_C22_texp15'],sig_rv_gr8.loc[mask3],color='gray',marker=marker,s=30,alpha=0.5)                
+            plt.scatter(snr[mask2],sig_rv[mask2],color='k',marker=marker,s=30)    
+
+        plt.scatter(snr[mask],sig_rv[mask],color='g',marker='o',s=7,label='All (%.0f / %.0f)'%(sum(mask),len(mask)))
+        for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
+            mask2 = np.array((selection[Teff_var]>t1)&(selection[Teff_var]<=t2))
+            plt.scatter(snr[mask&mask2],sig_rv[mask&mask2],color=color,marker=marker,s=7,label='T = [%.0fK - %.0fK] | (%.0f / %.0f)'%(t1,t2,sum(mask&mask2),sum(mask2)))
+
         plt.axvline(x=snr_crit,color='k',ls=':')
         plt.axhline(y=sig_rv_crit,color='k',ls=':')
         plt.axvspan(xmin=0,xmax=snr_crit,color='k',alpha=0.2)
         plt.axhspan(ymin=sig_rv_crit,ymax=1.0,color='k',alpha=0.2)
         plt.xlabel('SNR continuum',fontsize=14)
         plt.ylabel(r'$\sigma_{{\gamma}}$ $RV$ [m/s]',fontsize=14)
-        plt.legend()
-        plt.xlim(0,1000)
-        plt.ylim(0,0.75)
+        plt.legend(loc=1,markerscale=2.0)
+        plt.xlim(0,1299)
+        plt.ylim(0,1.00)
         ax = plt.gca()
         plt.axes([0.82,0.12,0.10,0.7],sharey=ax) ; plt.tick_params(labelleft=False,right=True,labelright=True)
-        plt.hist(sig_rv,bins=np.arange(0,0.75,0.01),color='k',orientation='horizontal',alpha=0.4)
-        plt.hist(sig_rv[mask],bins=np.arange(0,0.75,0.01),color='g',orientation='horizontal',alpha=0.4)
+        plt.hist(sig_rv,bins=np.arange(0,1.00,0.01),color='k',orientation='horizontal',alpha=0.4)
+        plt.hist(sig_rv[mask],bins=np.arange(0,1.00,0.01),color='g',orientation='horizontal',alpha=0.4)
         plt.axes([0.12,0.82,0.7,0.10],sharex=ax) ; plt.tick_params(labelbottom=False,top=True,labeltop=True)
-        plt.hist(snr,bins=np.arange(0,1000,25),color='k',alpha=0.4) 
-        plt.hist(snr[mask],bins=np.arange(0,1000,25),color='g',alpha=0.4) 
+        plt.hist(snr,bins=np.arange(0,1000,10),color='k',alpha=0.4) 
+        plt.hist(snr[mask],bins=np.arange(0,1000,10),color='g',alpha=0.4) 
 
-    def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, overhead=1):
+    def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, Nb_obs_per_year=None, overhead=1):
         if weather:
             nb_hours = self.info_SC_nb_hours_per_yr_eff
         else:
             nb_hours = self.info_SC_nb_hours_per_yr
 
-        texp = np.array([5,10,12,15,20])
+        texp = np.array([5,8,10,12,15,20,25,30])
         nb_exp = nb_hours*60/texp + overhead 
 
-        ti = np.arange(5,20.1,0.1)
+        ti = np.arange(4,30.1,0.1)
         ni = np.arange(20,200,1)
         texp,nstars = np.meshgrid(ti,ni)
 
+        code = ''
+        if Texp is not None:
+            code='_T'
+        if Nb_star is not None:
+            code='_N'
+
+        if self.simu_tag_survey!=code:
+            self.simu_counter_survey = 0
+        self.simu_tag_survey = code
+
         ls = ['-','--','-.',':'][self.simu_counter_survey%4]
+
         self.simu_counter_survey +=1
 
-        plt.figure('Survey Strategy',figsize=(10,10))
+        plt.figure('Survey_Strategy'+code,figsize=(10,10))
         plt.axes([0.08,0.08,0.86,0.6])
         c = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[25,50,75,100,150,200,250,300])
         plt.clabel(c,fmt='%.0f')
@@ -869,7 +977,7 @@ class tcs(object):
         if self.simu_counter_survey==1:
             plt.grid()
         if Texp is not None:
-            plt.axvline(x=Texp,color='k',ls=ls)
+            plt.axvline(x=Texp,color='k',ls=ls,lw=3)
             plt.axes([0.08,0.73,0.86,0.25])
             plt.plot(ni,nb_hours*60/((Texp+overhead)*ni),color='k',label='Texp = %.0f min'%(Texp),ls=ls)
             plt.scatter(np.arange(20,201,20),nb_hours*60/((Texp+overhead)*np.arange(20,201,20)),color='k')
@@ -882,23 +990,38 @@ class tcs(object):
             plt.xlim(20,200) ; plt.ylim(0,365)
             plt.legend()
         if Nb_star is not None:
-            plt.axhline(y=Nb_star,color='k',ls=ls)
+            plt.axhline(y=Nb_star,color='k',ls=ls,lw=3)
             plt.axes([0.08,0.73,0.86,0.25])
             plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_star),ls=ls,color='k')
-            plt.scatter(np.arange(5,21,2.5),nb_hours*60/((np.arange(5,21,2.5)+overhead)*Nb_star),color='k')
-            for i in np.arange(5,21,2.5):
+            plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_star),color='k')
+            for i in np.arange(5,31,2.5):
                 plt.text(i,nb_hours*60/((i+overhead)*Nb_star)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_star)),color='k',ha='center')
             if self.simu_counter_survey==1:
                 plt.grid()
             plt.ylabel('Nb yearly obs. per *')
             plt.xlabel('Texp [min]')
-            plt.xlim(4,20)
+            plt.xlim(4,30)
+        if Nb_obs_per_year is not None:
+            c2 = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[0,Nb_obs_per_year],cmap='Greys',linestyles=ls,linewidths=3) 
+            plt.clabel(c2,fmt='%.0f')
+            plt.axes([0.08,0.73,0.86,0.25])
+            plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_obs_per_year),ls=ls,color='k')
+            plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_obs_per_year),color='k')
+            for i in np.arange(5,31,2.5):
+                plt.text(i,nb_hours*60/((i+overhead)*Nb_obs_per_year)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_obs_per_year)),color='k',ha='center')
+            if self.simu_counter_survey==1:
+                plt.grid()
+            plt.ylabel('Nb stars')
+            plt.xlabel('Texp [min]')
+            plt.xlim(4,30)
 
-    def func_cutoff(self, cutoff=None, par_space='', par_box=['',''], par_crit=''):
+    def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit=''):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""
         GR8 = gr8.copy()
         if cutoff is None:
-            cutoff = self.info_TA_cutoff
+            cutoff = self.info_TA_cutoff['presurvey']
+            tagname = 'presurvey'
+        
         for c in cutoff.keys():
             if c[0:8]=='snr_texp':
                 texp=float(c[:-1].split('exp')[1])
@@ -916,6 +1039,18 @@ class tcs(object):
                 sig_rv = sig_rv_texp15/(np.sqrt(texp/15))
                 GR8[c[:-1]] = sig_rv
 
-        table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname='',par_space=par_space, par_box=par_box, par_crit=par_crit)
-        self.info_TA_my_cutoff = cutoff
-        self.info_TA_stars_selected = table_filtered
+        tagname_fig=''
+        if par_space!='':
+            tagname_fig = par_space
+        if par_box[0]!='':
+            tagname_fig=par_box[0]
+        
+        table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit)
+        self.info_TA_cutoff[tagname] = cutoff
+        self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
+
+
+    def cutoff_ST(self):
+        for tagname,cutoff in zip(['Tim','Jean','Sam1','Sam2','Miku','William1','William2','Stefano'],[tcsv.cutoff_tim,tcsv.cutoff_jean,tcsv.cutoff_sam,tcsv.cutoff_sam2,tcsv.cutoff_mick,tcsv.cutoff_william1,tcsv.cutoff_william2,tcsv.cutoff_stefano]):
+            self.func_cutoff(tagname=tagname,cutoff=cutoff)
+        
