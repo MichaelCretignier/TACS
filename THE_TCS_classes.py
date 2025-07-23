@@ -137,9 +137,9 @@ def get_starname(entry):
 def star_info(entry, format='v1'):
     name, ID = get_starname(entry)
     if format=='v1':
-        info = ' ID : %.0f \n Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f   FeH = %.2f    RHK = %.2f   Vsini = %.1f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
+        info = ' ID : %.0f \n Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f   FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['ruwe'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     else:
-        info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
+        info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['ruwe'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
 
 def plot_TESS_CVZ():
