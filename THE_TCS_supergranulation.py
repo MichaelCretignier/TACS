@@ -43,10 +43,19 @@ star3.compute_SG_month(month=2, plot=False, selection='SG') #february
 plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jan',print_names=True)
 plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Feb',print_names=True)
 
+# you can also start with your own hardcoded list of stars
+star4 = tcsc.tcs()
+
 starnames = ['HD55575','HD89269','HD56124','HD90839','HD95128']
 
-star3.create_star_selection(starnames,tagname='my_selection')
-star3.compute_SG_month(month=1, plot=False, selection='my_selection') #january
-plt.figure(figsize=(10,10)) ; star3.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
+star4.compute_SG_calendar(
+    sun_elevation = -6, 
+    airmass_max = 1.75, 
+    alpha_step = 0.5, 
+    dec_step = 1)
+
+star4.create_star_selection(starnames,tagname='my_selection')
+star4.compute_SG_month(month=1, plot=False, selection='my_selection') #january
+plt.figure(figsize=(10,10)) ; star4.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
 
 
