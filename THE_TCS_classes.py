@@ -10,6 +10,12 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
+print("""\n[INFO USER] READ ME CAREFULLY 
+[INFO USER] The RUWE is currently disabled for stars brighter than mv<5 
+[INFO USER] Atmospheric parameters are still in validation phase.
+""")
+
+
 cwd = os.getcwd()
 
 Teff_var = 'teff_mean'
@@ -364,7 +370,7 @@ class table_star(object):
             index = np.array(list(self.data.index))
             n = np.array(db_starname.loc[index,'HD'])
             for xi,yi,ti in zip(xval,yval,n):
-                plt.text(xi,yi,ti,ha='center',va='top')
+                plt.text(xi,yi,ti,ha='center',va='bottom',fontsize=7)
         plt.xlabel(x,fontsize=14)
         plt.ylabel(y,fontsize=14)
 
@@ -672,7 +678,7 @@ class tcs(object):
 
         month_tag = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]
 
-        table['night_length_%s'%(month_tag)] = output[loc][month-1]
+        table['night_length_%s'%(month_tag)] = output[loc][:,month-1]
 
         self.info_TA_stars_selected['SG'] = table_star(table.copy())
 
