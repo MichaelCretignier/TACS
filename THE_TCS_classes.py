@@ -399,7 +399,6 @@ class table_star(object):
             def update(self,newx,newy):
                 dist = abs((xval-newx)/np.nanstd(xval))+abs((yval-newy)/np.nanstd(yval))
                 loc = np.array(dataframe.index)[np.argmin(dist)]
-                print(dataframe,loc)
                 new_star = dataframe.loc[loc]
                 text_fmt = star_info(new_star)
                 self.info_text.set_text(text_fmt)
