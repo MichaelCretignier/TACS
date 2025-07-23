@@ -21,12 +21,17 @@ cwd = os.getcwd()
 
 Teff_var = 'teff_mean'
 
-gr8 = pd.read_csv(cwd+'/TACS_Material/Master_table.csv',index_col=0)
+gr8_raw = pd.read_csv(cwd+'/TACS_Material/Master_table.csv',index_col=0)
+gr8 = gr8_raw.copy()
+
 db_starname = pd.read_csv(cwd+'/TACS_Material/simbad_name.csv',index_col=0)
 table_time = pd.read_csv(cwd+'/TACS_Material/time_conversion.csv',index_col=0)
 
 seeing = interp1d(table_time['deci'].astype('float')-2026,table_time['seeing'].astype('float'), kind='cubic', bounds_error=False, fill_value='extrapolate')(np.linspace(0,1,365))
 downtime = interp1d(table_time['deci'].astype('float')-2026,table_time['downtime'].astype('float'), kind='cubic', bounds_error=False, fill_value='extrapolate')(np.linspace(0,1,365))
+month_year = np.ones(365)
+for i in [31,59,90,120,151,181,212,243,273,304,334,365]:
+    month_year[np.arange(1,366)>i] = month_year[np.arange(1,366)>i]+1
 
 def crossmatch_names(tab1,kw):
     names1 = np.array(tab1[kw])
@@ -606,7 +611,7 @@ class tcs(object):
         if plot:
             self.info_IM_observable.plot()
         
-    def create_timeseries(self, airmass_max=1.5, nb_year=10, texp=15, weather=True, nb_subexp=None):
+    def create_timeseries(self, airmass_max=1.5, nb_year=10, month=None, texp=15, weather=True):
         dt = 24*60/1440 #dt in minutes
         N = int(np.round(texp/dt,0))
         j0 = 0.0#61041.0
@@ -618,23 +623,44 @@ class tcs(object):
                                 weather=weather, 
                                 plot=False)
             epochs = []
-            for d,n in enumerate(self.info_IM_observable.data.T):
-                loc = np.where(n==1)[0]                
-                if len(loc)>N:
+            l0 = np.median(np.where(self.info_IM_observable.data==1)[0])
+            dt = int(l0-0.5*1440)
+            maps = np.roll(self.info_IM_observable.data.T,-dt,axis=1)
+            for d,n in enumerate(maps):
+                loc = np.where(n==1)[0]  
+                if len(loc)>N:                            
                     loc = loc[int(N/2):-int(N/2)]
                     mini = loc[0]
                     maxi = loc[-1]
                     t0 = np.mean(loc)+np.arange(-100,100,1)*N
                     t0 = t0[(t0>mini)&(t0<maxi)]
+                    t0 += dt
                     epochs.append(j0+d+0.5+(t0/1441-0.5)+365*year)
             jdb.append(epochs)
         jdb = np.hstack(jdb)
         jdb = np.hstack(jdb)
-        self.info_XY_timestamps = tableXY(x=jdb,y=np.random.randn(len(jdb)),xlabel='Nights [days]')
+        rv = np.random.randn(len(jdb))
         
-        if nb_subexp is not None:
-            for n in np.unique(jdb//1):
-                l2 = np.where((jdb//1)==n)[0]
+        if month is not None:
+            days = np.where(month_year==month)[0]
+            mask = np.in1d(jdb.astype('int'),days)
+            jdb = jdb[mask]
+            rv = rv[mask]
+
+        self.info_XY_timestamps = tableXY(x=jdb, y=rv, xlabel='Nights [days]')
+        
+
+    def create_survey(self, selection, airmass_max=1.5, nb_year=10, texp=15, weather=True, nb_subexp=None):
+        if selection not in self.info_TA_stars_selected.keys():
+            print(' [ERROR] This selection %s is not part of the selections:',list(self.info_TA_stars_selected.keys()))
+        else:
+            table = self.info_TA_stars_selected[selection]
+            timeseries = []
+            for ID in np.array(table.index):
+                self.set_star(id=ID)
+                self.create_timeseries(airmass_max=airmass_max, nb_year=nb_year, texp=texp, weather=weather, nb_subexp=nb_subexp)
+                timeseries.append(self.info_XY_timestamps)
+
 
     def compute_SG_calendar(
             self,
@@ -875,7 +901,10 @@ class tcs(object):
 
     def plot_keplerians(self,axhline=None, obs_per_night=None, random=False):
         nb = len(self.info_XY_keplerian)
-        plt.figure(figsize=(18,10))
+        fig = plt.figure(figsize=(18,10))
+        if self.info_TA_starnames is not None:
+            fig.suptitle('%s | %s | %s | %s'%(self.info_TA_starnames['PRIMARY'], self.info_TA_starnames['HD'], self.info_TA_starnames['HIP'], self.info_TA_starnames['GAIA']))
+        
         for j in np.arange(nb):
             if not j:
                 plt.subplot(nb,1,j+1) ; ax = plt.gca()
@@ -913,8 +942,17 @@ class tcs(object):
 
     def compute_optimal_texp(self, selection=None, snr_crit=250, sig_rv_crit=0.30, texp_crit=20, budget='_phot'):
         """ budget = '_arve_osc+gr' """
+        
+        if snr_crit<1:
+            snr_crit=1
+        
+        if sig_rv_crit<0.001:
+            sig_rv_crit=100
+        
         if selection is None:
             selection = gr8.copy()    
+        else:
+            selection = self.info_TA_stars_selected[selection].data
 
         snr_texp15 = np.array(0.5*(selection['snr_420_texp15']+selection['snr_550_texp15'])) #Cretignier et al. +22
         texp_snr_crit = 15*(snr_crit/snr_texp15)**2
@@ -938,6 +976,8 @@ class tcs(object):
         optimal_time = np.max([texp_snr_crit,texp_sig_rv_crit],axis=0)
         statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
 
+        selection['texp_optimal'] = optimal_time
+
         plt.figure(figsize=(18,6))
         plt.axes([0.03,0.33,0.2,0.8])
         plt.pie([np.sum(statistic==0),np.sum(statistic==1)],labels=['SNR \nlimited','Sig RV \nlimited'], autopct='%.0f%%')
@@ -958,12 +998,38 @@ class tcs(object):
         plt.hist(optimal_time,bins=np.arange(0,46,1),color='k',alpha=0.4,label='Optimal')
         plt.xlabel('Texp [min]') ; plt.xlim(0,50)
 
+    def compute_nb_nights_required(self, selection='', texp=15, month=1):
+        """Only thing missing is to check the number of star with season gap"""
+        tab = self.info_TA_stars_selected[selection].data
+
+
+
+        nights = (1-self.info_IM_night.data)
+        observing = 1 - downtime/100
+        hours = np.sum(nights*observing,axis=0)/60*0.60 #60% of GTO
+
+        day0 = np.where(month_year==month)[0][0]
+
+        cumu_hours = np.cumsum(np.roll(hours,-day0))
+
+        overhead = 1
+        if texp!='optimal':
+            total_time = (texp+overhead)*len(tab)/60
+        else:
+            total_time = (np.sum(tab['texp_optimal'])+len(tab)*overhead)/60
+        
+        nb_days = np.where(cumu_hours>total_time)[0][0]
+        print(' [INFO] Total time needed = %.1f hours'%(total_time))
+        print(' [INFO] Number of days needed : %.0f'%(nb_days))
+        
 
     def plot_survey_snr_texp(self, selection=None, texp=None, snr_crit=250, sig_rv_crit=0.30, budget='_phot'):
         
         if selection is None:
             selection = gr8.copy()
-        
+        else:
+            selection = self.info_TA_stars_selected[selection].data
+
         #snr_texp15 = gr8['snr_550_texp15']
         texp_snr250 = selection['texp_snr_250']
         if budget=='_phot':
@@ -1008,6 +1074,8 @@ class tcs(object):
         plt.hist(snr,bins=np.arange(0,1000,10),color='k',alpha=0.4) 
         plt.hist(snr[mask],bins=np.arange(0,1000,10),color='g',alpha=0.4) 
 
+
+
     def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, Nb_obs_per_year=None, overhead=1):
         if weather:
             nb_hours = self.info_SC_nb_hours_per_yr_eff
@@ -1047,8 +1115,8 @@ class tcs(object):
             plt.axvline(x=Texp,color='k',ls=ls,lw=3)
             plt.axes([0.08,0.73,0.86,0.25])
             plt.plot(ni,nb_hours*60/((Texp+overhead)*ni),color='k',label='Texp = %.0f min'%(Texp),ls=ls)
-            plt.scatter(np.arange(20,201,20),nb_hours*60/((Texp+overhead)*np.arange(20,201,20)),color='k')
-            for i in np.arange(20,201,20):
+            plt.scatter(np.arange(20,401,20),nb_hours*60/((Texp+overhead)*np.arange(20,401,20)),color='k')
+            for i in np.arange(20,401,20):
                 plt.text(i,nb_hours*60/((Texp+overhead)*i)+10,'%.0f'%(nb_hours*60/((Texp+overhead)*i)),color='k',ha='center')
             if self.simu_counter_survey==1:
                 plt.grid()

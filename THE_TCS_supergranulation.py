@@ -44,14 +44,14 @@ star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jan',print_names=Tr
 star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Feb',print_names=True)
 
 # you can also start with your own hardcoded list of stars
-star4 = tcsc.tcs()
+star4 = tcsc.tcs(sun_elevation=-6, starname='HD55575') 
 
 starnames = ['HD55575','HD89269','HD56124','HD90839','HD95128']
 star4.create_star_selection(starnames,tagname='my_selection')
 
 star4.compute_SG_calendar(
     sun_elevation = -6, 
-    airmass_max = 1.75, 
+    airmass_max = 2.5, 
     alpha_step = 0.5, 
     dec_step = 1,
     selection='my_selection')
@@ -59,4 +59,11 @@ star4.compute_SG_calendar(
 star4.compute_SG_month(month=1, plot=False, selection='my_selection') #january
 star4.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
 
-
+# the code also work for other instruments and not only HARPS3
+for n,ins in enumerate(['HARPS3','NEID','KPF','EXPRES']):
+    star5 = tcsc.tcs(sun_elevation=-6, starname='HD55575',instrument=ins) 
+    #plt.subplot(2,2,1+n) ; star5.compute_nights(airmass_max=11, weather=False, plot=True)
+    star5.create_timeseries(airmass_max=1.75, nb_year=1, month=1, texp=10, weather=False)
+    star5.info_XY_timestamps.plot(label=ins)
+plt.xlim(0,30)
+plt.legend()

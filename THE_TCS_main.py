@@ -19,7 +19,7 @@ tutorial.plot_survey_stars(Nb_obs_per_year=75) # 150 measurements for a 2-year p
 ### ------- EXAMPLES ------- ###
 
 ##### COMPUTE SEASON AND NIGHT LENGTH #####
-star = tcsc.tcs(sun_elevation=-12, starname='HD217014') 
+star = tcsc.tcs(sun_elevation=-12, starname='HD217014') #using starname
 
 #analysis visibility
 plt.figure(figsize=(12,12))
@@ -27,7 +27,7 @@ plt.figure(figsize=(12,12))
 plt.subplot(2,2,1) ; star.compute_nights(airmass_max=11, weather=False, plot=True)
 plt.subplot(2,2,2) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True)
 
-star.set_star(ra=18,dec=38) # change for a declination ra input (HD166620)
+star.set_star(ra=18,dec=38) # change for a DEC vs RA input (HD166620)
 
 plt.subplot(2,2,3) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True)
 plt.subplot(2,2,4) ; star.compute_nights(airmass_max=1.5, weather=True, plot=True)
@@ -41,7 +41,7 @@ star2 = tcsc.tcs(sun_elevation=-12, starname='HD217014')
 star2.plot_exoplanets_db(y_var='k')
 
 star2.create_timeseries(airmass_max=1.75, nb_year=1, texp=15, weather=False)
-star2.compute_exoplanet_rv_signal(y0=2025) #Nov comissioning
+star2.compute_exoplanet_rv_signal(y0=2025) #Nov. comissioning
 star2.plot_keplerians()
 
 star2.set_star(starname='HD75732')
