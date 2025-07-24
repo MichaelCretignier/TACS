@@ -1,5 +1,6 @@
 import matplotlib.pylab as plt
 import numpy as np
+import pandas as pd
 
 import THE_TCS_classes as tcsc
 import THE_TCS_variables as tcsv
@@ -137,3 +138,4 @@ for j in range(1,9):
     loc = np.where(statistic==j)[0][-1]
     plt.scatter(loc,j,color='k')
     plt.text(loc,j,'%.0f'%(loc),ha='center',va='bottom')
+
