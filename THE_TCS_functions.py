@@ -1,3 +1,15 @@
+from IPython import get_ipython
+
+ipython = get_ipython()
+ipython.magic('matplotlib')
+
+import matplotlib
+
+try:
+    matplotlib.use('Qt5Agg',force=True)
+except:
+    matplotlib.use('Agg',force=True)
+
 from datetime import datetime, timezone
 
 import matplotlib.pylab as plt
