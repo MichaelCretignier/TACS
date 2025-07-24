@@ -8,16 +8,11 @@ import THE_TCS_variables as tcsv
 summary = tcsc.plot_exoplanets2(cutoff={})
 summary = tcsc.plot_exoplanets2(cutoff={'teff_mean<':6000,'ruwe<':1.2,'logg>':4.2})
 
-# START
-tutorial = tcsc.tcs(sun_elevation=-12) 
-# Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
-# As a recall, Total_time = Nstar * Texp * Nb_obs
-tutorial.plot_survey_stars(Texp=20)
-tutorial.plot_survey_stars(Texp=10) # NB, the number are not twice because overhead = 1min
-tutorial.plot_survey_stars(Nb_star=40)
-tutorial.plot_survey_stars(Nb_obs_per_year=75) # 150 measurements for a 2-year pre-survey
-
 ### ------- EXAMPLES ------- ###
+
+# Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
+survey = tcsc.tcs(sun_elevation=-12, instrument='HARPS3')
+survey.func_cutoff(tagname='bright!',cutoff={'gmag<':6,'teff_mean<':6000})
 
 ##### COMPUTE SEASON AND NIGHT LENGTH #####
 star = tcsc.tcs(sun_elevation=-12, starname='HD217014') #using starname
@@ -53,27 +48,30 @@ star2.plot_keplerians()
 ##### SG CALENDAR #####
 star3 = tcsc.tcs()
 star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=1, dec_step=5)
-#change the default cutoff if necessary
-star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=1, dec_step=5,
-                          cutoff={'ruwe<':1.2,
-                                  'teff_mean<':6000,
-                                  'logg>':4.2, 
-                                  'vmag<':5.5,
-                                  'vsini<':8})
 
-star3.compute_SG_month(month=1)
-
-star3.compute_SG_month(month=1,
-                        cutoff={'ruwe<':1.2,
-                                  'MIST Teff<':6000,
-                                  'MIST logg>':4.2, 
-                                  'Vmag<':6.5,
-                                  'vsini<':8})
-
+star3.compute_SG_month(month=1,plot=True)
 
 #OPTIMAL EXPOSURE TIME
 
-star3.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.30, budget='_phot', texp_crit=15)
+# START
+tutorial = tcsc.tcs(sun_elevation=-12) 
+# As a recall, Total_time = Nstar * Texp * Nb_obs
+tutorial.plot_survey_stars(Texp=20)
+tutorial.plot_survey_stars(Texp=10) # NB, the number are not twice because overhead = 1min
+tutorial.plot_survey_stars(Nb_star=40)
+tutorial.plot_survey_stars(Nb_obs_per_year=60) # 120 measurements for a 2-year pre-survey
+
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_phot', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', selection='presurvey')
+
+tutorial.compute_optimal_texp(snr_crit=150, sig_rv_crit=0.30, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
+tutorial.compute_optimal_texp(snr_crit=200, sig_rv_crit=0.40, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
+
+tutorial.plot_survey_stars(Texp=15,selection='presurvey') 
+tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='HZ_mp_min_osc+gr_texp15') 
+tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='texp_optimal') 
+
 
 #TESS LIGHTCURVES
 star4 = tcsc.tcs(sun_elevation=-12, starname='HD99492')

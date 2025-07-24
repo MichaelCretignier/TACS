@@ -7,12 +7,12 @@ import THE_TCS_variables as tcsv
 
 #first and best standard star
 star1 = tcsc.tcs(sun_elevation=-6, starname='HD127334') 
-s1 = plt.subplot(2,1,1)
+s1 = plt.subplot(2,1,1) ; plt.title('%s'%(star1.info_SC_starname['HD']))
 star1.plot_night_length(figure=s1) #peak in April
 
 #second standard star
 star2 = tcsc.tcs(sun_elevation=-6, starname='HD144579') 
-s2 = plt.subplot(2,1,2)
+s2 = plt.subplot(2,1,2) ; plt.title('%s'%(star2.info_SC_starname['HD']))
 star2.plot_night_length(figure=s2) #peak in May
 
 #create a timesampling for star1
@@ -68,3 +68,4 @@ for n,ins in enumerate(['HARPS3','NEID','KPF','EXPRES']):
     star5.info_XY_timestamps.plot(label=ins)
 plt.xlim(0,30)
 plt.legend()
+

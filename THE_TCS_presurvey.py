@@ -127,6 +127,7 @@ for members in list(question3.info_TA_stars_selected.keys())[1:]:
     stars.append(loc)
 stars = pd.DataFrame({'index':np.hstack(stars)})['index'].value_counts()
 statistic = np.array(stars)
+plt.close()
 
 plt.figure()
 plt.plot(statistic)

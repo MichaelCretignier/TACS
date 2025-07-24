@@ -205,7 +205,7 @@ def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument=
     return hours, airmass
 
 
-def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',''], par_crit=''):
+def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',''], par_crit='', verbose=True):
     'par_space format : P1 & P2'
     'par_box format : P1_min -> P1_max & P2_min -> P2_max'
 
@@ -283,9 +283,11 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     print_table['eff_nights_1.5'] = (np.round(print_table['eff_nights_1.5'],0)).astype('int')
     print_table['teff_mean'] = (np.round(print_table['teff_mean'],0)).astype('int')
     print_table['HZ_mp_min_osc+gr_texp15'] = np.round(print_table['HZ_mp_min_osc+gr_texp15'],2)
-    print('\n [INFO] %.0f stars in the final sample'%(len(table2)))
-    print('\n [INFO] Here are the top 30-ranked stars of your THE list:\n')          
-    print(print_table)
+        
+    if verbose:
+        print('\n [INFO] %.0f stars in the final sample'%(len(table2)))
+        print('\n [INFO] Here are the top 30-ranked stars of your THE list:\n')  
+        print(print_table)
     
     return table2
 

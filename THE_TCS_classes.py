@@ -442,7 +442,9 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['presurvey'] = tcsv.cutoff_presurvey
-        
+        self.func_cutoff(tagname='presurvey',cutoff=tcsv.cutoff_presurvey, verbose=False)
+        plt.close('cumulative')
+
         if sun_elevation is not None:
             self.compute_night_length(sun_elevation=sun_elevation)
         if starname is not None:
@@ -675,7 +677,7 @@ class tcs(object):
             alpha_step=1, 
             dec_step=1,
             cutoff=None,
-            selection=None):
+            selection='presurvey'):
         
         if selection is not None:
             table_gr8 = self.info_TA_stars_selected[selection].data
@@ -1080,9 +1082,8 @@ class tcs(object):
         plt.hist(snr,bins=np.arange(0,1000,10),color='k',alpha=0.4) 
         plt.hist(snr[mask],bins=np.arange(0,1000,10),color='g',alpha=0.4) 
 
-
-
-    def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, Nb_obs_per_year=None, overhead=1):
+    
+    def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, Nb_obs_per_year=None, overhead=1, selection=None, ranking='HZ_mp_min_osc+gr_texp15'):
         if weather:
             nb_hours = self.info_SC_nb_hours_per_yr_eff
         else:
@@ -1096,7 +1097,7 @@ class tcs(object):
         texp,nstars = np.meshgrid(ti,ni)
 
         code = ''
-        if Texp is not None:
+        if (Texp is not None)&(selection is None):
             code='_T'
         if Nb_star is not None:
             code='_N'
@@ -1107,56 +1108,80 @@ class tcs(object):
 
         ls = ['-','--','-.',':'][self.simu_counter_survey%4]
 
-        self.simu_counter_survey +=1
+        self.simu_counter_survey = self.simu_counter_survey+1
+        
+        if selection is not None:
+            table = self.info_TA_stars_selected[selection].data
+            table = table.sort_values(by=ranking)
+            total_time = self.info_SC_nb_hours_per_yr_eff*60 # total time per year in min
+            if Texp is not None:
+                texp = np.ones(len(table))*(Texp+overhead)
+                label= 'Texp=%.0fmin'%(Texp)
+            else:
+                texp = np.array(table['texp_optimal']+overhead)
+                label = ranking
 
-        plt.figure('Survey_Strategy'+code,figsize=(10,10))
-        plt.axes([0.08,0.08,0.86,0.6])
-        c = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[25,50,75,100,150,200,250,300])
-        plt.clabel(c,fmt='%.0f')
-        plt.xlabel('Texp [min]',fontsize=14)
-        plt.ylabel('Nb stars []',fontsize=14)
-        if self.simu_counter_survey==1:
-            plt.grid()
-        if Texp is not None:
-            plt.axvline(x=Texp,color='k',ls=ls,lw=3)
-            plt.axes([0.08,0.73,0.86,0.25])
-            plt.plot(ni,nb_hours*60/((Texp+overhead)*ni),color='k',label='Texp = %.0f min'%(Texp),ls=ls)
-            plt.scatter(np.arange(20,401,20),nb_hours*60/((Texp+overhead)*np.arange(20,401,20)),color='k')
-            for i in np.arange(20,401,20):
-                plt.text(i,nb_hours*60/((Texp+overhead)*i)+10,'%.0f'%(nb_hours*60/((Texp+overhead)*i)),color='k',ha='center')
-            if self.simu_counter_survey==1:
-                plt.grid()
-            plt.ylabel('Nb yearly obs. per *')
-            plt.xlabel('Nb star []')
-            plt.xlim(20,200) ; plt.ylim(0,365)
+            texp_cumu = np.cumsum(texp)
+
+            nb_obs_per_year = total_time/texp_cumu
+            plt.figure('Survey_Strategy')
+            plt.title('Total number of stars in the selection = %.0f'%(len(texp_cumu)))
+            plt.plot(np.arange(20,len(texp_cumu)),nb_obs_per_year[20:],color='k',ls=ls,label=label)
+            for j in range(20,len(texp),10):
+                plt.scatter(j,nb_obs_per_year[j],color='k',marker='o')
+                plt.text(j,nb_obs_per_year[j],'%.0f'%(nb_obs_per_year[j]),ha='left',va='bottom')
+                plt.xlabel('Number of stars')
+                plt.ylabel('Number of obs. per year')
             plt.legend()
-        if Nb_star is not None:
-            plt.axhline(y=Nb_star,color='k',ls=ls,lw=3)
-            plt.axes([0.08,0.73,0.86,0.25])
-            plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_star),ls=ls,color='k')
-            plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_star),color='k')
-            for i in np.arange(5,31,2.5):
-                plt.text(i,nb_hours*60/((i+overhead)*Nb_star)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_star)),color='k',ha='center')
+        else:
+            plt.figure('Survey_Strategy'+code,figsize=(10,10))
+            plt.axes([0.08,0.08,0.86,0.6])
+            c = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[25,50,75,100,150,200,250,300])
+            plt.clabel(c,fmt='%.0f')
+            plt.xlabel('Texp [min]',fontsize=14)
+            plt.ylabel('Nb stars []',fontsize=14)
             if self.simu_counter_survey==1:
                 plt.grid()
-            plt.ylabel('Nb yearly obs. per *')
-            plt.xlabel('Texp [min]')
-            plt.xlim(4,30)
-        if Nb_obs_per_year is not None:
-            c2 = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[0,Nb_obs_per_year],cmap='Greys',linestyles=ls,linewidths=3) 
-            plt.clabel(c2,fmt='%.0f')
-            plt.axes([0.08,0.73,0.86,0.25])
-            plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_obs_per_year),ls=ls,color='k')
-            plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_obs_per_year),color='k')
-            for i in np.arange(5,31,2.5):
-                plt.text(i,nb_hours*60/((i+overhead)*Nb_obs_per_year)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_obs_per_year)),color='k',ha='center')
-            if self.simu_counter_survey==1:
-                plt.grid()
-            plt.ylabel('Nb stars')
-            plt.xlabel('Texp [min]')
-            plt.xlim(4,30)
+            if Texp is not None:
+                plt.axvline(x=Texp,color='k',ls=ls,lw=3)
+                plt.axes([0.08,0.73,0.86,0.25])
+                plt.plot(ni,nb_hours*60/((Texp+overhead)*ni),color='k',label='Texp = %.0f min'%(Texp),ls=ls)
+                plt.scatter(np.arange(20,401,20),nb_hours*60/((Texp+overhead)*np.arange(20,401,20)),color='k')
+                for i in np.arange(20,401,20):
+                    plt.text(i,nb_hours*60/((Texp+overhead)*i)+10,'%.0f'%(nb_hours*60/((Texp+overhead)*i)),color='k',ha='center')
+                if self.simu_counter_survey==1:
+                    plt.grid()
+                plt.ylabel('Nb yearly obs. per *')
+                plt.xlabel('Nb star []')
+                plt.xlim(20,200) ; plt.ylim(0,365)
+                plt.legend()
+            if Nb_star is not None:
+                plt.axhline(y=Nb_star,color='k',ls=ls,lw=3)
+                plt.axes([0.08,0.73,0.86,0.25])
+                plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_star),ls=ls,color='k')
+                plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_star),color='k')
+                for i in np.arange(5,31,2.5):
+                    plt.text(i,nb_hours*60/((i+overhead)*Nb_star)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_star)),color='k',ha='center')
+                if self.simu_counter_survey==1:
+                    plt.grid()
+                plt.ylabel('Nb yearly obs. per *')
+                plt.xlabel('Texp [min]')
+                plt.xlim(4,30)
+            if Nb_obs_per_year is not None:
+                c2 = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[0,Nb_obs_per_year],cmap='Greys',linestyles=ls,linewidths=3) 
+                plt.clabel(c2,fmt='%.0f')
+                plt.axes([0.08,0.73,0.86,0.25])
+                plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_obs_per_year),ls=ls,color='k')
+                plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_obs_per_year),color='k')
+                for i in np.arange(5,31,2.5):
+                    plt.text(i,nb_hours*60/((i+overhead)*Nb_obs_per_year)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_obs_per_year)),color='k',ha='center')
+                if self.simu_counter_survey==1:
+                    plt.grid()
+                plt.ylabel('Nb stars')
+                plt.xlabel('Texp [min]')
+                plt.xlim(4,30)
 
-    def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit=''):
+    def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""
         GR8 = gr8.copy()
         if cutoff is None:
@@ -1186,7 +1211,7 @@ class tcs(object):
         if par_box[0]!='':
             tagname_fig=par_box[0]
         
-        table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit)
+        table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose)
         self.info_TA_cutoff[tagname] = cutoff
         self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
 
