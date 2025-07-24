@@ -11,7 +11,7 @@ summary = tcsc.plot_exoplanets2(cutoff={'teff_mean<':6000,'ruwe<':1.2,'logg>':4.
 ### ------- EXAMPLES ------- ###
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
-survey = tcsc.tcs(sun_elevation=-12, instrument='HARPS3')
+survey = tcsc.tcs(sun_elevation=-12, instrument='HARPS3') #HARPS3 is the default
 survey.func_cutoff(tagname='bright!',cutoff={'gmag<':6,'teff_mean<':6000})
 
 ##### COMPUTE SEASON AND NIGHT LENGTH #####

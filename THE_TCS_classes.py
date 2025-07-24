@@ -432,7 +432,7 @@ class tcs(object):
     
     def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3'):    
         self.info_XY_telescope_open = tableXY(y=np.ones(365))
-        self.info_XY_downtime = tableXY(x=np.arange(365),y=table_time['downtime'])
+        self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
         self.simu_counter_survey = 0
         self.simu_tag_survey = ''
