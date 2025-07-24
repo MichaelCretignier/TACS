@@ -2,13 +2,15 @@ Libraries:
 
 pandas : 1.4.1
 numpy : 1.20.1
+astropy : 4.2.1
+scipy : 1.7.3
 
 [INSTALL PYTHON ENVIRONMENT]
 
 Python environnement:
 
 python3 -m venv tcs
-pip install pandas==1.4.1 numpy==1.20.1
+pip install pandas==1.4.1 numpy==1.20.1 astropy==4.2.1 scipy==1.7.3
 
 [REFERENCES]
 
