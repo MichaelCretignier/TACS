@@ -445,11 +445,12 @@ class tcs(object):
         self.func_cutoff(tagname='presurvey',cutoff=tcsv.cutoff_presurvey, verbose=False)
         plt.close('cumulative')
 
+        self.random_weather()
+
         if sun_elevation is not None:
             self.compute_night_length(sun_elevation=sun_elevation)
         if starname is not None:
             self.set_star(starname=starname)
-            self.random_weather()
 
     def create_star_selection(self,starnames,tagname='my_selection'):
         gaia_names = []
