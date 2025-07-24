@@ -41,7 +41,7 @@ star2.compute_exoplanet_rv_signal(y0=2025) #Nov. comissioning
 star2.plot_keplerians()
 
 star2.set_star(starname='HD75732')
-star2.create_timeseries(airmass_max=1.75, nb_year=1, texp=15, weather=False)
+star2.create_timeseries(airmass_max=1.75, nb_year=2, texp=15, weather=True)
 star2.compute_exoplanet_rv_signal(y0=2026) #start in 2026
 star2.plot_keplerians()
 

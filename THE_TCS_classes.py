@@ -431,7 +431,7 @@ class table_star(object):
 class tcs(object):
     
     def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3'):    
-        self.info_XY_telescope_open = tableXY(y=np.ones(365))
+        self.info_XY_telescope_open = []
         self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
         self.simu_counter_survey = 0
@@ -492,10 +492,7 @@ class tcs(object):
     def random_weather(self):
         output = np.ravel(dropout_year().astype('int'))
         print(' [INFO] Number of bad/good nights = %.0f/%.0f'%(len(output)-sum(output),sum(output)))
-        self.info_XY_telescope_open = tableXY(
-            y=output,
-            xlabel='Nights [days]',
-            ylabel='Telescope open')
+        self.info_XY_telescope_open.append(tableXY(y=output,xlabel='Nights [days]',ylabel='Telescope open'))
 
     def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True):
         self.info_TA_starnames = None
@@ -582,11 +579,15 @@ class tcs(object):
         if plot:
             lc.plot()
 
-    def compute_nights(self,airmass_max=1.5,weather=False, plot=False):
+    def compute_nights(self, airmass_max=1.5, weather=False, plot=False, year=0):
         
         map_night = 1-self.info_IM_night.data
         map_star = self.info_IM_airmass.data<airmass_max
-        map_weather = self.info_XY_telescope_open.y*np.ones(1441)[:,np.newaxis]
+        if weather:
+            open_dome = self.info_XY_telescope_open[year].y
+        else:
+            open_dome = np.ones(365)
+        map_weather = open_dome*np.ones(1441)[:,np.newaxis]
 
         total_map = map_night*map_star
         self.info_XY_season = tableXY(
@@ -621,16 +622,24 @@ class tcs(object):
             self.info_IM_observable.plot()
         
     def create_timeseries(self, airmass_max=1.5, nb_year=10, month=None, texp=15, weather=True):
+
+        if weather:
+            nb_yr_bn = len(self.info_XY_telescope_open)
+            extra = nb_year-nb_yr_bn
+            if extra<0:
+                extra = 0
+            for i in np.arange(extra):
+                self.random_weather()
+
         dt = 24*60/1440 #dt in minutes
         N = int(np.round(texp/dt,0))
         j0 = 0.0#61041.0
         jdb = []
         for year in range(nb_year):
-            if weather:
-                self.random_weather()
             self.compute_nights(airmass_max=airmass_max, 
                                 weather=weather, 
-                                plot=False)
+                                plot=False,
+                                year=year)
             epochs = []
             l0 = np.median(np.where(self.info_IM_observable.data==1)[0])
             dt = int(l0-0.5*1440)
