@@ -1,8 +1,8 @@
 [INSTALL]
 
-python3 -m venv tcs
-pip install -r requirements.txt
-conda activate tcs
+python3 -m venv tcs \
+pip install -r requirements.txt \
+conda activate tcs \
 
 [REFERENCES]
 
