@@ -1,4 +1,15 @@
+import os
+
 import numpy as np
+import pandas as pd
+
+cwd = os.getcwd()
+
+
+NEID_standards = ['HD4628','HD9407','HD10700','HD127334','HD185144','HD211354']
+NEID_Gupta_25 = pd.read_csv(cwd+'/TACS_Material/NEID_table_Gupta+21_25.csv',index_col=0)
+NEID_catalog = list(NEID_Gupta_25['starname'])
+HARPS_catalog = [] #TBD
 
 cutoff_presurvey = {
     'teff_mean<':6000,

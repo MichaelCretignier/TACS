@@ -1,6 +1,7 @@
 import matplotlib.pylab as plt
 
 import THE_TCS_classes as tcsc
+import THE_TCS_variables as tcsv
 
 #### VISUALIZATION OF KNOWN EXOPLANETS #####
 
@@ -78,12 +79,27 @@ star3.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.30, budget='_phot', texp_
 star4 = tcsc.tcs(sun_elevation=-12, starname='HD99492')
 star4.show_lightcurve(rm_gap=True)
 
-#CUTOFF
+#Investigate a pre-determined star list (cross-matched with GR8)
+
+neid = tcsc.tcs(sun_elevation=-12)
+neid.create_star_selection(tcsv.NEID_catalog,tagname='NEID')
+neid.create_star_selection(tcsv.NEID_standards,tagname='NEID_standards')
+
+neid.info_TA_stars_selected['NEID_standards'].plot(y='dec_j2000',x='ra_j2000')
+neid.info_TA_stars_selected['GR8'].plot(y='dec_j2000',x='ra_j2000',c='k',GUI=False)
+
+neid.compute_SG_calendar(
+    sun_elevation = -6, 
+    airmass_max = 2.5, 
+    alpha_step = 1, 
+    dec_step = 5,
+    selection='NEID')
+
 star5 = tcsc.tcs(sun_elevation=-12)
 star5.func_cutoff(cutoff=None)
 star5.func_cutoff(cutoff=None,par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
 star5.func_cutoff(cutoff=None,par_space='teff_mean&dist',par_box=['4500->5300','0->30'])
 
-star6 = tcsc.tcs(sun_elevation=-6)
-star6.cutoff_ST()
+
+
 

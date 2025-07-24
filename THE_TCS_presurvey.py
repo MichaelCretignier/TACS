@@ -2,6 +2,7 @@ import matplotlib.pylab as plt
 import numpy as np
 
 import THE_TCS_classes as tcsc
+import THE_TCS_variables as tcsv
 
 #let's select -12 for the twilght (in best case, extratime for very bright targets)
 
@@ -64,31 +65,6 @@ tutorial.func_cutoff(
     par_space='teff_mean&snr_C22_texp15')
 
 tutorial.plot_survey_stars(Nb_star=76) 
-
-#toi4499
-table = pd.DataFrame({
-    'period':[3.490212,5.538772,145.7191],
-    'k':[1.05,0.25,129.292],
-    'ecc':[0,0,0.355],
-    'peri':[0,0,295.548],
-    't0':[2460338.925724,2460335.262371,2455510.079815],
-    'mass':[1.0,1.0,1000]})
-
-toi4499 = tcsc.tcs(instrument='HARPS3') 
-toi4499.compute_night_length(sun_elevation=-12) #twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
-toi4499.set_star(ra=18,dec=39) # change for a declination ra input (HD166620)
-toi4499.plot_night_length()
-toi4499.create_timeseries(airmass_max=1.75, nb_year=1, texp=30, weather=False)
-
-toi4499.compute_exoplanet_rv_signal(keplerian_par=table, y0=2025)
-toi4499.plot_keplerians(axhline=0)
-
-plt.figure()
-toi4499.info_XY_keplerian[1].plot()
-selection = toi4499.info_XY_keplerian[1].night_subset(3,random=False)
-toi4499.info_XY_keplerian[1].subset.plot()
-selection = toi4499.info_XY_keplerian[1].night_subset(3,random=True)
-toi4499.info_XY_keplerian[1].subset.plot()
 
 #### OPEN QUESTIONS:
 

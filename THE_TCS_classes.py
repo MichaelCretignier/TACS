@@ -370,10 +370,11 @@ class table_star(object):
     def print_columns(self):
         print(list(self.data.keys()))
 
-    def plot(self, x, y, c=None, s=None, print_names=False):
+    def plot(self, x, y, c=None, s=None, print_names=False, GUI=True):
         
-        fig = plt.figure(figsize=(10,10))
-        plt.axes([0.1,0.1,0.85,0.75])
+        if GUI:
+            fig = plt.figure(figsize=(10,10))
+            plt.axes([0.1,0.1,0.85,0.75])
         
         dataframe = self.data
         xval = np.array(dataframe[x])
@@ -381,7 +382,11 @@ class table_star(object):
         if c is None:
             for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
                 mask3 = np.array((dataframe[Teff_var]>t1)&(dataframe[Teff_var]<=t2))
-                plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30)   
+                plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30,zorder=10)   
+        else:
+            if len(c)<3:
+                plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1)   
+
         if print_names:
             index = np.array(list(dataframe.index))
             n = np.array(db_starname.loc[index,'HD'])
@@ -390,37 +395,38 @@ class table_star(object):
         plt.xlabel(x,fontsize=14)
         plt.ylabel(y,fontsize=14)
 
-        ax = plt.gca()
-        xlim = ax.get_xlim()
-        ylim = ax.get_ylim()
+        if GUI:
+            ax = plt.gca()
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()
 
-        info_text = plt.text(xlim[0]+0.03*(xlim[1]-xlim[0]),ylim[1]+0.15*(ylim[1]-ylim[0]),'Double click somewhere',fontsize=13,ha='left',va='top')
-        l, = plt.plot([xlim[0]],[ylim[0]],marker='x',color='k',markersize=10)
+            info_text = plt.text(xlim[0]+0.03*(xlim[1]-xlim[0]),ylim[1]+0.15*(ylim[1]-ylim[0]),'Double click somewhere',fontsize=13,ha='left',va='top')
+            l, = plt.plot([xlim[0]],[ylim[0]],marker='x',color='k',markersize=10)
 
-        class Index(object):
-            def __init__(self):
-                self.info_text = ''
-                self.marker = None
-            def update(self,newx,newy):
-                dist = abs((xval-newx)/np.nanstd(xval))+abs((yval-newy)/np.nanstd(yval))
-                loc = np.array(dataframe.index)[np.argmin(dist)]
-                new_star = dataframe.loc[loc]
-                text_fmt = star_info(new_star)
-                self.info_text.set_text(text_fmt)
-                self.marker.set_data([new_star[x],new_star[y]])
-                
-                plt.draw()
-                fig.canvas.draw_idle()
-                
-        t = Index()
-        t.info_text = info_text
-        t.marker = l
-        
-        def onclick(event):
-            if event.dblclick:
-                t.update(event.xdata,event.ydata)
+            class Index(object):
+                def __init__(self):
+                    self.info_text = ''
+                    self.marker = None
+                def update(self,newx,newy):
+                    dist = abs((xval-newx)/np.nanstd(xval))+abs((yval-newy)/np.nanstd(yval))
+                    loc = np.array(dataframe.index)[np.argmin(dist)]
+                    new_star = dataframe.loc[loc]
+                    text_fmt = star_info(new_star)
+                    self.info_text.set_text(text_fmt)
+                    self.marker.set_data([new_star[x],new_star[y]])
+                    
+                    plt.draw()
+                    fig.canvas.draw_idle()
+                    
+            t = Index()
+            t.info_text = info_text
+            t.marker = l
+            
+            def onclick(event):
+                if event.dblclick:
+                    t.update(event.xdata,event.ydata)
 
-        plt.gcf().canvas.mpl_connect('button_press_event', onclick)
+            plt.gcf().canvas.mpl_connect('button_press_event', onclick)
 
 class tcs(object):
     
@@ -432,7 +438,7 @@ class tcs(object):
         self.simu_tag_survey = ''
         self.info_SC_starname = None
         self.info_SC_instrument = instrument
-        self.info_TA_stars_selected = {'gr8':table_star(gr8)}
+        self.info_TA_stars_selected = {'GR8':table_star(gr8)}
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['presurvey'] = tcsv.cutoff_presurvey

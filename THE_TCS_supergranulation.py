@@ -1,6 +1,7 @@
 import matplotlib.pylab as plt
 
 import THE_TCS_classes as tcsc
+import THE_TCS_variables as tcsv
 
 #standard stars based on HARPN
 
