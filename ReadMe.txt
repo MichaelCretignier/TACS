@@ -1,28 +1,7 @@
-Libraries:
+[INSTALL]
 
-pandas : 1.4.1
-numpy : 1.20.1
-astropy : 4.2.1
-scipy : 1.7.3
-matplotlib : 3.3.4
-IPython : 7.22.0
-
-[INSTALL PYTHON ENVIRONMENT]
-
-Python environnement:
-
-[PIP]
 python3 -m venv tcs
-pip install pandas==1.4.1 numpy==1.20.1 astropy==4.2.1 scipy==1.7.3 matplotlib==3.3.4 IPython==7.22.0
-
-[CONDA]
-conda create -n tcs python=3.8.8 \
-  pandas=1.4.1 \
-  numpy=1.20.1 \
-  astropy=4.2.1 \
-  scipy=1.7.3 \
-  matplotlib=3.3.4 \
-  IPython=7.22.0 
+pip install -r requirements.txt
 conda activate tcs
 
 [REFERENCES]
