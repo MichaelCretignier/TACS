@@ -45,8 +45,8 @@ tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_
 tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='start')
 tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='start')
 
-tutorial.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', texp_crit=20, selection='start')
-tutorial.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', texp_crit=20, selection='start')
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=20, selection='start')
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.55, budget='_arve_phot+osc+gr', texp_crit=20, selection='start')
 
 tutorial.func_cutoff(cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['start'],
     {'snr_C22_texp15>':250, 

@@ -948,14 +948,14 @@ class tcs(object):
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
         plt.ylim(-1)
 
-    def compute_optimal_texp(self, selection=None, snr_crit=250, sig_rv_crit=0.30, texp_crit=20, budget='_phot'):
+    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, budget='_phot'):
         """ budget = '_arve_osc+gr' """
         
-        if snr_crit<1:
-            snr_crit=1
+        if snr<1:
+            snr=1
         
-        if sig_rv_crit<0.001:
-            sig_rv_crit=100
+        if sig_rv<0.001:
+            sig_rv=100
         
         if selection is None:
             selection = gr8.copy()    
@@ -963,14 +963,14 @@ class tcs(object):
             selection = self.info_TA_stars_selected[selection].data
 
         snr_texp15 = np.array(0.5*(selection['snr_420_texp15']+selection['snr_550_texp15'])) #Cretignier et al. +22
-        texp_snr_crit = 15*(snr_crit/snr_texp15)**2
+        texp_snr_crit = 15*(snr/snr_texp15)**2
 
         if budget!='_phot':
             texp_tabulated = np.array([1,5,8,10,12,15,20,25,30])
             kws = ['sig_rv'+budget+'_texp%.0f'%(j) for j in texp_tabulated]
-            sig_rv = np.array(selection[kws])<=sig_rv_crit
+            sig_rvi = np.array(selection[kws])<=sig_rv
             texp_sig_rv_crit = []
-            for s in sig_rv:
+            for s in sig_rvi:
                 loc = np.where(s)[0]
                 if len(loc):
                     texp_sig_rv_crit.append(texp_tabulated[loc[0]])
@@ -979,7 +979,7 @@ class tcs(object):
             texp_sig_rv_crit = np.array(texp_sig_rv_crit)
         else:
             sig_rv_texp15 = np.array(selection['sig_rv_phot_texp15'])
-            texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv_crit)**2
+            texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv)**2
 
         optimal_time = np.max([texp_snr_crit,texp_sig_rv_crit],axis=0)
         statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
@@ -991,8 +991,8 @@ class tcs(object):
         plt.pie([np.sum(statistic==0),np.sum(statistic==1)],labels=['SNR \nlimited','Sig RV \nlimited'], autopct='%.0f%%')
 
         plt.axes([0.32,0.1,0.65,0.8])
-        plt.scatter(np.arange(len(selection)),texp_snr_crit,label=r'SNR > %.0f'%(snr_crit))
-        plt.scatter(np.arange(len(selection)),texp_sig_rv_crit,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv_crit))
+        plt.scatter(np.arange(len(selection)),texp_snr_crit,label=r'SNR > %.0f'%(snr))
+        plt.scatter(np.arange(len(selection)),texp_sig_rv_crit,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv))
         plt.scatter(np.arange(len(selection)),optimal_time,color='k',label='Optimal',marker='.')
         plt.legend()
         plt.ylabel('Texp [min]') ; plt.ylim(0,50)
@@ -1001,8 +1001,8 @@ class tcs(object):
         plt.title('Nb stars valid = %.0f / %.0f'%(np.sum(optimal_time<=texp_crit),len(selection)))
 
         plt.axes([0.05,0.1,0.2,0.35])
-        plt.hist(texp_snr_crit,bins=np.arange(0,46,1),color='C0',alpha=0.4,label=r'SNR > %.0f'%(snr_crit))
-        plt.hist(texp_sig_rv_crit,bins=np.arange(0,46,1),color='C1',alpha=0.4,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv_crit))
+        plt.hist(texp_snr_crit,bins=np.arange(0,46,1),color='C0',alpha=0.4,label=r'SNR > %.0f'%(snr))
+        plt.hist(texp_sig_rv_crit,bins=np.arange(0,46,1),color='C1',alpha=0.4,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv))
         plt.hist(optimal_time,bins=np.arange(0,46,1),color='k',alpha=0.4,label='Optimal')
         plt.xlabel('Texp [min]') ; plt.xlim(0,50)
 
@@ -1109,7 +1109,7 @@ class tcs(object):
         ls = ['-','--','-.',':'][self.simu_counter_survey%4]
 
         self.simu_counter_survey = self.simu_counter_survey+1
-        
+
         if selection is not None:
             table = self.info_TA_stars_selected[selection].data
             table = table.sort_values(by=ranking)

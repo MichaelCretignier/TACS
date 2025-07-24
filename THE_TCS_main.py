@@ -65,8 +65,8 @@ tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_
 tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='presurvey')
 tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', selection='presurvey')
 
-tutorial.compute_optimal_texp(snr_crit=150, sig_rv_crit=0.30, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
-tutorial.compute_optimal_texp(snr_crit=200, sig_rv_crit=0.40, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
+tutorial.compute_optimal_texp(snr=150, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
+tutorial.compute_optimal_texp(snr=200, sig_rv=0.40, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
 
 tutorial.plot_survey_stars(Texp=15,selection='presurvey') 
 tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='HZ_mp_min_osc+gr_texp15') 
