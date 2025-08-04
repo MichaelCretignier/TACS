@@ -403,8 +403,6 @@ class table_star(object):
                 plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1)   
 
         if print_names:
-            print(dataframe)
-            print(db_starname)
             index = np.array(list(dataframe.index))
             n = np.array(db_starname.loc[index,'HD'])
             for xi,yi,ti in zip(xval,yval,n):
