@@ -247,7 +247,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
             plt.legend()
             plt.grid()
             plt.xlim(np.nanmin(table2[kw[0:-1]]),np.nanmax(table2[kw[0:-1]]))
-            table2 = table2[mask].reset_index(drop=True)
+            table2 = table2[mask]#.reset_index(drop=True)
             if par_space!='':
                 p1 = par_space.split('&')[0].replace(' ','')
                 p2 = par_space.split('&')[1].replace(' ','')
@@ -264,13 +264,15 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
                     p1x = np.array(par_box[0].split('->')).astype('float')
                     p2y = np.array(par_box[1].split('->')).astype('float')
                     mask_box = (table2[p1]>p1x[0])&(table2[p1]<p1x[1])&(table2[p2]>p2y[0])&(table2[p2]<p2y[1])
-                    plt.scatter(table2.loc[mask_box,p1],table2.loc[mask_box,p2],color='g',ec='k',marker='o',label='%.0f (-%.0f)'%(sum(mask_box),old_value-sum(mask_box)))
+                    mask_box = np.array(mask_box)
+                    plt.scatter(np.array(table2[p1])[mask_box],np.array(table2[p2])[mask_box],color='g',ec='k',marker='o',label='%.0f (-%.0f)'%(sum(mask_box),old_value-sum(mask_box)))
                     old_value = sum(mask_box)
                 if par_crit!='':
                     p1c = par_crit.split('==')[0]
                     p1c_val = float(par_crit.split('==')[1])
                     mask_box = (table2[p1c].astype('float')==p1c_val)
-                    plt.scatter(table2.loc[mask_box,p1],table2.loc[mask_box,p2],color='g',ec='k',marker='o',label='%.0f (-%.0f)'%(sum(mask_box),old_value-sum(mask_box)))
+                    mask_box = np.array(mask_box)
+                    plt.scatter(np.array(table2[p1])[mask_box],np.array(table2[p2])[mask_box],color='g',ec='k',marker='o',label='%.0f (-%.0f)'%(sum(mask_box),old_value-sum(mask_box)))
                     old_value = sum(mask_box)   
 
                 plt.xlabel(p1)

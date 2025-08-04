@@ -249,15 +249,19 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
     return summary
 
 class tableXY(object):
-    def __init__(self, x=None, y=None, xlabel='', ylabel='', ls='o'):
+    def __init__(self, x=None, y=None, yerr=None, xlabel='', ylabel='', ls='o'):
         if x is None:
             x = np.arange(len(y))
 
         if y is None:
             y = np.zeros(len(x))
+        
+        if yerr is None:
+            yerr = np.zeros(len(y))
 
         self.x = x
         self.y = y
+        self.yerr = yerr
         self.xlabel = xlabel
         self.ylabel = ylabel
         self.ls = ls
@@ -275,7 +279,7 @@ class tableXY(object):
         statistic = np.array(statistic)
         return auto_format(statistic)
 
-    def plot(self, alpha=0.5, label=None, ytext=60, figure=None, ls=None, subset=None):
+    def plot(self, alpha=0.5, label=None, ytext=60, figure=None, ls=None, subset=None, color=None):
         if figure is not None:
             if type(figure)==str:
                 plt.figure(figure)
@@ -285,7 +289,10 @@ class tableXY(object):
             subset = np.arange(0,len(self.x)).astype('int')
         
         if ls=='o':
-            plt.scatter(self.x[subset],self.y[subset],alpha=alpha,label=label)
+            if np.sum(abs(self.yerr))!=0:
+                plt.errorbar(self.x[subset],self.y[subset],yerr=self.yerr, capsize=0, marker='o', ls='', alpha=alpha, label=label, color=color)
+            else:
+                plt.scatter(self.x[subset],self.y[subset],alpha=alpha,label=label,color=color)
         else:
             plt.plot(self.x,self.y,alpha=alpha,label=label,ls=ls,color='k')
         plt.xlabel(self.xlabel)
@@ -299,7 +306,7 @@ class tableXY(object):
             plt.xlim(0,365)
 
     def create_subset(self,subset):
-        self.subset = tableXY(x=self.x[subset], y=self.y[subset], xlabel=self.xlabel, ylabel=self.ylabel)
+        self.subset = tableXY(x=self.x[subset], y=self.y[subset], yerr=self.yerr[subset], xlabel=self.xlabel, ylabel=self.ylabel)
 
     def night_subset(self,obs_per_night,random=False,replace=False):
         
@@ -321,10 +328,18 @@ class tableXY(object):
         if replace:
             self.x = self.x[selection]
             self.y = self.y[selection]
+            self.yerr = self.yerr[selection]
             return None
         else:
             self.create_subset(selection)
             return selection
+        
+    def split_chunck(self, nb_chunck=1):
+        nb = len(self.x)
+        liste = np.array_split(np.arange(nb),nb_chunck)
+        self.chunck = [[]]*nb_chunck
+        for n,subset in enumerate(liste):
+            self.chunck[n] = tableXY(x=self.x[subset], y=self.y[subset], yerr=self.yerr[subset], xlabel=self.xlabel, ylabel=self.ylabel)
 
 class image(object):
     def __init__(self,data,xlabel='',ylabel='',zlabel=''):
@@ -388,6 +403,8 @@ class table_star(object):
                 plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1)   
 
         if print_names:
+            print(dataframe)
+            print(db_starname)
             index = np.array(list(dataframe.index))
             n = np.array(db_starname.loc[index,'HD'])
             for xi,yi,ti in zip(xval,yval,n):
@@ -452,6 +469,16 @@ class tcs(object):
         if starname is not None:
             self.set_star(starname=starname)
 
+        sig_ins = 0.0
+        if self.info_SC_instrument!='HARPS3':
+            sig_ins = 0.50
+        self.info_SC_instrument_noise = sig_ins
+        self.info_XY_noise_instrument = self.create_ins_noise(sig_ins)
+
+    def create_ins_noise(self, sig_ins=0.00, nb_years=10):
+        ins_noise = tableXY(x=np.arange(365*nb_years),y=np.random.randn(365*nb_years)*sig_ins) #generate a 10-years instrument stability
+        return ins_noise
+    
     def create_star_selection(self,starnames,tagname='my_selection'):
         gaia_names = []
         for s in starnames:
@@ -876,7 +903,7 @@ class tcs(object):
 
         plt.gcf().canvas.mpl_connect('button_press_event', onclick)
 
-    def compute_exoplanet_rv_signal(self, jdb=None, keplerian_par={}, y0=2026):
+    def compute_exoplanet_rv_signal(self, jdb=None, keplerian_par={}, y0=2026, photon_noise=0.0):
         if len(keplerian_par)==0:
             gaia_name = self.info_TA_starnames['GAIA']
             mask = np.array(db_exoplanets['host']==gaia_name)
@@ -884,6 +911,18 @@ class tcs(object):
             mask = np.array(db_exoplanets['host']=='')
         if jdb is None:
             jdb = self.info_XY_timestamps.x
+
+        self.info_XY_keplerian_noise = []
+
+        phot_noise = np.random.randn(len(jdb))*photon_noise
+        ins_noise = self.info_XY_noise_instrument.y[(jdb-int(np.min(jdb))).astype('int')]
+        red_noise = np.zeros(len(jdb))
+
+        self.info_XY_keplerian_noise.append(tableXY(x=jdb,y=phot_noise))
+        self.info_XY_keplerian_noise.append(tableXY(x=jdb,y=ins_noise))
+        self.info_XY_keplerian_noise.append(tableXY(x=jdb,y=red_noise))
+        noise_tot = phot_noise + ins_noise + red_noise
+        noise_err = np.sqrt(photon_noise**2+self.info_SC_instrument_noise**2)
 
         j0 = 0
         if np.mean(jdb)<40000:
@@ -909,10 +948,13 @@ class tcs(object):
                 signal2 = tcsf.Keplerian_rv(jdb_model, P, K, e, omega, t0)
                 self.info_XY_keplerian_model.append(tableXY(x=jdb_model-j0, y=signal2, xlabel=xlabel,ls='-', ylabel='RV [m/s]'))
             rv_tot = np.sum([k.y for k in self.info_XY_keplerian[1:]],axis=0)
-            self.info_XY_keplerian[0] = tableXY(x=jdb-j0, y=rv_tot, xlabel=xlabel,ls='o', ylabel='RV tot [m/s]')
+            self.info_XY_keplerian[0] = tableXY(x=jdb-j0, y=rv_tot, xlabel=xlabel,ls='o', ylabel='RV Kep tot [m/s]')
             rv_tot2 = np.sum([k.y for k in self.info_XY_keplerian_model[1:]],axis=0)
             self.info_XY_keplerian_model[0] = tableXY(x=jdb_model-j0, y=rv_tot2, xlabel=xlabel,ls='-', ylabel='RV tot [m/s]')
         
+            self.info_XY_keplerian.append(tableXY(x=jdb-j0, y=rv_tot+noise_tot, yerr=np.ones(len(jdb))*noise_err, xlabel=xlabel,ls='o', ylabel='RV tot [m/s]'))
+            self.info_XY_keplerian_model.append(tableXY(x=jdb_model-j0, y=rv_tot2, xlabel=xlabel,ls='-', ylabel='RV tot [m/s]'))
+
         else:
             self.info_TA_exoplanets_known = []
             print(' [INFO] No exoplanets found for this target.')
@@ -1222,6 +1264,7 @@ class tcs(object):
             tagname_fig=par_box[0]
         
         table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose)
+        print(table_filtered)
         self.info_TA_cutoff[tagname] = cutoff
         self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
 

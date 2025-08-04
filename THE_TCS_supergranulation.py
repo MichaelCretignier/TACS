@@ -52,7 +52,7 @@ star4.create_star_selection(starnames,tagname='my_selection')
 
 star4.compute_SG_calendar(
     sun_elevation = -6, 
-    airmass_max = 2.5, 
+    airmass_max = 1.5, 
     alpha_step = 0.5, 
     dec_step = 1,
     selection='my_selection')
