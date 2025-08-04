@@ -1264,7 +1264,6 @@ class tcs(object):
             tagname_fig=par_box[0]
         
         table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose)
-        print(table_filtered)
         self.info_TA_cutoff[tagname] = cutoff
         self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
 
