@@ -445,7 +445,7 @@ class table_star(object):
 
 class tcs(object):
     
-    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3'):    
+    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True):    
         self.info_XY_telescope_open = []
         self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
@@ -460,12 +460,16 @@ class tcs(object):
         self.func_cutoff(tagname='presurvey',cutoff=tcsv.cutoff_presurvey, verbose=False)
         plt.close('cumulative')
 
-        self.random_weather()
+        if type(verbose)!=list:
+            verbose = [verbose]*3
+
+        self.random_weather(verbose=verbose[0])
 
         if sun_elevation is not None:
-            self.compute_night_length(sun_elevation=sun_elevation)
+            self.compute_night_length(sun_elevation=sun_elevation, verbose=verbose[1])
+
         if starname is not None:
-            self.set_star(starname=starname)
+            self.set_star(starname=starname, verbose=verbose[2])
 
         sig_ins = 0.0
         if self.info_SC_instrument!='HARPS3':
@@ -514,9 +518,10 @@ class tcs(object):
         if self.info_SC_starname is not None:
             self.compute_night_star()
 
-    def random_weather(self):
+    def random_weather(self,verbose=True):
         output = np.ravel(dropout_year().astype('int'))
-        print(' [INFO] Number of bad/good nights = %.0f/%.0f'%(len(output)-sum(output),sum(output)))
+        if verbose:
+            print(' [INFO] Number of bad/good nights = %.0f/%.0f'%(len(output)-sum(output),sum(output)))
         self.info_XY_telescope_open.append(tableXY(y=output,xlabel='Nights [days]',ylabel='Telescope open'))
 
     def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True):
