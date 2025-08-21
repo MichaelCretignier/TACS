@@ -154,6 +154,10 @@ def star_info(entry, format='v1'):
         info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['ruwe'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
 
+def get_star_info(starname):
+    index = resolve_starname(starname)['INDEX']
+    print(star_info(gr8.loc[index]))
+
 def plot_TESS_CVZ():
     theta = np.linspace(0,2*np.pi,100)
     plt.plot(np.cos(theta)*12/360*24+18,np.sin(theta)*12+66,lw=1,ls='-.',color='k')
@@ -423,7 +427,7 @@ class table_star(object):
             ylim = ax.get_ylim()
 
             info_text = plt.text(xlim[0]+0.03*(xlim[1]-xlim[0]),ylim[1]+0.15*(ylim[1]-ylim[0]),'Double click somewhere',fontsize=13,ha='left',va='top')
-            l, = plt.plot([xlim[0]],[ylim[0]],marker='x',color='k',markersize=10)
+            l, = plt.plot([xlim[0]],[ylim[0]],marker='x',color='k',markersize=10,zorder=100)
 
             class Index(object):
                 def __init__(self):
@@ -813,16 +817,15 @@ class tcs(object):
         ra = np.ravel(RA)
         dec = np.ravel(DEC)
 
-        table = self.info_TA_stars_selected[selection].data
-
-        dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
-        loc = np.argmin(dist,axis=0)
-
         month_tag = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]
 
-        table['night_length_%s'%(month_tag)] = output[loc][:,month-1]
-
-        self.info_TA_stars_selected[selection] = table_star(table.copy())
+        #add the info column
+        for selections in [selection,'presurvey']:
+            table = self.info_TA_stars_selected[selections].data
+            dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
+            loc = np.argmin(dist,axis=0)
+            table['night_length_%s'%(month_tag)] = output[loc][:,month-1]
+            self.info_TA_stars_selected[selections] = table_star(table.copy())
 
         if plot:
             fig = plt.figure(figsize=(18,12))
