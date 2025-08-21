@@ -4,16 +4,16 @@ import THE_TCS_classes as tcsc
 import THE_TCS_variables as tcsv
 
 #standard stars based on HARPN
-
-#first and best standard star
-star1 = tcsc.tcs(sun_elevation=-6, starname='HD127334') 
-s1 = plt.subplot(2,1,1) ; plt.title('%s'%(star1.info_SC_starname['HD']))
-star1.plot_night_length(figure=s1) #peak in April
-
-#second standard star
-star2 = tcsc.tcs(sun_elevation=-6, starname='HD144579') 
-s2 = plt.subplot(2,1,2) ; plt.title('%s'%(star2.info_SC_starname['HD']))
-star2.plot_night_length(figure=s2) #peak in May
+standards = tcsc.inner_gr8(tcsv.NEID_standards)[1:] #remove HD4628 that is not quiet
+star1 = tcsc.tcs(sun_elevation=-6) 
+plt.figure(figsize=(16,8))
+for n,s in enumerate(standards): 
+    star1.set_star(starname=s,verbose=False)
+    s1 = plt.subplot(len(standards)/3,3,n+1)
+    plt.title('%s'%(star1.info_SC_starname['HD']))
+    star1.plot_night_length(figure=s1,legend=False) #peak in April
+    plt.ylim(-1,10)
+plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
 
 #create a timesampling for star1
 star1.create_timeseries(airmass_max=1.75, nb_year=1, texp=10, weather=False)

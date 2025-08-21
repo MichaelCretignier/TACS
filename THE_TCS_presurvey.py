@@ -113,7 +113,7 @@ tutorial.plot_survey_stars(Texp=10)
 # confirmation by a more mathematical compoutation
 
 tutorial.compute_nb_nights_required(selection='start', texp=10,month=1)
-tutorial.compute_optimal_texp(snr_crit=250, sig_rv_crit=0.00, budget='_phot', texp_crit=20, selection='start')
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.00, budget='_phot', texp_crit=20, selection='start')
 tutorial.compute_nb_nights_required(selection='start',texp='optimal',month=1)
 
 # 3 

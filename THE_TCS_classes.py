@@ -130,6 +130,13 @@ def resolve_starname(name,verbose=True):
         print(' [INFO] Starname %s has not been found'%(name))
         return None
 
+def inner_gr8(list_names):
+    inner = []
+    for s in list_names:
+        a = resolve_starname(s,verbose=False)
+        if a is not None:
+            inner.append(s)
+    return inner
 
 def get_starname(entry):
     gaia_ID = np.where(db_starname['GAIA']=='Gaia DR3 '+str(entry['gaiaedr3_source_id']))[0]
@@ -279,7 +286,7 @@ class tableXY(object):
         statistic = np.array(statistic)
         return auto_format(statistic)
 
-    def plot(self, alpha=0.5, label=None, ytext=60, figure=None, ls=None, subset=None, color=None):
+    def plot(self, alpha=0.5, label=None, ytext=0, figure=None, ls=None, subset=None, color=None):
         if figure is not None:
             if type(figure)==str:
                 plt.figure(figure)
@@ -986,7 +993,7 @@ class tcs(object):
                 plt.axhline(y=axhline,alpha=0.4,color='k',lw=1)
 
 
-    def plot_night_length(self,figure='NightLength'):
+    def plot_night_length(self,figure='NightLength',legend=True):
         backup = np.array([self.info_SC_night_def]).copy()
         
         self.compute_night_length(sun_elevation=-12, verbose=False) 
@@ -994,12 +1001,13 @@ class tcs(object):
         self.info_XY_night_duration.plot(figure=figure,label='Z=1.5 | S=-12',ytext=-0.5) 
         
         self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-12') 
+        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-12',ytext=-0.5) 
         
         self.compute_night_length(sun_elevation=-6, verbose=False) #change the sunset/rise parameter
         self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-6')
-        plt.legend()
+        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-6',ytext=-0.5)
+        if legend:
+            plt.legend()
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
         plt.ylim(-1)
 
@@ -1138,7 +1146,7 @@ class tcs(object):
         plt.hist(snr[mask],bins=np.arange(0,1000,10),color='g',alpha=0.4) 
 
     
-    def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, Nb_obs_per_year=None, overhead=1, selection=None, ranking='HZ_mp_min_osc+gr_texp15'):
+    def plot_survey_stars(self,weather=True, Nb_star=None, Texp=None, Nb_obs_per_year=None, overhead=1, selection=None, ranking='HZ_mp_min_osc+gr_texp15', color='k'):
         if weather:
             nb_hours = self.info_SC_nb_hours_per_yr_eff
         else:
@@ -1181,7 +1189,7 @@ class tcs(object):
             nb_obs_per_year = total_time/texp_cumu
             plt.figure('Survey_Strategy')
             plt.title('Total number of stars in the selection = %.0f'%(len(texp_cumu)))
-            plt.plot(np.arange(20,len(texp_cumu)),nb_obs_per_year[20:],color='k',ls=ls,label=label)
+            plt.plot(np.arange(20,len(texp_cumu)),nb_obs_per_year[20:],color=color,ls=ls,label=label)
             for j in range(20,len(texp),10):
                 plt.scatter(j,nb_obs_per_year[j],color='k',marker='o')
                 plt.text(j,nb_obs_per_year[j],'%.0f'%(nb_obs_per_year[j]),ha='left',va='bottom')
@@ -1200,8 +1208,8 @@ class tcs(object):
             if Texp is not None:
                 plt.axvline(x=Texp,color='k',ls=ls,lw=3)
                 plt.axes([0.08,0.73,0.86,0.25])
-                plt.plot(ni,nb_hours*60/((Texp+overhead)*ni),color='k',label='Texp = %.0f min'%(Texp),ls=ls)
-                plt.scatter(np.arange(20,401,20),nb_hours*60/((Texp+overhead)*np.arange(20,401,20)),color='k')
+                plt.plot(ni,nb_hours*60/((Texp+overhead)*ni),color=color,label='Texp = %.0f min'%(Texp),ls=ls)
+                plt.scatter(np.arange(20,401,20),nb_hours*60/((Texp+overhead)*np.arange(20,401,20)),color=color)
                 for i in np.arange(20,401,20):
                     plt.text(i,nb_hours*60/((Texp+overhead)*i)+10,'%.0f'%(nb_hours*60/((Texp+overhead)*i)),color='k',ha='center')
                 if self.simu_counter_survey==1:
@@ -1213,8 +1221,8 @@ class tcs(object):
             if Nb_star is not None:
                 plt.axhline(y=Nb_star,color='k',ls=ls,lw=3)
                 plt.axes([0.08,0.73,0.86,0.25])
-                plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_star),ls=ls,color='k')
-                plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_star),color='k')
+                plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_star),ls=ls,color=color)
+                plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_star),color=color)
                 for i in np.arange(5,31,2.5):
                     plt.text(i,nb_hours*60/((i+overhead)*Nb_star)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_star)),color='k',ha='center')
                 if self.simu_counter_survey==1:
@@ -1226,8 +1234,8 @@ class tcs(object):
                 c2 = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[0,Nb_obs_per_year],cmap='Greys',linestyles=ls,linewidths=3) 
                 plt.clabel(c2,fmt='%.0f')
                 plt.axes([0.08,0.73,0.86,0.25])
-                plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_obs_per_year),ls=ls,color='k')
-                plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_obs_per_year),color='k')
+                plt.plot(ti,nb_hours*60/((ti+overhead)*Nb_obs_per_year),ls=ls,color=color)
+                plt.scatter(np.arange(5,31,2.5),nb_hours*60/((np.arange(5,31,2.5)+overhead)*Nb_obs_per_year),color=color)
                 for i in np.arange(5,31,2.5):
                     plt.text(i,nb_hours*60/((i+overhead)*Nb_obs_per_year)+10,'%.0f'%(nb_hours*60/((i+overhead)*Nb_obs_per_year)),color='k',ha='center')
                 if self.simu_counter_survey==1:

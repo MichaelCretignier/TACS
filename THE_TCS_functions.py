@@ -184,6 +184,7 @@ def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument=
         'EXPRES':34.74444,
         'NEID':31.9584,
         'KPF':19.8261,
+        '2ES':-29.25786,
         }[instrument]     
     
     lon_deg = {
@@ -196,6 +197,7 @@ def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument=
         'EXPRES':-68.578056,
         'NEID':-111.5987,
         'KPF':-155.4700,
+        '2ES':-70.73666,
         }[instrument]  
 
     # Date et heure UTC de l'observation

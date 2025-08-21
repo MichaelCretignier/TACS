@@ -5,8 +5,11 @@ import pandas as pd
 
 cwd = os.getcwd()
 
+HARPN_standards = ['HD4628','HD166620','HD122064','HD127334','HD144579','HD151288','HD10476']
 
-NEID_standards = ['HD4628','HD9407','HD10700','HD127334','HD185144','HD211354']
+NEID_standards = ['HD4628','HD9407','HD10700','HD127334','HD185144','HD211354',
+                  'HD179957','HD116442','HD95735','HD166620','HD86728','HD68017',
+                  'HD51419']
 NEID_Gupta_25 = pd.read_csv(cwd+'/TACS_Material/NEID_table_Gupta+21_25.csv',index_col=0)
 NEID_catalog = list(NEID_Gupta_25['starname'])
 HARPS_catalog = [] #TBD

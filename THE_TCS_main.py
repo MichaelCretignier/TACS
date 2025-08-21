@@ -15,7 +15,7 @@ survey = tcsc.tcs(sun_elevation=-12, instrument='HARPS3') #HARPS3 is the default
 survey.func_cutoff(tagname='bright!',cutoff={'gmag<':6,'teff_mean<':6000})
 
 ##### COMPUTE SEASON AND NIGHT LENGTH #####
-star = tcsc.tcs(sun_elevation=-12, starname='HD217014') #using starname
+star = tcsc.tcs(sun_elevation=-12, starname='HD127334') #using starname
 
 #analysis visibility
 plt.figure(figsize=(12,12))
@@ -34,7 +34,7 @@ star.plot_night_length()
 ##### COMPUTE 10 YEARS TIME-SERIES #####
 
 star2 = tcsc.tcs(sun_elevation=-12, starname='HD217014')
-star2.plot_exoplanets_db(y_var='k')
+star2.plot_exoplanets_db(y_var='mass')
 
 star2.create_timeseries(airmass_max=1.75, nb_year=1, texp=15, weather=False)
 star2.compute_exoplanet_rv_signal(y0=2025) #Nov. comissioning
@@ -56,6 +56,8 @@ star3.compute_SG_month(month=1,plot=True)
 # START
 tutorial = tcsc.tcs(sun_elevation=-12) 
 # As a recall, Total_time = Nstar * Texp * Nb_obs
+tutorial.plot_survey_stars(Nb_star=100)
+
 tutorial.plot_survey_stars(Texp=20)
 tutorial.plot_survey_stars(Texp=10) # NB, the number are not twice because overhead = 1min
 tutorial.plot_survey_stars(Nb_star=40)
@@ -69,9 +71,9 @@ tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_
 tutorial.compute_optimal_texp(snr=150, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
 tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=15, selection='presurvey')
 
-tutorial.plot_survey_stars(Texp=15,selection='presurvey') 
-tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='HZ_mp_min_osc+gr_texp15') 
-tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='texp_optimal') 
+tutorial.plot_survey_stars(Texp=15,selection='presurvey',color='green') 
+tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='HZ_mp_min_osc+gr_texp15',color='C1') 
+tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='texp_optimal',color='C1') 
 
 
 #TESS LIGHTCURVES
