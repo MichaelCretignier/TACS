@@ -695,8 +695,9 @@ class tcs(object):
                     t0 = t0[(t0>mini)&(t0<maxi)]
                     t0 += dt
                     epochs.append(j0+d+0.5+(t0/1441-0.5)+365*year)
-            jdb.append(epochs)
-        jdb = np.hstack(jdb)
+            jdb.append(np.concatenate(epochs))
+            #jdb.append(epochs)
+        #jdb = np.hstack(jdb)
         jdb = np.hstack(jdb)
         rv = np.random.randn(len(jdb))
         
