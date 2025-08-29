@@ -16,7 +16,6 @@ print("""\n[INFO USER] READ ME CAREFULLY
 [INFO USER] An issue or an upgrade? Contact me at:  michael.cretignier@physics.ox.ac.uk
       """)
 
-
 cwd = os.getcwd()
 
 Teff_var = 'teff_mean'
@@ -25,7 +24,7 @@ gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table.csv',index_col=0)
 gr8 = gr8_raw.copy()
 
 if len(gr8)==1112:
-    print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE\n')
+    print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE members\n')
 else:
     print('[INFO USER] You are using the [PUBLIC] version of the code. If you are THE member, read the README.\n')
 
@@ -54,8 +53,11 @@ def crossmatch_names(tab1,kw):
 lightcurves = pd.read_pickle(cwd+'/TACS_Material/Lightcurves.p')
 db_exoplanets = pd.read_csv(cwd+'/TACS_Material/exoplanets_db.csv',index_col=0)
 db_exoplanets.loc[db_exoplanets['k']!=db_exoplanets['k'],'k'] = 0.1
-db_exoplanets = crossmatch_names(db_exoplanets,'host')
+db_exoplanets = crossmatch_names(db_exoplanets,'GAIA')
 db_exoplanets = db_exoplanets.sort_values(by='PRIMARY').reset_index(drop=True)
+
+db_tess_candidates = pd.read_csv(cwd+'/TACS_Material/TESS_candidates.csv',index_col=0)
+db_exoplanets = db_exoplanets.merge(db_tess_candidates,how='outer')
 
 #GR8 TABLE FORMATION
 
@@ -143,6 +145,24 @@ def resolve_starname(name,verbose=True):
         print('[INFO] Starname %s has not been found'%(name))
         return None
 
+def starname_resolver(stars):
+    flag = []
+    output = []
+    for s in np.array(stars):
+        loc = resolve_starname(s,verbose=False)
+        if loc is not None:
+            flag.append(1)
+            output.append(loc['INDEX'])
+        else:
+            flag.append(np.nan)
+            output.append(0)
+    output = np.array(output)
+    flag = np.array(flag)
+
+    names = db_starname.loc[output]
+    names[flag!=flag] = np.nan
+    return names
+
 def inner_gr8(list_names):
     inner = []
     for s in list_names:
@@ -204,7 +224,7 @@ def plot_exoplanets(y_var='k'):
     plt.subplots_adjust(left=0.10,right=0.95)
     return fig 
 
-def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
+def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=50):
     table_gr8 = gr8.copy() 
     for kw in cutoff.keys():
         if kw[-1]=='<':
@@ -212,7 +232,7 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
         else:
             table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]>cutoff[kw]]
 
-    selected = np.in1d(np.array([i.split(' ')[-1] for i in np.array(db_exoplanets['host'])]),np.array(table_gr8['gaiaedr3_source_id']))
+    selected = np.in1d(np.array([i.split(' ')[-1] for i in np.array(db_exoplanets['GAIA'])]),np.array(table_gr8['gaiaedr3_source_id']))
     db_exoplanets['pre_survey'] = selected.astype('int')
 
     fig = plt.figure(figsize=(18,12))
@@ -228,8 +248,10 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
     db_exoplanets['p_eccmin'] = pmin
     db_exoplanets['p_eccmax'] = pmax
 
-    for j in range(3):
-        plt.subplot(1,3,j+1) ; plt.xscale('log')
+    nraw = 33
+    ncol = len(np.unique(db_exoplanets['GAIA']))//nraw+1
+    for j in range(ncol):
+        plt.subplot(1,ncol,j+1) ; plt.xscale('log')
         plt.axvspan(xmin=60,xmax=400,color='g',alpha=0.2)
         plt.tick_params(labelleft=False)
         plt.xlim(0.5,80000)
@@ -238,11 +260,13 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
     db = np.sort(np.unique(db_exoplanets['PRIMARY']))
     db = np.array([np.where(np.array(db_starname['PRIMARY'])==d)[0][0] for d in db])
 
+    print(db_exoplanets)
+
     summary = []
     for system in db_starname.loc[db,'GAIA']:
-        plt.subplot(1,3,(abs(count)//30)+1)
+        plt.subplot(1,ncol,(abs(count)//nraw)+1)
         count-=1
-        mask = np.array(db_exoplanets['host']==system)
+        mask = np.array(db_exoplanets['GAIA']==system)
         syst = db_exoplanets.loc[mask]
         plt.plot([1,50000],[count,count],lw=1,color='k',ls='-',alpha=0.2)
         plt.scatter(syst['period'],syst['period']*0+count,s=syst['marker'],color='k',zorder=10)
@@ -253,6 +277,8 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
         condition_NE = np.sum((syst['mass']>10)&(syst['mass']<=30)).astype('int')
         condition_SE = np.sum((syst['mass']<=10)).astype('int')
         condition_transit = np.sum(syst['radius']==syst['radius'])
+        if condition_transit!=0:
+            plt.arrow(0.5,count,0.2,0,color='k',head_width=0.1)
 
         summary.append([system,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit)])       
 
@@ -269,8 +295,11 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=100):
                 plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color=['white','r'][int(p1<400)],va='center',ha='center',zorder=1000)
     summary = np.array(summary)
     summary = pd.DataFrame(summary,columns=['GAIA','HJ','BDW','GZ','NEP','SE','TRNS'])
-    plt.subplots_adjust(left=0.03,right=0.93,wspace=0.30)
+    plt.subplots_adjust(left=0.03,right=0.93,wspace=0.30,top=0.96,bottom=0.09)
     return summary
+
+def plot_tess_candidates():
+    pass
 
 class tableXY(object):
     def __init__(self, x=None, y=None, yerr=None, xlabel='', ylabel='', ls='o'):
@@ -894,7 +923,7 @@ class tcs(object):
         fig = plot_exoplanets(y_var=y_var)
 
         gaia_name = self.info_TA_starnames['GAIA']
-        found = np.where(np.array(db_exoplanets['host'])==gaia_name)[0]
+        found = np.where(np.array(db_exoplanets['GAIA'])==gaia_name)[0]
         if len(found):
             init_text = star_info(gr8.iloc[self.info_TA_starnames['INDEX']],format='v2')
             l, = plt.plot(
@@ -913,11 +942,11 @@ class tcs(object):
                 self.marker = None
             def update(self,newx,newy):
                 loc = np.argmin(abs(np.log10(db_exoplanets[y_var])-np.log10(newy))+abs(np.log10(db_exoplanets['period'])-np.log10(newx)))
-                info = resolve_starname(db_exoplanets.loc[loc,'host'],verbose=False)
+                info = resolve_starname(db_exoplanets.loc[loc,'GAIA'],verbose=False)
                 new_star = gr8.iloc[info['INDEX']]
                 text_fmt = star_info(new_star,format='v2')
                 self.info_text.set_text(text_fmt)
-                exo = db_exoplanets.loc[db_exoplanets['host']==info['GAIA']]
+                exo = db_exoplanets.loc[db_exoplanets['GAIA']==info['GAIA']]
                 self.marker.set_data([exo['period'],exo[y_var]])
                 plt.draw()
                 fig.canvas.draw_idle()
@@ -935,9 +964,9 @@ class tcs(object):
     def compute_exoplanet_rv_signal(self, jdb=None, keplerian_par={}, y0=2026, photon_noise=0.0):
         if len(keplerian_par)==0:
             gaia_name = self.info_TA_starnames['GAIA']
-            mask = np.array(db_exoplanets['host']==gaia_name)
+            mask = np.array(db_exoplanets['GAIA']==gaia_name)
         else:
-            mask = np.array(db_exoplanets['host']=='')
+            mask = np.array(db_exoplanets['GAIA']=='')
         if jdb is None:
             jdb = self.info_XY_timestamps.x
 

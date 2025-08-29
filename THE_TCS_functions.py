@@ -5,21 +5,13 @@ try:
 except:
     matplotlib.use('Agg',force=True)
 
-from IPython import get_ipython
-
-ipython = get_ipython()
-if ipython is not None: 
-    try:
-        ipython.run_line_magic('matplotlib', 'qt5')
-    except:
-        ipython.run_line_magic('matplotlib', 'inline')
-
 from datetime import datetime, timedelta, timezone
 
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
 from astropy import units as u
+from IPython import get_ipython
 
 
 def find_nearest(array,value,dist_abs=True,closest='abs'):

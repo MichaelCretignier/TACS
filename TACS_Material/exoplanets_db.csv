@@ -1,4 +1,4 @@
-,host,name,method,year,period,radius,mass,k,ecc,peri,t0,t0_transit,i
+,GAIA,name,method,year,period,radius,mass,k,ecc,peri,t0,t0_transit,i
 0,Gaia DR3 43802039287826432,HD 24040 b,Radial Velocity,2006,3552.0,,1287.205,50.53,0.04,110.5,2454308.0,2456932.0,
 1,Gaia DR3 43802039287826432,HD 24040 c,Radial Velocity,2021,515.4,,63.8835,4.85,0.11,-17.1887,,2454984.0,
 2,Gaia DR3 102082477749475200,30 Ari B b,Radial Velocity,2009,335.1,,3140.03,272.0,0.289,322.0,2453890.35,,
