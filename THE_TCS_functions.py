@@ -1,8 +1,3 @@
-from IPython import get_ipython
-
-ipython = get_ipython()
-ipython.magic('matplotlib')
-
 import matplotlib
 
 try:
@@ -10,7 +5,16 @@ try:
 except:
     matplotlib.use('Agg',force=True)
 
-from datetime import datetime, timezone
+from IPython import get_ipython
+
+ipython = get_ipython()
+if ipython is not None: 
+    try:
+        ipython.run_line_magic('matplotlib', 'qt5')
+    except:
+        ipython.run_line_magic('matplotlib', 'inline')
+
+from datetime import datetime, timedelta, timezone
 
 import matplotlib.pylab as plt
 import numpy as np
@@ -134,6 +138,25 @@ def Fisher_std(jdb, K=1, P=100, phi=0.0, sigma=0.5):
 
 # -------- FONCTIONS -------- #
 
+def decimal_year_to_iso(decimal_years):
+    iso_times = []
+    for y in decimal_years:
+        year = int(np.floor(y))
+        remainder = y - year
+        
+        # Check if leap year
+        days_in_year = 366 if ((year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)) else 365
+        
+        # Fractional year → days + seconds
+        seconds_in_year = days_in_year * 24 * 3600
+        delta_seconds = remainder * seconds_in_year
+        
+        dt = datetime(year, 1, 1) + timedelta(seconds=delta_seconds)
+        iso_times.append(dt.isoformat())
+    iso_times = pd.DataFrame(np.array([list(decimal_years),iso_times]).T,columns=['deciyear','iso'])
+    iso_times['iso'] = iso_times['iso'].str[0:10]+'T00:00:00.000000'
+    return iso_times
+
 def julian_date(dt):
     """Convertit une datetime UTC en date julienne"""
     timestamp = dt.timestamp()
@@ -225,7 +248,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
 
     table2 = table.copy()
     count=0
-    nb_rows = (len(cutoff)-1)//4+1
+    nb_rows = (len(cutoff)-1)//5+1
     old_value = np.nan
     old_value2 = len(table)
     for kw in cutoff.keys():
@@ -237,28 +260,34 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
             mask = table2[kw[0:-1]]>=value
         
         if plot:
-            plt.figure('cumulative'+tagname,figsize=(16,4*nb_rows))
-            plt.subplot(nb_rows,4,count)
+            plt.figure('cumulative'+tagname,figsize=(16,3.5*nb_rows))
+            plt.subplot(nb_rows,5,count)
             plt.title(kw+str(value))
             plt.hist(table2[kw[0:-1]],cumulative=True,bins=100)
             plt.axvline(x=value,label='%.0f / %.0f'%(sum(mask),len(mask)),color='k')
-            if kw[-1]=='<':
-                plt.axvspan(xmin=value,xmax=np.nanmax(table2[kw[0:-1]]),alpha=0.2,color='k')
+            if len(table2):
+                xmax = np.nanmax(table2[kw[0:-1]])
+                xmin = np.nanmin(table2[kw[0:-1]])
             else:
-                plt.axvspan(xmax=value,xmin=np.nanmin(table2[kw[0:-1]]),alpha=0.2,color='k')
-            plt.legend()
+                xmax=value
+                xmin=value
+            if kw[-1]=='<':
+                plt.axvspan(xmin=value,xmax=xmax,alpha=0.2,color='k')
+            else:
+                plt.axvspan(xmax=value,xmin=xmin,alpha=0.2,color='k')
+            plt.legend(loc=4)
             plt.grid()
-            plt.xlim(np.nanmin(table2[kw[0:-1]]),np.nanmax(table2[kw[0:-1]]))
+            plt.xlim(xmin,xmax)
             table2 = table2[mask]#.reset_index(drop=True)
             if par_space!='':
                 p1 = par_space.split('&')[0].replace(' ','')
                 p2 = par_space.split('&')[1].replace(' ','')
-                plt.figure('para'+tagname,figsize=(18,4*nb_rows))
+                plt.figure('para'+tagname,figsize=(18,3.5*nb_rows))
                 if count==1:
-                    plt.subplot(nb_rows,4,count)
+                    plt.subplot(nb_rows,5,count)
                     ax1 = plt.gca()
                 else:
-                    plt.subplot(nb_rows,4,count,sharex=ax1,sharey=ax1)
+                    plt.subplot(nb_rows,5,count,sharex=ax1,sharey=ax1)
                 plt.scatter(table[p1],table[p2],color='k',alpha=0.1,marker='.')
                 plt.scatter(table2[p1],table2[p2],color='r',ec='k',marker='.',label='%.0f (-%.0f)'%(len(table2),old_value2-len(table2)))
                 old_value2 = len(table2)
@@ -284,10 +313,10 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
 
     if plot:
         plt.figure('cumulative'+tagname,figsize=(18,4*nb_rows))
-        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
+        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.93,bottom=0.08,left=0.08,right=0.95)
         if par_space!='':
             plt.figure('para'+tagname,figsize=(18,4*nb_rows))
-            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.95,bottom=0.08,left=0.08,right=0.95)
+            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.93,bottom=0.08,left=0.08,right=0.95)
         plt.show()
     table2 = table2.sort_values(by='HZ_mp_min_osc+gr_texp15')
     
@@ -301,8 +330,8 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     print_table['HZ_mp_min_osc+gr_texp15'] = np.round(print_table['HZ_mp_min_osc+gr_texp15'],2)
         
     if verbose:
-        print('\n [INFO] %.0f stars in the final sample'%(len(table2)))
-        print('\n [INFO] Here are the top 30-ranked stars of your THE list:\n')  
+        print('\n[INFO] %.0f stars in the final sample'%(len(table2)))
+        print('\n[INFO] Here are the top 30-ranked stars of your THE list:\n')  
         print(print_table)
     
     return table2

@@ -21,10 +21,15 @@ cwd = os.getcwd()
 
 Teff_var = 'teff_mean'
 
-gr8_raw = pd.read_csv(cwd+'/TACS_Material/Master_table.csv',index_col=0)
+gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table.csv',index_col=0)
 gr8 = gr8_raw.copy()
 
-db_starname = pd.read_csv(cwd+'/TACS_Material/simbad_name.csv',index_col=0)
+if len(gr8)==1112:
+    print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE\n')
+else:
+    print('[INFO USER] You are using the [PUBLIC] version of the code. If you are THE member, read the README.\n')
+
+db_starname = pd.read_csv(cwd+'/TACS_Material/THE_SIMBAD.csv',index_col=0)
 table_time = pd.read_csv(cwd+'/TACS_Material/time_conversion.csv',index_col=0)
 
 seeing = interp1d(table_time['deci'].astype('float')-2026,table_time['seeing'].astype('float'), kind='cubic', bounds_error=False, fill_value='extrapolate')(np.linspace(0,1,365))
@@ -52,18 +57,16 @@ db_exoplanets.loc[db_exoplanets['k']!=db_exoplanets['k'],'k'] = 0.1
 db_exoplanets = crossmatch_names(db_exoplanets,'host')
 db_exoplanets = db_exoplanets.sort_values(by='PRIMARY').reset_index(drop=True)
 
-
-
+#GR8 TABLE FORMATION
 
 gr8['dist'] = 1000/gr8['parallax']
-gr8.loc[gr8['vsini']>50,'vsini'] = 50
-gr8['vsini_known'] = np.array(gr8['vsini'])
-gr8.loc[gr8['vsini_known']!=gr8['vsini_known'],'vsini_known'] = 50
-gr8.loc[gr8['vsini']!=gr8['vsini'],'vsini'] = 0.0
+gr8.loc[gr8['VSINI']>30,'VSINI'] = 30
+gr8['VSINI_known'] = np.array(gr8['VSINI'])
+gr8.loc[gr8['VSINI_known']!=gr8['VSINI_known'],'VSINI_known'] = 30
+gr8.loc[gr8['VSINI']!=gr8['VSINI'],'VSINI'] = 0.0
 
 gr8['RHK_known'] = np.array(gr8['RHK'])
 gr8.loc[gr8['RHK_known']!=gr8['RHK_known'],'RHK_known'] = -4.0
-gr8.loc[gr8['logRHK']!=gr8['logRHK'],'logRHK'] = -6.0
 gr8.loc[gr8['RHK']!=gr8['RHK'],'RHK'] = -6.0
 
 gr8['HWO'] = 0
@@ -72,8 +75,18 @@ gr8.loc[(gr8[Teff_var]>4500)&(gr8[Teff_var]<5300)&(gr8['dist']<12),'HWO'] = 1
 gr8.loc[(gr8[Teff_var]<4500)&(gr8[Teff_var]<5300)&(gr8['dist']<5),'HWO'] = 1
 
 #based on Andreas comment, would be better to check RVs databases drift
-gr8.loc[gr8['vmag']<5,'ruwe'] = 0.1
-gr8['log_ruwe'] = np.log10(gr8['ruwe'])
+gr8.loc[gr8['logg']<3.5,'logg'] = 3.5
+gr8.loc[gr8['vmag']<5,'ruwe_GAIA'] = 0.1
+gr8.loc[gr8['ruwe_GAIA']>4,'ruwe_GAIA'] = 4
+gr8.loc[gr8['rv_trend_kms_DACE']>1,'rv_trend_kms_DACE'] = 1
+gr8.loc[gr8['sky_contam_VIZIER']>1,'sky_contam_VIZIER'] = 1
+gr8.loc[gr8['multi_peak_GAIA']>10,'multi_peak_GAIA'] = 10
+
+gr8['SPclass'] = '-'
+gr8.loc[(gr8[Teff_var]>6000),'SPclass'] = 'F'
+gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<6000),'SPclass'] = 'S'
+gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<5600),'SPclass'] = 'G'
+gr8.loc[(gr8[Teff_var]<5200),'SPclass'] = 'K'
 
 #FUNCTIONS
 
@@ -123,11 +136,11 @@ def resolve_starname(name,verbose=True):
         output = db_starname.iloc[loc]
         output['INDEX'] = loc
         if verbose:
-            print('\n [INFO] Starnames found:')
+            print('\n[INFO] Starnames found:\n')
             print(output,'\n')
         return output
     else:
-        print(' [INFO] Starname %s has not been found'%(name))
+        print('[INFO] Starname %s has not been found'%(name))
         return None
 
 def inner_gr8(list_names):
@@ -493,6 +506,8 @@ class tcs(object):
         return ins_noise
     
     def create_star_selection(self,starnames,tagname='my_selection'):
+        if type(starnames) is not list:
+                starnames = list(starnames)
         gaia_names = []
         for s in starnames:
             output = resolve_starname(s,verbose=False)
@@ -524,7 +539,7 @@ class tcs(object):
             self.info_SC_nb_hours_per_yr = np.round(nb_hours,1)
             self.info_SC_nb_hours_per_yr_eff = np.round(nb_hours_weather,1)
             if verbose:
-                print(' [INFO] Nb of hours per year : %.0f (%.0f)'%(self.info_SC_nb_hours_per_yr_eff,self.info_SC_nb_hours_per_yr))
+                print('[INFO] Nb of hours per year : %.0f (%.0f)'%(self.info_SC_nb_hours_per_yr_eff,self.info_SC_nb_hours_per_yr))
 
         if self.info_SC_starname is not None:
             self.compute_night_star()
@@ -532,7 +547,7 @@ class tcs(object):
     def random_weather(self,verbose=True):
         output = np.ravel(dropout_year().astype('int'))
         if verbose:
-            print(' [INFO] Number of bad/good nights = %.0f/%.0f'%(len(output)-sum(output),sum(output)))
+            print('[INFO] Number of bad/good nights = %.0f/%.0f'%(len(output)-sum(output),sum(output)))
         self.info_XY_telescope_open.append(tableXY(y=output,xlabel='Nights [days]',ylabel='Telescope open'))
 
     def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True):
@@ -755,7 +770,7 @@ class tcs(object):
         if self.simu_SG_calendar is not None:
             if (self.simu_SG_calendar['param1']==sun_elevation)&(self.simu_SG_calendar['param2']==airmass_max)&(self.simu_SG_calendar['param3']==alpha_step)&(self.simu_SG_calendar['param4']==dec_step):
                 button = 0
-                print(' [INFO] Old simulation found.')
+                print('[INFO] Old simulation found.')
         
         if button==1:
             output = []
@@ -765,14 +780,14 @@ class tcs(object):
             counter=0
             for i,j in zip(np.ravel(RA),np.ravel(DEC)):
                 if counter in loading:
-                    print(' [INFO] Progress... [%.0f%%]'%(np.where(loading==counter)[0][0]*10))
+                    print('[INFO] Progress... [%.0f%%]'%(np.where(loading==counter)[0][0]*10))
                 self.set_star(ra=i,dec=j) 
                 self.compute_nights(airmass_max=airmass_max, weather=False, plot=False)
                 params.append([i,j])
                 output.append(self.info_XY_night_duration.monthly_average())
                 counter+=1
-            print(' [INFO] Finished!')
-            print(' [INFO] Stacking tables...')
+            print('[INFO] Finished!')
+            print('[INFO] Stacking tables...')
             params = np.array(params)
             output = np.array(output)
 
@@ -785,7 +800,7 @@ class tcs(object):
         else:
             params,output,RA,DEC = self.simu_SG_calendar['outputs']
         
-        print(' [INFO] Producing Calendar plot... Wait...')
+        print('[INFO] Producing Calendar plot... Wait...')
         fig = plt.figure(figsize=(18,12))
         fig.suptitle('Sun elevation = %.0f | Airmass max = %.2f'%(sun_elevation,airmass_max))
         plt.subplots_adjust(left=0.05,right=0.98,top=0.94,bottom=0.05,hspace=0.30,wspace=0.30)
@@ -821,7 +836,7 @@ class tcs(object):
         month_tag = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]
 
         #add the info column
-        for selections in [selection,'presurvey']:
+        for selections in ['presurvey',selection]:
             table = self.info_TA_stars_selected[selections].data
             dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
             loc = np.argmin(dist,axis=0)
@@ -971,7 +986,7 @@ class tcs(object):
 
         else:
             self.info_TA_exoplanets_known = []
-            print(' [INFO] No exoplanets found for this target.')
+            print('[INFO] No exoplanets found for this target.')
 
     def plot_keplerians(self,axhline=None, obs_per_night=None, random=False):
         nb = len(self.info_XY_keplerian)
@@ -1094,8 +1109,8 @@ class tcs(object):
             total_time = (np.sum(tab['texp_optimal'])+len(tab)*overhead)/60
         
         nb_days = np.where(cumu_hours>total_time)[0][0]
-        print(' [INFO] Total time needed = %.1f hours'%(total_time))
-        print(' [INFO] Number of days needed : %.0f'%(nb_days))
+        print('[INFO] Total time needed = %.1f hours'%(total_time))
+        print('[INFO] Number of days needed : %.0f'%(nb_days))
         
 
     def plot_survey_snr_texp(self, selection=None, texp=None, snr_crit=250, sig_rv_crit=0.30, budget='_phot'):
@@ -1113,7 +1128,7 @@ class tcs(object):
             sig_rv_gr8 = gr8['sig_rv'+budget+'_texp15']/(np.sqrt(texp/15))
         else:
             texp = tcsf.find_nearest(np.array([1,5,8,10,12,15,20,25,30]),texp)[1][0]
-            print(' [INFO] Closest Texp tabulated = %.0f min'%(texp))
+            print('[INFO] Closest Texp tabulated = %.0f min'%(texp))
             sig_rv = selection['sig_rv'+budget+'_texp%.0f'%(texp)]
             sig_rv_gr8 = gr8['sig_rv'+budget+'_texp%.0f'%(texp)]
         snr = (np.sqrt(texp/15))*selection['snr_C22_texp15'] #Cretignier et al. +22
@@ -1248,9 +1263,39 @@ class tcs(object):
                 plt.xlabel('Texp [min]')
                 plt.xlim(4,30)
 
-    def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True):
+    def which_cutoff(self,starname,cutoff=None,tagname=None):
+        if tagname is not None:
+            try:
+                cutoff = self.info_TA_cutoff[tagname]
+            except:
+                print('[ERROR] this tagname is not found, current list is: ',list(self.info_TA_cutoff.keys()))
+        index = resolve_starname(starname)
+        if index is not None:
+            star = gr8.loc[index['INDEX']]
+            output = []
+            for kws in cutoff.keys():
+                kw = kws[:-1]
+                condition = kws[-1]
+                value = cutoff[kws]
+                if condition=='>':
+                    test = int(star[kw]>value)
+                else:
+                    test = int(star[kw]<value)
+                output.append([['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['<---',''][test]])
+            output = pd.DataFrame(output,columns=['!','feature','condition','threshold','value','test','!!'])
+            output['value'] = np.round(output['value'],2)
+            if sum(output['test']=='FALSE'):
+                print('[INFO] -- NO -- This star was rejected.\n')
+            else:
+                print('[INFO] --YES -- This star is still selected.\n')
+            print(output)
+
+    def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""
         GR8 = gr8.copy()
+        if show_sample is not None:
+            GR8 = GR8.loc[GR8['SPclass']==show_sample]
+
         if cutoff is None:
             cutoff = self.info_TA_cutoff['presurvey']
             tagname = 'presurvey'
@@ -1279,11 +1324,54 @@ class tcs(object):
             tagname_fig=par_box[0]
         
         table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose)
-        self.info_TA_cutoff[tagname] = cutoff
-        self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
+        if tagname!='dustbin':
+            self.info_TA_cutoff[tagname] = cutoff
+            self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
 
 
     def cutoff_ST(self):
         for tagname,cutoff in zip(['Tim','Jean','Sam1','Sam2','Miku','William1','William2','Stefano'],[tcsv.cutoff_tim,tcsv.cutoff_jean,tcsv.cutoff_sam,tcsv.cutoff_sam2,tcsv.cutoff_mick,tcsv.cutoff_william1,tcsv.cutoff_william2,tcsv.cutoff_stefano]):
             self.func_cutoff(tagname=tagname,cutoff=cutoff)
+
+
+
+    def create_table_sceduler(self, selection, year=2026, texp=900):
+        table_scheduler = self.info_TA_stars_selected[selection].data.copy()
+        table_scheduler['schedulingMode'] = 'MONITORING'
+        table_scheduler['t0'] = 'NULL'
+        table_scheduler['period'] = 1
+        table_scheduler['delta'] = 0.3
+        table_scheduler['moonMaxFI'] = 0
+        table_scheduler['minMoonDist1'] = 5
+        table_scheduler['ifExceedsMinFI1'] = 15
+        table_scheduler['minMoonDist2'] = 0
+        table_scheduler['ifExceedsMinFI2'] = 0
+        table_scheduler['rvMoonRange'] = 10
+        table_scheduler['rvMoonRangeMinFI'] = 0.5
+        table_scheduler['rvMoonMinAlt'] = -5
+        table_scheduler['twilight'] = -12
+        table_scheduler['maxSeeing'] = 2
+        table_scheduler['maxExtinction'] = 1.1
+        table_scheduler['maxSkyBrightness'] = 15
+        table_scheduler['minAltitude'] = 35
+        table_scheduler['acqType'] = 'OBJECT'
+        table_scheduler['GDR3_D_number'] = table_scheduler['gaiaedr3_source_id']
+
+
+        table_scheduler['priority'] = 6
+        ranking = table_scheduler['HZ_mp_min_osc+gr_texp15']
+        table_scheduler.loc[ranking<np.nanpercentile(ranking,33),'priority'] = 3
+        table_scheduler.loc[ranking>np.nanpercentile(ranking,66),'priority'] = 9
+
+        if type(texp)==str:
+            texp = 900
         
+        table_scheduler['expTime'] = texp
+        #expN
+        #obsN
+        variables = ['priority','GDR3_ID_number','expTime','expN','obsN','groupEnableTime','groupDisableTime',
+                     'acqType','schedulingMode','t0','period','delta',
+                     'moonMaxFI','minMoonDist1','ifExceedsMinFI1','minMoonDist2','ifExceedsMinFI2','rvMoonRange','rvMoonMinFI','rvMoonMinAlt',
+                     'twilight','maxSeeing','maxExtinction','maxSkyBrightness','minAltitude']
+        
+        table_sheduler = table_scheduler[variables]

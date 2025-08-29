@@ -3,6 +3,28 @@ import matplotlib.pylab as plt
 import THE_TCS_classes as tcsc
 import THE_TCS_variables as tcsv
 
+#### PRESURVEY CUTOFFF ####
+
+presurvey = tcsc.tcs(sun_elevation=-12, instrument='HARPS3') #HARPS3 is the default
+presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, tagname='presurvey') #this line is already running by default in tcsc.tsc()
+
+#testing if a star is in a list (otherwise why not)
+presurvey.which_cutoff('HD166620', tagname='presurvey') #can also take cutoff={} input
+presurvey.which_cutoff('HD16160', tagname='presurvey')
+presurvey.which_cutoff('51Peg', tagname='presurvey')
+ 
+#following the K sample
+presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, show_sample='K', tagname='dustbin')
+
+#### EXAMPLE OF CUTOFF VISUALISATION ####
+
+example1 = tcsc.tcs(sun_elevation=-12)
+#following a binary flag
+example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO==1', cutoff=tcsv.cutoff_presurvey, tagname='dustbin')
+
+#following a parameter space box
+example1.func_cutoff(par_space='teff_mean&dist', par_box=['4500->5300','0->30'], cutoff=tcsv.cutoff_presurvey, tagname='dustbin')
+
 #### VISUALIZATION OF KNOWN EXOPLANETS #####
 
 summary = tcsc.plot_exoplanets2(cutoff={})
@@ -11,22 +33,23 @@ summary = tcsc.plot_exoplanets2(cutoff={'teff_mean<':6000,'ruwe<':1.2,'logg>':4.
 ### ------- EXAMPLES ------- ###
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
-survey = tcsc.tcs(sun_elevation=-12, instrument='HARPS3') #HARPS3 is the default
+survey = tcsc.tcs(sun_elevation=-12) #HARPS3 is the default
 survey.func_cutoff(tagname='bright!',cutoff={'gmag<':6,'teff_mean<':6000})
 
 ##### COMPUTE SEASON AND NIGHT LENGTH #####
 star = tcsc.tcs(sun_elevation=-12, starname='HD127334') #using starname
 
-#analysis visibility
 plt.figure(figsize=(12,12))
 
-plt.subplot(2,2,1) ; star.compute_nights(airmass_max=11, weather=False, plot=True)
-plt.subplot(2,2,2) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True)
+plt.subplot(1,2,1) ; star.compute_nights(airmass_max=11, weather=False, plot=True)
+plt.subplot(1,2,2) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True)
 
-star.set_star(ra=18,dec=38) # change for a DEC vs RA input (HD166620)
-
-plt.subplot(2,2,3) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True)
-plt.subplot(2,2,4) ; star.compute_nights(airmass_max=1.5, weather=True, plot=True)
+plt.figure(figsize=(18,5))
+for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF']):
+    star = tcsc.tcs(sun_elevation=-12, instrument=ins)
+    star.set_star(ra=18,dec=20) # change for a DEC vs RA input
+    plt.subplot(1,5,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
+plt.subplots_adjust(left=0.05,right=0.96)
 
 #night duration
 star.plot_night_length()
@@ -83,24 +106,33 @@ star4.show_lightcurve(rm_gap=True)
 #Investigate a pre-determined star list (cross-matched with GR8)
 
 neid = tcsc.tcs(sun_elevation=-12)
-neid.create_star_selection(tcsv.NEID_catalog,tagname='NEID')
+neid.create_star_selection(tcsv.NEID_catalog['HD'],tagname='NEID')
 neid.create_star_selection(tcsv.NEID_standards,tagname='NEID_standards')
 
 neid.info_TA_stars_selected['NEID_standards'].plot(y='dec_j2000',x='ra_j2000')
-neid.info_TA_stars_selected['GR8'].plot(y='dec_j2000',x='ra_j2000',c='k',GUI=False)
+neid.info_TA_stars_selected['presurvey'].plot(y='dec_j2000',x='ra_j2000',c='k',GUI=False)
 
 neid.compute_SG_calendar(
     sun_elevation = -6, 
-    airmass_max = 2.5, 
+    airmass_max = 1.75, 
     alpha_step = 1, 
     dec_step = 5,
-    selection='NEID')
+    selection='NEID_standards')
 
-star5 = tcsc.tcs(sun_elevation=-12)
-star5.func_cutoff(cutoff=None)
-star5.func_cutoff(cutoff=None,par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
-star5.func_cutoff(cutoff=None,par_space='teff_mean&dist',par_box=['4500->5300','0->30'])
+neid.compute_SG_month(month=1,plot=True,selection='NEID_standards')
 
+##
+test = tcsc.tcs(sun_elevation=-12, instrument='HARPS3') #HARPS3 is the default
 
+for selection in ['GR8','presurvey']:
+    rhk1 = test.info_TA_stars_selected[selection].data['logRHK']
+    rhk2 = test.info_TA_stars_selected[selection].data['logRHK_BoroSaika+18']
+    rhk3 = test.info_TA_stars_selected[selection].data['logRHK_DACE']
+    rhk4 = test.info_TA_stars_selected[selection].data['logRHK_YARARA']
+    rhk = np.array([rhk1,rhk2,rhk3,rhk4]).T
 
-
+    plt.figure()
+    for n in [1,4]:
+        r = np.nanmean(rhk[:,0:n],axis=1)
+        myf.hist(r[r==r],bins=np.arange(-6,-4,0.1),label='%.0f%%(%.0f)'%(np.sum(r==r)*100/len(r),np.sum(r==r)),color='C%.0f'%(n-1))
+    plt.legend()
