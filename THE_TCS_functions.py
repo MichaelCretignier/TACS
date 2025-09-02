@@ -214,7 +214,7 @@ def airmass_kasten_young(alt_deg):
     airmass[airmass>10] = 10 
     return airmass
 
-def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument='HARPS3'):
+def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument='HARPS3', day=1, month=1):
     """tstamp_min being the sampling in minute"""
     
     lat_deg = {
@@ -244,7 +244,7 @@ def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument=
         }[instrument]  
 
     # Date et heure UTC de l'observation
-    utc_datetime = datetime(2025, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+    utc_datetime = datetime(2025, month, day, 0, 0, 0, tzinfo=timezone.utc)
 
     jd = julian_date(utc_datetime)
 
