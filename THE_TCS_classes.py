@@ -579,7 +579,7 @@ class tcs(object):
             print('[INFO] Number of bad/good nights = %.0f/%.0f'%(len(output)-sum(output),sum(output)))
         self.info_XY_telescope_open.append(tableXY(y=output,xlabel='Nights [days]',ylabel='Telescope open'))
 
-    def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True,method='approximation'):
+    def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True,method='fast'):
         self.info_TA_starnames = None
         if id is not None:
             starname = gr8.iloc[id]['primary_name']
