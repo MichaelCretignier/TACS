@@ -78,7 +78,7 @@ star3.compute_SG_month(month=1,plot=True)
 
 # START
 tutorial = tcsc.tcs(sun_elevation=-12) 
-# As a recall, Total_time = Nstar * Texp * Nb_obs
+# As a recall, Total_time = Nstar * (Texp + overhead) * Nb_obs
 tutorial.plot_survey_stars(Nb_star=100)
 
 tutorial.plot_survey_stars(Texp=20)
@@ -97,6 +97,24 @@ tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', tex
 tutorial.plot_survey_stars(Texp=15,selection='presurvey',color='green') 
 tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='HZ_mp_min_osc+gr_texp15',color='C1') 
 tutorial.plot_survey_stars(Texp=None,selection='presurvey',ranking='texp_optimal',color='C1') 
+
+tutorial.create_table_scheduler(
+    selection='presurvey',
+    year=2026,
+    texp=1000,
+    n_obs=50,
+    month_obs_baseline=3
+    )
+
+tutorial.create_table_scheduler(
+    selection=tutorial.info_TA_stars_selected['presurvey'].data.sort_values(by='HZ_mp_min_osc+gr_texp15')[0:40],
+    year=2026,
+    texp=700,
+    freq_obs=1,
+    ranking=None,
+    month_obs_baseline=12,
+    tagname='40stars'
+    )
 
 
 #TESS LIGHTCURVES

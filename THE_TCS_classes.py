@@ -324,7 +324,7 @@ class tableXY(object):
         self.x = new_grid
 
     def monthly_average(self):
-        borders = [0,31,59,90,120,151,181,212,243,273,304,334,365]
+        borders = tcsv.month_border
         statistic = []
         for b1,b2 in zip(borders[0:-1],borders[1:]):
             mask = (self.x>=b1)&(self.x<=b2)
@@ -352,7 +352,7 @@ class tableXY(object):
         plt.ylabel(self.ylabel)
         ax = plt.gca()
         if self.xlabel=='Nights [days]':
-            for j,t in zip([31,59,90,120,151,181,212,243,273,304,334,365],['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']):
+            for j,t in zip(tcsv.month_border,['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']):
                 plt.axvline(x=j,color='k',ls='-',alpha=0.5)
                 plt.axvline(x=j,color='white',ls=':')
                 plt.text(j-15,ytext,t,color='k',ha='center')
@@ -1266,6 +1266,7 @@ class tcs(object):
                 plt.xlabel('Nb star []')
                 plt.xlim(20,200) ; plt.ylim(0,365)
                 plt.legend()
+                self.info_XY_survey_stat = tableXY(x=ni,y=nb_hours*60/((Texp+overhead)*ni))
             if Nb_star is not None:
                 plt.axhline(y=Nb_star,color='k',ls=ls,lw=3)
                 plt.axes([0.08,0.73,0.86,0.25])
@@ -1278,6 +1279,7 @@ class tcs(object):
                 plt.ylabel('Nb yearly obs. per *')
                 plt.xlabel('Texp [min]')
                 plt.xlim(4,30)
+                self.info_XY_survey_stat = tableXY(x=ti,y=nb_hours*60/((ti+overhead)*Nb_star))
             if Nb_obs_per_year is not None:
                 c2 = plt.contour(texp,nstars,nb_hours*60/((texp+overhead)*nstars),levels=[0,Nb_obs_per_year],cmap='Greys',linestyles=ls,linewidths=3) 
                 plt.clabel(c2,fmt='%.0f')
@@ -1291,6 +1293,9 @@ class tcs(object):
                 plt.ylabel('Nb stars')
                 plt.xlabel('Texp [min]')
                 plt.xlim(4,30)
+                self.info_XY_survey_stat = tableXY(x=ti,y=nb_hours*60/((ti+overhead)*Nb_obs_per_year))
+        
+        
 
     def which_cutoff(self,starname,cutoff=None,tagname=None):
         if tagname is not None:
@@ -1364,8 +1369,69 @@ class tcs(object):
 
 
 
-    def create_table_sceduler(self, selection, year=2026, texp=900):
-        table_scheduler = self.info_TA_stars_selected[selection].data.copy()
+    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', need_help=False):
+
+        if type(selection)==str:
+            table_scheduler = self.info_TA_stars_selected[selection].data.copy()
+        else:
+            table_scheduler = selection.copy()
+
+        if tagname=='':
+            tagname = '_'+selection
+
+        table_scheduler = table_scheduler.sort_values(by='ra_j2000').reset_index(drop=True)
+        table_scheduler['ID_table'] = np.arange(len(table_scheduler))+1
+
+        tyr_rise = np.array(table_scheduler['tyr_rise_1.75'])-2025+year
+        tyr_set = np.array(table_scheduler['tyr_set_1.75'])-2025+year
+
+        tyr_mid = 0.5*(tyr_set+tyr_rise)
+        month_obs_baseline = int(month_obs_baseline)
+        if month_obs_baseline!=12:
+            tyr_rise2 = tyr_mid-0.5*month_obs_baseline/12
+            tyr_set2 = tyr_mid+0.5*month_obs_baseline/12
+            tyr_rise[tyr_rise2>tyr_rise] = tyr_rise2[tyr_rise2>tyr_rise]
+            tyr_set[tyr_set2<tyr_set] = tyr_set2[tyr_set2<tyr_set]
+        tyr_set[tyr_rise>year+1] = tyr_set[tyr_rise>year+1]-1
+        tyr_rise[tyr_rise>year+1] = tyr_rise[tyr_rise>year+1]-1
+
+        tyr_rise = tcsf.conv_time(list(tyr_rise))
+        tyr_set = tcsf.conv_time(list(tyr_set))
+        season_length = tyr_set[0]-tyr_rise[0]
+
+        if need_help:
+            self.plot_survey_stars(Nb_star=len(table_scheduler))
+            pouet
+
+        if type(texp)==str:
+            texp = 900
+
+        loc = tcsf.find_nearest(self.info_XY_survey_stat.x*60,texp)[0][0]
+        nobs_max = self.info_XY_survey_stat.y[loc]
+
+        warning = 0
+        if type(n_obs)==str:
+            n_obs = nobs_max
+
+        if freq_obs is not None:
+            table_scheduler['obsN'] = (season_length*freq_obs).astype('int')
+        else:
+            table_scheduler['obsN'] = n_obs
+
+        table_scheduler['expTime'] = texp
+
+        total_time = np.sum(table_scheduler['obsN']*(table_scheduler['expTime']+60))/3600
+        total_max = self.info_SC_nb_hours_per_yr
+        total_max_eff = self.info_SC_nb_hours_per_yr_eff
+
+        fraction = 100*total_time/total_max
+        fraction_eff = 100*total_time/total_max_eff
+        if fraction>125:
+            print('\n---->[WARNING] You overfilled the scheduler! Carefully consider this option.\n')
+            warning = 1
+        print('[INFO] You filled the GTO time (60%% of the telescope time) at %.0f%%'%(fraction))
+        print('[INFO] You filled the effective GTO time (60%% of the telescope time + weather) at %.0f%%'%(fraction_eff))
+
         table_scheduler['schedulingMode'] = 'MONITORING'
         table_scheduler['t0'] = 'NULL'
         table_scheduler['period'] = 1
@@ -1376,7 +1442,7 @@ class tcs(object):
         table_scheduler['minMoonDist2'] = 0
         table_scheduler['ifExceedsMinFI2'] = 0
         table_scheduler['rvMoonRange'] = 10
-        table_scheduler['rvMoonRangeMinFI'] = 0.5
+        table_scheduler['rvMoonMinFI'] = 0.5
         table_scheduler['rvMoonMinAlt'] = -5
         table_scheduler['twilight'] = -12
         table_scheduler['maxSeeing'] = 2
@@ -1384,23 +1450,98 @@ class tcs(object):
         table_scheduler['maxSkyBrightness'] = 15
         table_scheduler['minAltitude'] = 35
         table_scheduler['acqType'] = 'OBJECT'
-        table_scheduler['GDR3_D_number'] = table_scheduler['gaiaedr3_source_id']
-
-
-        table_scheduler['priority'] = 6
-        ranking = table_scheduler['HZ_mp_min_osc+gr_texp15']
-        table_scheduler.loc[ranking<np.nanpercentile(ranking,33),'priority'] = 3
-        table_scheduler.loc[ranking>np.nanpercentile(ranking,66),'priority'] = 9
-
-        if type(texp)==str:
-            texp = 900
+        table_scheduler['GDR3_ID_number'] = table_scheduler['gaiaedr3_source_id']
         
-        table_scheduler['expTime'] = texp
-        #expN
-        #obsN
+        table_scheduler['priority'] = 6
+        if ranking is not None:
+            ranking = table_scheduler[ranking]
+            table_scheduler.loc[ranking<np.nanpercentile(ranking,33),'priority'] = 3
+            table_scheduler.loc[ranking>np.nanpercentile(ranking,66),'priority'] = 9
+        else:
+            table_scheduler['priority'] = 9
+
+        table_scheduler['expN'] = 1
+
+        table_scheduler['groupEnableTime'] = np.nan
+        table_scheduler['groupDisableTime'] = np.nan
+
+        table_scheduler2 = table_scheduler.copy()
+        for n in range(len(table_scheduler)):
+            t1 = tyr_rise[1][n]
+            t2 = tyr_set[1][n]
+            if t2>(year+1):
+                frag1 = year+1-t1
+                frag2 = t2-year-1
+                f1 = frag1/(frag2+frag1)
+                f2 = frag2/(frag2+frag1)
+
+                table_scheduler.loc[n,'groupEnableTime'] = '%.0f-01-01T00:00:00.000'%(year)
+                table_scheduler.loc[n,'groupDisableTime'] = str(year)+tyr_set[2][n][4:]
+                table_scheduler.loc[n,'obsN'] = int(f2*table_scheduler.loc[n,'obsN'])
+
+                table_scheduler2.loc[n,'groupEnableTime'] = tyr_rise[2][n]
+                table_scheduler2.loc[n,'groupDisableTime'] = '%.0f-12-31T00:00:00.000'%(year)
+                table_scheduler2.loc[n,'obsN'] = table_scheduler2.loc[n,'obsN'] - table_scheduler.loc[n,'obsN']
+            else:
+                table_scheduler.loc[n,'groupEnableTime'] = tyr_rise[2][n]
+                table_scheduler.loc[n,'groupDisableTime'] = tyr_set[2][n] 
+
+        table_scheduler_final = pd.concat([table_scheduler,table_scheduler2],axis=0)
+        table_scheduler_final = table_scheduler_final.loc[table_scheduler_final['obsN']!=0]
+        table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).sort_values(by='ra_j2000').reset_index(drop=True)
+
         variables = ['priority','GDR3_ID_number','expTime','expN','obsN','groupEnableTime','groupDisableTime',
                      'acqType','schedulingMode','t0','period','delta',
                      'moonMaxFI','minMoonDist1','ifExceedsMinFI1','minMoonDist2','ifExceedsMinFI2','rvMoonRange','rvMoonMinFI','rvMoonMinAlt',
                      'twilight','maxSeeing','maxExtinction','maxSkyBrightness','minAltitude']
-        
-        table_sheduler = table_scheduler[variables]
+
+        gto_time = np.sum(1-self.info_IM_night.data,axis=0)
+
+        t0 = tcsf.conv_time([str(year)+'-01-01T00:00:00.000'])[0]
+        plt.figure(figsize=(10,10))
+        plt.axes([0.08,0.1,0.85,0.65])
+        jdb1 = tcsf.conv_time(list(table_scheduler_final['groupEnableTime']))[0]
+        jdb2 = tcsf.conv_time(list(table_scheduler_final['groupDisableTime']))[0]
+        obs = []
+        for n in np.arange(len(table_scheduler_final)):
+            N = np.array(table_scheduler_final.loc[n,'obsN'])
+            ID = np.array(table_scheduler_final.loc[n,'ID_table'])
+            rank = np.array(table_scheduler_final.loc[n,'priority'])
+            texp = np.array(table_scheduler_final.loc[n,'expTime'])
+            days = np.arange(jdb1[n],jdb2[n]+1,1)
+            Draw = np.min([N,len(days)])
+            obs.append([texp*np.ones(Draw), np.random.choice(days,Draw,replace=False)])
+            plt.scatter(obs[-1][1],ID*np.ones(Draw),s=rank,alpha=rank/10,color='k')
+        obs = np.hstack(obs)
+        obs[1] = ((obs[1]-t0)/366*12).astype('int')+1
+        stat = tcsv.months_specie.copy()
+        for j in range(1,13):
+            stat[stat==j] = np.sum(obs[0][obs[1]==j])/60/tcsv.month_len[j-1]
+
+        plt.scatter([np.nan],[np.nan],color='k',s=9, alpha=0.9,label='Priotity=9')
+        plt.scatter([np.nan],[np.nan],color='k',s=6,alpha=0.6,label='Priotity=6')
+        plt.scatter([np.nan],[np.nan],color='k',s=3,alpha=0.3,label='Priotity=3')
+        for j in t0+np.array(tcsv.month_border):
+            plt.axvline(x=j,lw=1,alpha=0.4,color='k')
+        plt.legend()
+        plt.ylabel('Star ID')
+        plt.xlabel('Jdb time - 2,400,000 [days]')
+        ax = plt.gca()
+
+        plt.axes([0.08,0.77,0.85,0.2],sharex=ax)
+        plt.tick_params(top=True,labeltop=True,labelbottom=False)
+        plt.plot(t0+self.info_XY_downtime.x,0.60*gto_time,label='GTO')
+        plt.plot(t0+self.info_XY_downtime.x,0.60*gto_time*(1-self.info_XY_downtime.y/100),label='GTO + weather')
+        plt.plot(t0+np.arange(0,365,1),stat,marker='.',label='Obs time')
+        plt.legend()
+        plt.ylabel('Time per night [min]')
+        for j in t0+np.array(tcsv.month_border):
+            plt.axvline(x=j,lw=1,alpha=0.4,color='k')
+
+        table_scheduler_final = table_scheduler_final[variables]
+
+        now = tcsf.now()[0:19].replace(':','-')
+
+        plt.savefig(cwd+'/TACS_OUTPUT/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.png'%(now,year,int(month_obs_baseline),tagname))
+        table_scheduler_final.to_csv(cwd+'/TACS_OUTPUT/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.csv'%(now,year,int(month_obs_baseline),tagname))
+

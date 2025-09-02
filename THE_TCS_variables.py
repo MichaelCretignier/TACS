@@ -5,6 +5,11 @@ import pandas as pd
 
 cwd = os.getcwd()
 
+month_border = [0,31,59,90,120,151,181,212,243,273,304,334,365]
+month_len = [31,28,31,30,31,30,31,31,30,31,30,31]
+months_specie = np.repeat(np.arange(1, 13), month_len)
+
+
 HARPN_standards = ['HD4628','HD166620','HD122064','HD127334','HD144579','HD151288','HD10476']
 
 NEID_standards = ['HD4628','HD9407','HD10700','HD127334','HD185144','HD211354',

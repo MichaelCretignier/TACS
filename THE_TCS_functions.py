@@ -7,6 +7,7 @@ except:
 
 from datetime import datetime, timedelta, timezone
 
+import astropy.time as Time
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
@@ -130,6 +131,10 @@ def Fisher_std(jdb, K=1, P=100, phi=0.0, sigma=0.5):
 
 # -------- FONCTIONS -------- #
 
+def now():
+    iso_time = datetime.now(timezone.utc).isoformat()
+    return iso_time
+
 def decimal_year_to_iso(decimal_years):
     iso_times = []
     for y in decimal_years:
@@ -153,6 +158,29 @@ def julian_date(dt):
     """Convertit une datetime UTC en date julienne"""
     timestamp = dt.timestamp()
     return timestamp / 86400.0 + 2440587.5
+
+def conv_time(time):    
+    time = np.array(time)
+    if (type(time[0])==np.float64)|(type(time[0])==np.int64):
+        fmt='mjd'
+        if time[0]<2030:
+            fmt='decimalyear'
+        elif np.mean(time)<20000:
+            time+=50000
+        if fmt=='mjd':
+            t0 = time
+            t1 = np.array([Time.Time(i, format=fmt).decimalyear for i in time])
+            t2 = np.array([Time.Time(i, format=fmt).isot for i in time])
+        else:
+            t0 = np.array([Time.Time(i, format=fmt).mjd for i in time])
+            t1 = time
+            t2 = np.array([Time.Time(i, format=fmt).isot for i in time])            
+    elif type(time[0])==np.str_:
+        fmt='isot'
+        t0 = np.array([Time.Time(i, format=fmt).jd-2400000 for i in time]) 
+        t1 = np.array([Time.Time(i, format=fmt).decimalyear for i in time])
+        t2 = time  
+    return t0,t1,t2
 
 def greenwich_sidereal_time(jd):
     """Temps sidéral à Greenwich en degrés"""
