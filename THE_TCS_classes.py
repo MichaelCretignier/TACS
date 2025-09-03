@@ -1356,6 +1356,7 @@ class tcs(object):
             missing = len(np.unique(outputs.loc[outputs['feature']=='starname','starname']))
             print('\n[INFO] %.0f (%.0f%%) stars rejected from the %.0f stars in the list (%.0f stars not in GR8, %.0f rejected).\n'%(rejected,100*rejected/total,total,missing,rejected-missing))
             if plot:
+                plt.figure()
                 outputs['feature'].value_counts().plot.pie(autopct="%1.0f%%")
         
         self.info_TA_stars_missing = outputs
@@ -1430,7 +1431,7 @@ class tcs(object):
             tyr_set[tyr_set2<tyr_set] = tyr_set2[tyr_set2<tyr_set]
         tyr_set[tyr_rise>year+1] = tyr_set[tyr_rise>year+1]-1
         tyr_rise[tyr_rise>year+1] = tyr_rise[tyr_rise>year+1]-1
-        
+
         tyr_rise = tcsf.conv_time(list(tyr_rise))
         pouet
         tyr_set = tcsf.conv_time(list(tyr_set))
