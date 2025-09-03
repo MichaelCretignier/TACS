@@ -254,7 +254,7 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=50):
         plt.subplot(1,ncol,j+1) ; plt.xscale('log')
         plt.axvspan(xmin=60,xmax=400,color='g',alpha=0.2)
         plt.tick_params(labelleft=False)
-        plt.xlim(0.5,80000)
+        plt.xlim(0.5,99000)
         plt.xlabel('Period [days]',fontsize=13)
     
     db = np.sort(np.unique(db_exoplanets['PRIMARY']))
@@ -265,6 +265,7 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=50):
     summary = []
     for system in db_starname.loc[db,'GAIA']:
         plt.subplot(1,ncol,(abs(count)//nraw)+1)
+        plt.axvline(x=10*365.25,color='k',lw=0.5,ls='--')
         count-=1
         mask = np.array(db_exoplanets['GAIA']==system)
         syst = db_exoplanets.loc[mask]
@@ -277,8 +278,11 @@ def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=50):
         condition_NE = np.sum((syst['mass']>10)&(syst['mass']<=30)).astype('int')
         condition_SE = np.sum((syst['mass']<=10)).astype('int')
         condition_transit = np.sum(syst['radius']==syst['radius'])
-        if condition_transit!=0:
+        condition_imaging = np.sum(syst['method']=='Imaging')
+        if (condition_transit!=0)|(condition_imaging!=0):
             plt.arrow(0.5,count,0.2,0,color='k',head_width=0.1)
+        if condition_imaging!=0:
+            plt.arrow(0.6,count-0.25,0.0,0.5,color='k',head_width=0.1)
 
         summary.append([system,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit)])       
 
