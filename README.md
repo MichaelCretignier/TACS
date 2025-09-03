@@ -10,6 +10,7 @@ pip install -r requirements.txt
 conda create -n tcs python=3.8.8
 conda activate tcs
 pip install -r requirements.txt
+conda install pyqt
 
 [REFERENCES]
 
