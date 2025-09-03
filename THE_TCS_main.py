@@ -142,19 +142,3 @@ neid.compute_SG_calendar(
     selection='NEID_standards')
 
 neid.compute_SG_month(month=1,plot=True,selection='NEID_standards')
-
-##
-test = tcsc.tcs(sun_elevation=-12, instrument='HARPS3') #HARPS3 is the default
-
-for selection in ['GR8','presurvey']:
-    rhk1 = test.info_TA_stars_selected[selection].data['logRHK']
-    rhk2 = test.info_TA_stars_selected[selection].data['logRHK_BoroSaika+18']
-    rhk3 = test.info_TA_stars_selected[selection].data['logRHK_DACE']
-    rhk4 = test.info_TA_stars_selected[selection].data['logRHK_YARARA']
-    rhk = np.array([rhk1,rhk2,rhk3,rhk4]).T
-
-    plt.figure()
-    for n in [1,4]:
-        r = np.nanmean(rhk[:,0:n],axis=1)
-        myf.hist(r[r==r],bins=np.arange(-6,-4,0.1),label='%.0f%%(%.0f)'%(np.sum(r==r)*100/len(r),np.sum(r==r)),color='C%.0f'%(n-1))
-    plt.legend()
