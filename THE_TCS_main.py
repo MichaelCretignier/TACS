@@ -12,7 +12,11 @@ presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, tagname='presurvey') #this l
 presurvey.which_cutoff('HD166620', tagname='presurvey') #can also take cutoff={} input
 presurvey.which_cutoff('HD16160', tagname='presurvey')
 presurvey.which_cutoff('51Peg', tagname='presurvey')
- 
+
+presurvey.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], tagname='presurvey')
+presurvey.which_cutoff(tcsv.catalog_NEID['HD'], tagname='presurvey', plot=True)
+presurvey.which_cutoff(tcsv.catalog_2ES['GAIA'], tagname='presurvey',plot=True)
+
 #following the K sample
 presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, show_sample='K', tagname='dustbin')
 
@@ -124,7 +128,7 @@ star4.show_lightcurve(rm_gap=True)
 #Investigate a pre-determined star list (cross-matched with GR8)
 
 neid = tcsc.tcs(sun_elevation=-12)
-neid.create_star_selection(tcsv.NEID_catalog['HD'],tagname='NEID')
+neid.create_star_selection(tcsv.catalog_NEID['HD'],tagname='NEID')
 neid.create_star_selection(tcsv.NEID_standards,tagname='NEID_standards')
 
 neid.info_TA_stars_selected['NEID_standards'].plot(y='dec_j2000',x='ra_j2000')

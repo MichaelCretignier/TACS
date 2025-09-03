@@ -142,7 +142,7 @@ def resolve_starname(name,verbose=True):
             print(output,'\n')
         return output
     else:
-        print('[INFO] Starname %s has not been found'%(name))
+        print('[WARNING] Starname %s has not been found'%(name))
         return None
 
 def starname_resolver(stars):
@@ -1304,32 +1304,57 @@ class tcs(object):
         
         
 
-    def which_cutoff(self,starname,cutoff=None,tagname=None):
+    def which_cutoff(self,starname,cutoff=None,tagname=None,plot=False):
         if tagname is not None:
             try:
                 cutoff = self.info_TA_cutoff[tagname]
             except:
                 print('[ERROR] this tagname is not found, current list is: ',list(self.info_TA_cutoff.keys()))
-        index = resolve_starname(starname)
-        if index is not None:
-            star = gr8.loc[index['INDEX']]
+        
+        if type(starname)==str:
+            starname = [starname]
+        starname = np.array(starname)
+
+        outputs = []
+        for s in starname:
+            index = resolve_starname(s,verbose=(len(starname)==1))
             output = []
-            for kws in cutoff.keys():
-                kw = kws[:-1]
-                condition = kws[-1]
-                value = cutoff[kws]
-                if condition=='>':
-                    test = int(star[kw]>value)
-                else:
-                    test = int(star[kw]<value)
-                output.append([['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['<---',''][test]])
-            output = pd.DataFrame(output,columns=['!','feature','condition','threshold','value','test','!!'])
-            output['value'] = np.round(output['value'],2)
-            if sum(output['test']=='FALSE'):
-                print('[INFO] -- NO -- This star was rejected.\n')
+            if index is not None:
+                star = gr8.loc[index['INDEX']]
+                for kws in cutoff.keys():
+                    kw = kws[:-1]
+                    condition = kws[-1]
+                    value = cutoff[kws]
+                    if condition=='>':
+                        test = int(star[kw]>value)
+                    else:
+                        test = int(star[kw]<value)
+                    output.append([s,['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['<---',''][test]])
+                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','!!'])
+                output['value'] = np.round(output['value'],2)
+                if len(starname)==1:
+                    if sum(output['test']=='FALSE'):
+                        print('[INFO] -- NO -- %s was rejected.\n'%(s))
+                    else:
+                        print('[INFO] --YES -- %s is still selected.\n'%(s))
+                    print(output[output.columns[1:]])
             else:
-                print('[INFO] --YES -- This star is still selected.\n')
-            print(output)
+                output.append([s,'--->','starname','!=','UNFOUND',s,'FALSE','<---'])
+                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','!!'])
+            if sum(output['test']=='FALSE'):
+                outputs.append(output.loc[output['test']=='FALSE'])
+        
+        if len(starname)!=1:
+            outputs = pd.concat(outputs)
+            print(outputs)
+            rejected = len(np.unique(outputs['starname']))
+            total = len(starname)
+            missing = len(np.unique(outputs.loc[outputs['feature']=='starname','starname']))
+            print('\n[INFO] %.0f (%.0f%%) stars rejected from the %.0f stars in the list (%.0f stars not in GR8, %.0f rejected).\n'%(rejected,100*rejected/total,total,missing,rejected-missing))
+            if plot:
+                outputs['feature'].value_counts().plot.pie(autopct="%1.0f%%")
+        
+        self.info_TA_stars_missing = outputs
 
     def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""

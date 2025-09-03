@@ -19,9 +19,12 @@ NEID_standards = ['HD4628','HD9407','HD10700','HD127334','HD185144','HD211354',
 YARARA = pd.read_csv(cwd+'/TACS_Material/THE_YARARA.csv',index_col=0)
 
 NEID_Gupta_25 = pd.read_csv(cwd+'/TACS_Material/THE_NEID.csv',index_col=0)
-NEID_catalog = NEID_Gupta_25.loc[NEID_Gupta_25['Rank_NEID']>0]
+catalog_NEID = NEID_Gupta_25.loc[NEID_Gupta_25['Rank_NEID']>0]
 NEID_Gupta_25 = NEID_Gupta_25.loc[NEID_Gupta_25['nobs_NEID']!=0]
-YARARA_catalog = YARARA.loc[YARARA['nobs_DB']!=0]
+catalog_YARARA = YARARA.loc[YARARA['nobs_DB']!=0]
+
+catalog_2ES = pd.read_csv(cwd+'/TACS_Material/THE_2ES_TCS_tool.csv',index_col=0)
+catalog_2ES  = catalog_2ES.loc[catalog_2ES['Rank_2ES']>0]
 
 cutoff_presurvey = {
     'teff_mean<':6000,
@@ -32,12 +35,12 @@ cutoff_presurvey = {
     'multi_peak_GAIA<':1,
     'sky_contam_VIZIER<':0.1,
     'rv_trend_kms_DACE<':0.1,
+    'simbad_type<':0.5,
     'eff_nights_1.75>':180,
     'season_length_1.75>':240,
     'HJ<':0.5,
     'BDW<':0.5,
     'RHK<':-4.7,
-    'dist>':0,
     'gmag<':7.5,
     }
 
