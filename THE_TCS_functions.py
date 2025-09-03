@@ -5,6 +5,7 @@ try:
 except:
     matplotlib.use('Agg',force=True)
 
+import warnings
 from datetime import datetime, timedelta, timezone
 
 import astropy.time as Time
@@ -13,7 +14,15 @@ import numpy as np
 import pandas as pd
 from astropy import units as u
 from IPython import get_ipython
+from matplotlib import MatplotlibDeprecationWarning
 
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
+warnings.filterwarnings('ignore', message='ERFA function.*yielded.*')
+
+ipython = get_ipython()
+if ipython is not None:
+    ipython.magic('%matplotlib qt')
 
 def find_nearest(array,value,dist_abs=True,closest='abs'):
     if type(array)!=np.ndarray:

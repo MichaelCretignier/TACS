@@ -1430,8 +1430,9 @@ class tcs(object):
             tyr_set[tyr_set2<tyr_set] = tyr_set2[tyr_set2<tyr_set]
         tyr_set[tyr_rise>year+1] = tyr_set[tyr_rise>year+1]-1
         tyr_rise[tyr_rise>year+1] = tyr_rise[tyr_rise>year+1]-1
-
+        
         tyr_rise = tcsf.conv_time(list(tyr_rise))
+        pouet
         tyr_set = tcsf.conv_time(list(tyr_set))
         season_length = tyr_set[0]-tyr_rise[0]
 
