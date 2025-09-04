@@ -1406,18 +1406,56 @@ class tcs(object):
 
 
 
-    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False,need_help=False):
+    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False):
 
         if type(selection)==str:
             table_scheduler = self.info_TA_stars_selected[selection].data.copy()
         else:
             table_scheduler = selection.copy()
+        table_scheduler['GR8_ID'] = table_scheduler.index
 
         if tagname=='':
             tagname = '_'+selection
 
         table_scheduler = table_scheduler.sort_values(by='ra_j2000').reset_index(drop=True)
-        table_scheduler['ID_table'] = np.arange(len(table_scheduler))+1
+
+        table_scheduler['priority'] = 6
+        if ranking is not None:
+            ranking = table_scheduler[ranking]
+            table_scheduler.loc[ranking<np.nanpercentile(ranking,33),'priority'] = 3
+            table_scheduler.loc[ranking>np.nanpercentile(ranking,66),'priority'] = 9
+        else:
+            table_scheduler['priority'] = 9
+
+        table_scheduler['expN'] = 1
+
+        table_scheduler['groupEnableTime'] = np.nan
+        table_scheduler['groupDisableTime'] = np.nan
+
+        table_scheduler['schedulingMode'] = 'MONITORING'
+        table_scheduler['t0'] = 'NULL'
+        table_scheduler['period'] = 1
+        table_scheduler['delta'] = 0.3
+        table_scheduler['moonMaxFI'] = 0
+        table_scheduler['minMoonDist1'] = 5
+        table_scheduler['ifExceedsMinFI1'] = 15
+        table_scheduler['minMoonDist2'] = 0
+        table_scheduler['ifExceedsMinFI2'] = 0
+        table_scheduler['rvMoonRange'] = 10
+        table_scheduler['rvMoonMinFI'] = 0.5
+        table_scheduler['rvMoonMinAlt'] = -5
+        table_scheduler['twilight'] = -12
+        table_scheduler['maxSeeing'] = 2
+        table_scheduler['maxExtinction'] = 1.1
+        table_scheduler['maxSkyBrightness'] = 15
+        table_scheduler['minAltitude'] = 35
+        table_scheduler['acqType'] = 'OBJECT'
+        table_scheduler['GDR3_ID_number'] = table_scheduler['gaiaedr3_source_id']
+
+        if plot_ranking_priority:
+            table_scheduler = table_scheduler.sort_values(by=['priority','ra_j2000']).reset_index(drop=True)            
+        else:
+            table_scheduler = table_scheduler.sort_values(by=['ra_j2000']).reset_index(drop=True)
 
         tyr_rise = np.array(table_scheduler['tyr_rise_1.75'])-2025+year
         tyr_set = np.array(table_scheduler['tyr_set_1.75'])-2025+year
@@ -1468,39 +1506,11 @@ class tcs(object):
             warning = 1
         print('[INFO] You filled the GTO time (60%% of the telescope time) at %.0f%%'%(fraction))
         print('[INFO] You filled the effective GTO time (60%% of the telescope time + weather) at %.0f%%'%(fraction_eff))
-
-        table_scheduler['schedulingMode'] = 'MONITORING'
-        table_scheduler['t0'] = 'NULL'
-        table_scheduler['period'] = 1
-        table_scheduler['delta'] = 0.3
-        table_scheduler['moonMaxFI'] = 0
-        table_scheduler['minMoonDist1'] = 5
-        table_scheduler['ifExceedsMinFI1'] = 15
-        table_scheduler['minMoonDist2'] = 0
-        table_scheduler['ifExceedsMinFI2'] = 0
-        table_scheduler['rvMoonRange'] = 10
-        table_scheduler['rvMoonMinFI'] = 0.5
-        table_scheduler['rvMoonMinAlt'] = -5
-        table_scheduler['twilight'] = -12
-        table_scheduler['maxSeeing'] = 2
-        table_scheduler['maxExtinction'] = 1.1
-        table_scheduler['maxSkyBrightness'] = 15
-        table_scheduler['minAltitude'] = 35
-        table_scheduler['acqType'] = 'OBJECT'
-        table_scheduler['GDR3_ID_number'] = table_scheduler['gaiaedr3_source_id']
         
-        table_scheduler['priority'] = 6
-        if ranking is not None:
-            ranking = table_scheduler[ranking]
-            table_scheduler.loc[ranking<np.nanpercentile(ranking,33),'priority'] = 3
-            table_scheduler.loc[ranking>np.nanpercentile(ranking,66),'priority'] = 9
+        if plot_real_ID:
+            table_scheduler['ID_table'] = table_scheduler['GR8_ID']           
         else:
-            table_scheduler['priority'] = 9
-
-        table_scheduler['expN'] = 1
-
-        table_scheduler['groupEnableTime'] = np.nan
-        table_scheduler['groupDisableTime'] = np.nan
+            table_scheduler['ID_table'] = np.arange(len(table_scheduler))+1
 
         table_scheduler2 = table_scheduler.copy()
         for n in range(len(table_scheduler)):
@@ -1525,10 +1535,8 @@ class tcs(object):
 
         table_scheduler_final = pd.concat([table_scheduler,table_scheduler2],axis=0)
         table_scheduler_final = table_scheduler_final.loc[table_scheduler_final['obsN']!=0]
-        if plot_ranking_priority:
-            table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).sort_values(by=['priority','ra_j2000']).reset_index(drop=True)            
-        else:
-            table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).sort_values(by=['ra_j2000']).reset_index(drop=True)
+
+        table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).reset_index(drop=True) 
 
         variables = ['priority','GDR3_ID_number','expTime','expN','obsN','groupEnableTime','groupDisableTime',
                      'acqType','schedulingMode','t0','period','delta',
