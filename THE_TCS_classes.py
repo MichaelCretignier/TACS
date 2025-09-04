@@ -1406,7 +1406,7 @@ class tcs(object):
 
 
 
-    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', need_help=False):
+    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False,need_help=False):
 
         if type(selection)==str:
             table_scheduler = self.info_TA_stars_selected[selection].data.copy()
@@ -1433,7 +1433,6 @@ class tcs(object):
         tyr_rise[tyr_rise>year+1] = tyr_rise[tyr_rise>year+1]-1
 
         tyr_rise = tcsf.conv_time(list(tyr_rise))
-        pouet
         tyr_set = tcsf.conv_time(list(tyr_set))
         season_length = tyr_set[0]-tyr_rise[0]
 
@@ -1526,7 +1525,10 @@ class tcs(object):
 
         table_scheduler_final = pd.concat([table_scheduler,table_scheduler2],axis=0)
         table_scheduler_final = table_scheduler_final.loc[table_scheduler_final['obsN']!=0]
-        table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).sort_values(by='ra_j2000').reset_index(drop=True)
+        if plot_ranking_priority:
+            table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).sort_values(by=['priority','ra_j2000']).reset_index(drop=True)            
+        else:
+            table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).sort_values(by=['ra_j2000']).reset_index(drop=True)
 
         variables = ['priority','GDR3_ID_number','expTime','expN','obsN','groupEnableTime','groupDisableTime',
                      'acqType','schedulingMode','t0','period','delta',
