@@ -18,9 +18,9 @@ GR8 Master table containing atmospheric parameters were obtained as described in
 [ADS] https://ui.adsabs.harvard.edu/abs/2025MNRAS.540.1786F/abstract
 
 If you're a member of THE
-Download in the TACS Google Drive repository the full tables:
-	1) THE_Master_table.csv
-	2) THE_DACE.csv
+Download in the TACS Google Drive repository the full tables: \
+	1) THE_Master_table.csv \
+	2) THE_DACE.csv \
 	3) THE_YARARA.csv
 
 The computation of the RV budget is made using:
