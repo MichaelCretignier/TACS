@@ -3,13 +3,13 @@
 python3 -m venv tcs \
 source tcs/bin/activate \
 pip install --upgrade pip \
-pip install -r requirements.txt \
+pip install -r requirements.txt
 
 [INSTALL by CONDA]
 
 conda create -n tcs python=3.8.8 \
 conda activate tcs \
-pip install -r requirements.txt \
+pip install -r requirements.txt
 
 [REFERENCES]
 
