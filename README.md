@@ -15,6 +15,9 @@ source tcs/bin/activate \
 pip install --upgrade pip \
 pip install -r requirements.txt
 
+[IMPORTANT]
+
+THE members should download the Master_table_v2.0.csv on the Google drive
 
 [REFERENCES]
 
