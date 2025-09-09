@@ -12,21 +12,12 @@ import THE_TCS_variables as tcsv
 
 print("""\n[INFO USER] READ ME CAREFULLY 
 [INFO USER] The RUWE is currently disabled for stars brighter than mv<5 
-[INFO USER] Atmospheric parameters are still in validation phase.
 [INFO USER] An issue or an upgrade? Contact me at:  michael.cretignier@physics.ox.ac.uk
       """)
 
 cwd = os.getcwd()
 
-Teff_var = 'teff_mean'
-
-gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table.csv',index_col=0)
-gr8 = gr8_raw.copy()
-
-if len(gr8)==1112:
-    print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE members\n')
-else:
-    print('[INFO USER] You are using the [PUBLIC] version of the code. If you are THE member, read the README.\n')
+Teff_var = 'teff'
 
 db_starname = pd.read_csv(cwd+'/TACS_Material/THE_SIMBAD.csv',index_col=0)
 table_time = pd.read_csv(cwd+'/TACS_Material/time_conversion.csv',index_col=0)
@@ -59,36 +50,51 @@ db_exoplanets = db_exoplanets.sort_values(by='PRIMARY').reset_index(drop=True)
 db_tess_candidates = pd.read_csv(cwd+'/TACS_Material/TESS_candidates.csv',index_col=0)
 db_exoplanets = db_exoplanets.merge(db_tess_candidates,how='outer')
 
-#GR8 TABLE FORMATION
+def produce_gr8(version='2.0',verbose=True):
+    #GR8 TABLE FORMATION
 
-gr8['dist'] = 1000/gr8['parallax']
-gr8.loc[gr8['VSINI']>30,'VSINI'] = 30
-gr8['VSINI_known'] = np.array(gr8['VSINI'])
-gr8.loc[gr8['VSINI_known']!=gr8['VSINI_known'],'VSINI_known'] = 30
-gr8.loc[gr8['VSINI']!=gr8['VSINI'],'VSINI'] = 0.0
+    gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table_v'+version+'.csv',index_col=0)
+    gr8 = gr8_raw.copy()
 
-gr8['RHK_known'] = np.array(gr8['RHK'])
-gr8.loc[gr8['RHK_known']!=gr8['RHK_known'],'RHK_known'] = -4.0
-gr8.loc[gr8['RHK']!=gr8['RHK'],'RHK'] = -6.0
+    if verbose:
+        if len(gr8)==1112:
+            print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE members\n')
+        else:
+            print('[INFO USER] You are using the [PUBLIC] version of the code. If you are THE member, read the README.\n')
 
-gr8['HWO'] = 0
-gr8.loc[(gr8[Teff_var]>5300)&(gr8[Teff_var]<6000)&(gr8['dist']<20),'HWO'] = 1
-gr8.loc[(gr8[Teff_var]>4500)&(gr8[Teff_var]<5300)&(gr8['dist']<12),'HWO'] = 1
-gr8.loc[(gr8[Teff_var]<4500)&(gr8[Teff_var]<5300)&(gr8['dist']<5),'HWO'] = 1
+    gr8['vsini_known'] = np.array(gr8['vsini'])
+    gr8.loc[gr8['vsini_known']!=gr8['vsini_known'],'vsini_known'] = 30
+    gr8.loc[gr8['vsini']!=gr8['vsini'],'vsini'] = 0.0
 
-#based on Andreas comment, would be better to check RVs databases drift
-gr8.loc[gr8['logg']<3.5,'logg'] = 3.5
-gr8.loc[gr8['vmag']<5,'ruwe_GAIA'] = 0.1
-gr8.loc[gr8['ruwe_GAIA']>4,'ruwe_GAIA'] = 4
-gr8.loc[gr8['rv_trend_kms_DACE']>1,'rv_trend_kms_DACE'] = 1
-gr8.loc[gr8['sky_contam_VIZIER']>1,'sky_contam_VIZIER'] = 1
-gr8.loc[gr8['multi_peak_GAIA']>10,'multi_peak_GAIA'] = 10
+    gr8['logRHK_known'] = np.array(gr8['logRHK'])
+    gr8.loc[gr8['logRHK_known']!=gr8['logRHK_known'],'logRHK_known'] = -4.0
+    gr8.loc[gr8['logRHK']!=gr8['logRHK'],'logRHK'] = -6.0
 
-gr8['SPclass'] = '-'
-gr8.loc[(gr8[Teff_var]>6000),'SPclass'] = 'F'
-gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<6000),'SPclass'] = 'S'
-gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<5600),'SPclass'] = 'G'
-gr8.loc[(gr8[Teff_var]<5200),'SPclass'] = 'K'
+    gr8['HWO'] = 0
+    gr8.loc[(gr8[Teff_var]>5300)&(gr8[Teff_var]<6000)&(gr8['distance']<20),'HWO'] = 1
+    gr8.loc[(gr8[Teff_var]>4500)&(gr8[Teff_var]<5300)&(gr8['distance']<12),'HWO'] = 1
+    gr8.loc[(gr8[Teff_var]<4500)&(gr8[Teff_var]<5300)&(gr8['distance']<5),'HWO'] = 1
+
+    #based on Andreas comment, would be better to check RVs databases drift
+    gr8.loc[gr8['logg']<3.5,'logg'] = 3.5
+    gr8.loc[gr8['vmag']<5,'ruwe_GAIA'] = 0.1
+    gr8.loc[gr8['ruwe_GAIA']>4,'ruwe_GAIA'] = 4
+    gr8.loc[gr8['rv_trend_kms_DACE']>1,'rv_trend_kms_DACE'] = 1
+    gr8.loc[gr8['sky_contam_VIZIER']>1,'sky_contam_VIZIER'] = 1
+    gr8.loc[gr8['multi_peak_GAIA']>10,'multi_peak_GAIA'] = 10
+
+    gr8['SPclass'] = '-'
+    gr8.loc[(gr8[Teff_var]>6000),'SPclass'] = 'F'
+    gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<6000),'SPclass'] = 'S'
+    gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<5600),'SPclass'] = 'G'
+    gr8.loc[(gr8[Teff_var]<5200),'SPclass'] = 'K'
+    return gr8, gr8_raw
+
+v1 = produce_gr8('1.0')
+v2 = produce_gr8('2.0',verbose=False)
+
+gr8 = {'1.0':v1[0],'2.0':v2[0]}
+gr8_raw = {'1.0':v1[1],'2.0':v2[1]}
 
 #FUNCTIONS
 
@@ -163,6 +169,17 @@ def starname_resolver(stars):
     names[flag!=flag] = np.nan
     return names
 
+def create_gr8like(table,name_col,gr8_column='HD'):
+    table = table.dropna(subset=[name_col]).reset_index(drop=True)
+    match = starname_resolver(table[name_col])
+    table[gr8_column] = np.array(match[gr8_column])
+    table = table.dropna(subset=[gr8_column])
+    table = table.drop_duplicates(subset=[gr8_column])
+    stat_after = len(table)
+    output = pd.merge(left=db_starname,right=table,on=gr8_column,how='left')
+    print('%.0f stars matched from the 1112 GR8 initial list'%(stat_after))
+    return output
+
 def inner_gr8(list_names):
     inner = []
     for s in list_names:
@@ -172,7 +189,7 @@ def inner_gr8(list_names):
     return inner
 
 def get_starname(entry):
-    gaia_ID = np.where(db_starname['GAIA']=='Gaia DR3 '+str(entry['gaiaedr3_source_id']))[0]
+    gaia_ID = np.where(db_starname['GAIA']==entry['GAIA'])[0]
     selected = db_starname.loc[gaia_ID]
     for order in ['HD','HIP','GJ','CSTL','PRIMARY']:
         if selected[order].values[0]!='-':
@@ -182,14 +199,10 @@ def get_starname(entry):
 def star_info(entry, format='v1'):
     name, ID = get_starname(entry)
     if format=='v1':
-        info = ' ID : %.0f \n Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f   FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['ruwe'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
+        info = ' ID : %.0f \n Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f   FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     else:
-        info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['Vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['MIST logg'], entry['Fe/H'], entry['RHK'], entry['vsini'], entry['ruwe'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
+        info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
-
-def get_star_info(starname):
-    index = resolve_starname(starname)['INDEX']
-    print(star_info(gr8.loc[index]))
 
 def plot_TESS_CVZ():
     theta = np.linspace(0,2*np.pi,100)
@@ -224,15 +237,17 @@ def plot_exoplanets(y_var='k'):
     plt.subplots_adjust(left=0.10,right=0.95)
     return fig 
 
-def plot_exoplanets2(cutoff={'MIST Teff<':6000},mcrit_sup=4000,mcrit_inf=50):
-    table_gr8 = gr8.copy() 
+def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50):
+    
+    table_gr8 = selection.copy()
+    
     for kw in cutoff.keys():
         if kw[-1]=='<':
             table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]<cutoff[kw]]
         else:
             table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]>cutoff[kw]]
 
-    selected = np.in1d(np.array([i.split(' ')[-1] for i in np.array(db_exoplanets['GAIA'])]),np.array(table_gr8['gaiaedr3_source_id']))
+    selected = np.in1d(np.array(db_exoplanets['GAIA']),np.array(table_gr8['GAIA']))
     db_exoplanets['pre_survey'] = selected.astype('int')
 
     fig = plt.figure(figsize=(18,12))
@@ -359,7 +374,7 @@ class tableXY(object):
             for j,t in zip(tcsv.month_border,['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']):
                 plt.axvline(x=j,color='k',ls='-',alpha=0.5)
                 plt.axvline(x=j,color='white',ls=':')
-                plt.text(j-15,ytext,t,color='k',ha='center')
+                plt.text(j+15,ytext,t,color='k',ha='center')
             plt.xlim(0,365)
 
     def create_subset(self,subset):
@@ -442,7 +457,7 @@ class table_star(object):
     def print_columns(self):
         print(list(self.data.keys()))
 
-    def plot(self, x, y, c=None, s=None, print_names=False, GUI=True):
+    def plot(self, x, y, c=None, s=None, print_names=False, GUI=True, alpha=1.0):
         
         if GUI:
             fig = plt.figure(figsize=(10,10))
@@ -454,10 +469,10 @@ class table_star(object):
         if c is None:
             for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
                 mask3 = np.array((dataframe[Teff_var]>t1)&(dataframe[Teff_var]<=t2))
-                plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30,zorder=10)   
+                plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30,zorder=10,alpha=alpha)   
         else:
             if len(c)<3:
-                plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1)   
+                plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1, alpha=alpha)   
 
         if print_names:
             index = np.array(list(dataframe.index))
@@ -502,7 +517,7 @@ class table_star(object):
 
 class tcs(object):
     
-    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast'):    
+    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version='2.0'):    
         self.info_XY_telescope_open = []
         self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
@@ -510,10 +525,18 @@ class tcs(object):
         self.simu_tag_survey = ''
         self.info_SC_starname = None
         self.info_SC_instrument = instrument
-        self.info_TA_stars_selected = {'GR8':table_star(gr8)}
+
+        self.info_TA_stars_selected = {
+            'GR8':table_star(gr8[version])}
+        
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['presurvey'] = tcsv.cutoff_presurvey
+        self.info_TA_cutoff['minimal'] = tcsv.cutoff_minimal
+
+        self.func_cutoff(tagname='minimal',cutoff=tcsv.cutoff_minimal, verbose=False)
+        plt.close('cumulative')
+
         self.func_cutoff(tagname='presurvey',cutoff=tcsv.cutoff_presurvey, verbose=False)
         plt.close('cumulative')
 
@@ -539,6 +562,7 @@ class tcs(object):
         return ins_noise
     
     def create_star_selection(self,starnames,tagname='my_selection'):
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         if type(starnames) is not list:
                 starnames = list(starnames)
         gaia_names = []
@@ -547,8 +571,7 @@ class tcs(object):
             if output is not None:
                 gaia_names.append(output['GAIA'])
         gaia_names = np.array(gaia_names)
-        gaia_names = np.array([int(i.split(' ')[-1]) for i in gaia_names])
-        mask_star = np.in1d(np.array(gr8['gaiaedr3_source_id']),gaia_names)
+        mask_star = np.in1d(np.array(gr8['GAIA']),gaia_names)
         self.info_TA_stars_selected[tagname] = table_star(gr8.loc[mask_star])
     
 
@@ -584,16 +607,18 @@ class tcs(object):
         self.info_XY_telescope_open.append(tableXY(y=output,xlabel='Nights [days]',ylabel='Telescope open'))
 
     def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True,method='fast'):
+        "ra in hours, dec in degree"
         self.info_TA_starnames = None
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         if id is not None:
-            starname = gr8.iloc[id]['primary_name']
+            starname = gr8.iloc[id]['PRIMARY']
 
         if starname is not None:
             starname = resolve_starname(starname,verbose)
             self.info_TA_starnames = starname
             if starname is not None:
-                ra = np.array(gr8.loc[gr8['primary_name']==starname['PRIMARY'],'ra_j2000'])[0]/360*24
-                dec = np.array(gr8.loc[gr8['primary_name']==starname['PRIMARY'],'dec_j2000'])[0]
+                ra = np.array(gr8.loc[gr8['PRIMARY']==starname['PRIMARY'],'ra_j2000'])[0]/360*24
+                dec = np.array(gr8.loc[gr8['PRIMARY']==starname['PRIMARY'],'dec_j2000'])[0]
             else:
                 print('[ERROR] STARNAME NOT FOUND')
         self.info_SC_ra = ra
@@ -691,16 +716,8 @@ class tcs(object):
             xlabel='Nights [days]',
             ylabel='Visible'
             ) #15-min exposure
-        self.info_XY_night_duration = []
-        for t in total_map.T:
-            loc = np.where(t==1)[0]
-            if len(loc):
-                duration = (np.max(loc)-np.min(loc))*24/1441
-            else:
-                duration = 0
-            self.info_XY_night_duration.append(duration)
         self.info_XY_night_duration = tableXY(
-            y = np.array(self.info_XY_night_duration),
+            y = np.sum(total_map,axis=0)/60,
             xlabel='Nights [days]',
             ylabel='Night duration [hours]'
             )
@@ -786,6 +803,8 @@ class tcs(object):
             cutoff=None,
             selection='presurvey'):
         
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
+
         if selection is not None:
             table_gr8 = self.info_TA_stars_selected[selection].data
             self.info_TA_cutoff['SG'] = cutoff
@@ -794,7 +813,7 @@ class tcs(object):
             if cutoff is None:
                 cutoff = self.info_TA_cutoff['presurvey']
             
-            table_gr8 = gr8.copy() 
+            table_gr8 = self.info_TA_stars_selected['GR8'].data.copy()
             for kw in cutoff.keys():
                 if kw[-1]=='<':
                     table_gr8 = table_gr8.loc[table_gr8[kw[:-1]]<cutoff[kw]]
@@ -841,7 +860,7 @@ class tcs(object):
             params,output,RA,DEC = self.simu_SG_calendar['outputs']
         
         print('[INFO] Producing Calendar plot... Wait...')
-        fig = plt.figure(figsize=(18,12))
+        fig = plt.figure(figsize=(16,10))
         fig.suptitle('Sun elevation = %.0f | Airmass max = %.2f'%(sun_elevation,airmass_max))
         plt.subplots_adjust(left=0.05,right=0.98,top=0.94,bottom=0.05,hspace=0.30,wspace=0.30)
 
@@ -857,10 +876,10 @@ class tcs(object):
             plt.ylim(-30,90)
             plt.xlabel('RA [hours]')
             plt.ylabel('Dec [deg]')
-            plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
-            plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['Vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
-            plt.scatter(table_gr8['ra_j2000']/360*24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
-            plt.scatter(table_gr8['ra_j2000']/360*24+24,table_gr8['dec_j2000'],s=(7.5-table_gr8['Vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
+            plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
+            plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
+            plt.scatter(table_gr8['ra_j2000']/360*24,table_gr8['dec_j2000'],s=(7.5-table_gr8['vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
+            plt.scatter(table_gr8['ra_j2000']/360*24+24,table_gr8['dec_j2000'],s=(7.5-table_gr8['vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
             plot_TESS_CVZ()
             plot_KEPLER_CVZ()
 
@@ -874,9 +893,10 @@ class tcs(object):
         dec = np.ravel(DEC)
 
         month_tag = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][month-1]
+        gr8 = self.info_TA_stars_selected['GR8'].data
 
         #add the info column
-        for selections in ['presurvey',selection]:
+        for selections in ['presurvey','minimal',selection]:
             table = self.info_TA_stars_selected[selections].data
             dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
             loc = np.argmin(dist,axis=0)
@@ -932,7 +952,7 @@ class tcs(object):
 
     def plot_exoplanets_db(self,y_var='k'):
         fig = plot_exoplanets(y_var=y_var)
-
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         gaia_name = self.info_TA_starnames['GAIA']
         found = np.where(np.array(db_exoplanets['GAIA'])==gaia_name)[0]
         if len(found):
@@ -1080,7 +1100,7 @@ class tcs(object):
             sig_rv=100
         
         if selection is None:
-            selection = gr8.copy()    
+            selection = self.info_TA_stars_selected['GR8'].data.copy()
         else:
             selection = self.info_TA_stars_selected[selection].data
 
@@ -1154,9 +1174,9 @@ class tcs(object):
         
 
     def plot_survey_snr_texp(self, selection=None, texp=None, snr_crit=250, sig_rv_crit=0.30, budget='_phot'):
-        
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         if selection is None:
-            selection = gr8.copy()
+            selection = self.info_TA_stars_selected['GR8'].data.copy()
         else:
             selection = self.info_TA_stars_selected[selection].data
 
@@ -1305,10 +1325,9 @@ class tcs(object):
                 plt.xlabel('Texp [min]')
                 plt.xlim(4,30)
                 self.info_XY_survey_stat = tableXY(x=ti,y=nb_hours*60/((ti+overhead)*Nb_obs_per_year))
-        
-        
 
     def which_cutoff(self,starname,cutoff=None,tagname=None,plot=False):
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         if tagname is not None:
             try:
                 cutoff = self.info_TA_cutoff[tagname]
@@ -1348,6 +1367,7 @@ class tcs(object):
             if sum(output['test']=='FALSE'):
                 outputs.append(output.loc[output['test']=='FALSE'])
         
+        pd.set_option("display.max_rows", None)
         if len(starname)!=1:
             outputs = pd.concat(outputs)
             print(outputs)
@@ -1358,12 +1378,13 @@ class tcs(object):
             if plot:
                 plt.figure()
                 outputs['feature'].value_counts().plot.pie(autopct="%1.0f%%")
-        
+        pd.reset_option("display.max_rows")
+
         self.info_TA_stars_missing = outputs
 
-    def func_cutoff(self, tagname='handmade', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None):
+    def func_cutoff(self, tagname='handmade', tagname_fig='', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""
-        GR8 = gr8.copy()
+        GR8 = self.info_TA_stars_selected['GR8'].data.copy()
         if show_sample is not None:
             GR8 = GR8.loc[GR8['SPclass']==show_sample]
 
@@ -1388,7 +1409,6 @@ class tcs(object):
                 sig_rv = sig_rv_texp15/(np.sqrt(texp/15))
                 GR8[c[:-1]] = sig_rv
 
-        tagname_fig=''
         if par_space!='':
             tagname_fig = par_space
         if par_box[0]!='':
@@ -1450,7 +1470,7 @@ class tcs(object):
         table_scheduler['maxSkyBrightness'] = 15
         table_scheduler['minAltitude'] = 35
         table_scheduler['acqType'] = 'OBJECT'
-        table_scheduler['GDR3_ID_number'] = table_scheduler['gaiaedr3_source_id']
+        table_scheduler['GDR3_ID_number'] = np.array([i.split(' ')[-1] for i in table_scheduler['GAIA']])
 
         if plot_ranking_priority:
             table_scheduler = table_scheduler.sort_values(by=['priority','ra_j2000']).reset_index(drop=True)            
@@ -1527,7 +1547,7 @@ class tcs(object):
                 table_scheduler.loc[n,'obsN'] = int(f2*table_scheduler.loc[n,'obsN'])
 
                 table_scheduler2.loc[n,'groupEnableTime'] = tyr_rise[2][n]
-                table_scheduler2.loc[n,'groupDisableTime'] = '%.0f-12-31T00:00:00.000'%(year)
+                table_scheduler2.loc[n,'groupDisableTime'] = '%.0f-12-31T23:59:00.000'%(year)
                 table_scheduler2.loc[n,'obsN'] = table_scheduler2.loc[n,'obsN'] - table_scheduler.loc[n,'obsN']
             else:
                 table_scheduler.loc[n,'groupEnableTime'] = tyr_rise[2][n]

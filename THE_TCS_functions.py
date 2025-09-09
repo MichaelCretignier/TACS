@@ -347,16 +347,17 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
             plt.figure('para'+tagname,figsize=(18,4*nb_rows))
             plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.93,bottom=0.08,left=0.08,right=0.95)
         plt.show()
-    table2 = table2.sort_values(by='HZ_mp_min_osc+gr_texp15')
+    ranking = 'HZ_mp_min_osc+gr_texp15'
+    table2 = table2.sort_values(by=ranking)
     
     
     #printable table
-    print_table = table2[0:30][['ra_j2000','dec_j2000','primary_name','vmag','eff_nights_1.5','dist','teff_mean','HZ_mp_min_osc+gr_texp15']]
+    print_table = table2[0:30][['ra_j2000','dec_j2000','PRIMARY','vmag','eff_nights_1.5','distance','teff',ranking]]
     print_table['vmag'] = np.round(print_table['vmag'],2)
-    print_table['dist'] = np.round(print_table['dist'],1)
+    print_table['distance'] = np.round(print_table['distance'],1)
     print_table['eff_nights_1.5'] = (np.round(print_table['eff_nights_1.5'],0)).astype('int')
-    print_table['teff_mean'] = (np.round(print_table['teff_mean'],0)).astype('int')
-    print_table['HZ_mp_min_osc+gr_texp15'] = np.round(print_table['HZ_mp_min_osc+gr_texp15'],2)
+    print_table['teff'] = (np.round(print_table['teff'],0)).astype('int')
+    print_table[ranking] = np.round(print_table[ranking],2)
         
     if verbose:
         print('\n[INFO] %.0f stars in the final sample'%(len(table2)))

@@ -9,35 +9,20 @@ import THE_TCS_variables as tcsv
 
 tutorial = tcsc.tcs(sun_elevation=-12) 
 
-#let's start with rough cutoff physically motivated
+# let's compute the average season length of the presurvey
 
-tutorial.func_cutoff(tagname='start',cutoff={
-    'teff_mean<': 6000,
-    'logg>': 4.2,
-    'vsini<': 8,
-    'Fe/H>': -0.4,
-    'log_ruwe<':0.079,
-    'HJ<': 0.5,
-    'BDW<': 0.5,
-    'RHK<': -4.7,
-    'gmag<':7.5,
-    'HZ_mp_min_osc+gr_texp15>':0
-    }) # produce 250 stars in the pre-survey
-
-# let's compute the average season length of this sample
-
-min_obs_per_year = np.mean(tutorial.info_TA_stars_selected['start'].data['season_length_1.5']) 
+min_obs_per_year = np.mean(tutorial.info_TA_stars_selected['presurvey'].data['season_length_1.5']) 
 
 # let's assume we want at least 1 observation 1 night over 2
 
-print(min_obs_per_year*0.5) #this is equal to 120 measurement per year
+print(min_obs_per_year*0.5) #this is equal to 130 measurement per year
 
-# let's have a look on what is the exposure time to get 120 measurement for the final sample (~40 stars)
+# let's have a look on what is the exposure time to get 130 measurement for the final sample (~40 stars)
 
 tutorial.plot_survey_stars(Nb_star=40) 
 
-#to get 120 measurement per year (1 night over 2), texp_max = 20 minutes
-#to get 240 measurement per year (every night), texp_max = 10 minutes
+#to get 130 measurements per year (1 night over 2), texp_max = 18 minutes
+#to get 260 measurements per year (every night), texp_max = 9 minutes
 
 tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_phot', selection='start')
 tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='start')
@@ -63,7 +48,7 @@ tutorial.func_cutoff(tagname='final',
 
 tutorial.func_cutoff(
     cutoff=tutorial.info_TA_cutoff['final'],
-    par_space='teff_mean&snr_C22_texp15')
+    par_space='teff&snr_C22_texp15')
 
 tutorial.plot_survey_stars(Nb_star=76) 
 
@@ -75,14 +60,14 @@ tutorial.plot_survey_stars(Nb_star=76)
 
 plt.figure(figsize=(18,8))
 plt.subplot(1,2,1)
-plt.scatter(tcsc.gr8_raw['snr_C22_texp15'],tcsc.gr8_raw['ruwe'],c=tcsc.gr8_raw['teff_mean'],cmap='jet',vmin=5000,vmax=6000) ; plt.colorbar()
+plt.scatter(tcsc.gr8_raw['snr_C22_texp15'],tcsc.gr8_raw['ruwe'],c=tcsc.gr8_raw['teff'],cmap='jet',vmin=5000,vmax=6000) ; plt.colorbar()
 plt.axhline(y=1.2,color='k',ls=':')
 plt.yscale('log')
 plt.ylabel('RUWE')
 plt.xlabel('SNR_continuum')
 plt.grid()
 plt.subplot(1,2,2)
-plt.scatter(tcsc.gr8_raw['vmag'],tcsc.gr8_raw['ruwe'],c=tcsc.gr8_raw['teff_mean'],cmap='jet',vmin=5000,vmax=6000) ; plt.colorbar()
+plt.scatter(tcsc.gr8_raw['vmag'],tcsc.gr8_raw['ruwe'],c=tcsc.gr8_raw['teff'],cmap='jet',vmin=5000,vmax=6000) ; plt.colorbar()
 plt.axhline(y=1.2,color='k',ls=':')
 plt.yscale('log')
 plt.ylabel('RUWE')
@@ -93,28 +78,16 @@ plt.grid()
 # How long would it take to observe all the pre-survey to extract homogeneous RHK, vsini?
 
 tutorial = tcsc.tcs(sun_elevation=-6) 
-tutorial.func_cutoff(tagname='start',cutoff={
-    'teff_mean<': 6000,
-    'logg>': 4.2,
-    'vsini<': 8,
-    'Fe/H>': -0.4,
-    'log_ruwe<':0.079,
-    'HJ<': 0.5,
-    'BDW<': 0.5,
-    'RHK<': -4.7,
-    'gmag<':7.5,
-    'HZ_mp_min_osc+gr_texp15>':0
-    }) # produce 250 stars in the pre-survey
 
 tutorial.plot_survey_stars(Texp=10)
 
-# by assuming a PRE-pre-survey of ~250 stars, it takes 365/25 = ~15 days
+# by assuming a PRE-pre-survey of ~150 stars, it takes 365/25 = ~15 days
 # in two weeks, we could have homogeneous Atmos + LOGRHK + vsini
 # confirmation by a more mathematical compoutation
 
-tutorial.compute_nb_nights_required(selection='start', texp=10,month=1)
+tutorial.compute_nb_nights_required(selection='presurvey', texp=10,month=1)
 tutorial.compute_optimal_texp(snr=250, sig_rv=0.00, budget='_phot', texp_crit=20, selection='start')
-tutorial.compute_nb_nights_required(selection='start',texp='optimal',month=1)
+tutorial.compute_nb_nights_required(selection='presurvey',texp='optimal',month=1)
 
 # 3 
 # Checking of the overlap between the selection of the TaCS members
@@ -139,4 +112,20 @@ for j in range(1,9):
     loc = np.where(statistic==j)[0][-1]
     plt.scatter(loc,j,color='k')
     plt.text(loc,j,'%.0f'%(loc),ha='center',va='bottom')
+
+#4 some peculiar population to check:
+
+tutorial = tcsc.tcs(sun_elevation=-12) 
+
+dust = tutorial.func_cutoff(tagname='bright',cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2,'vsini<':5})
+bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
+tutorial.which_cutoff(bright[0], tagname='presurvey')
+
+dust = tutorial.func_cutoff(tagname='TESS',cutoff={'TESS>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5})
+tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
+tutorial.which_cutoff(tess[0], tagname='presurvey')
+
+dust = tutorial.func_cutoff(tagname='HWO',cutoff={'HWO>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5})
+hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
+tutorial.which_cutoff(hwo[0], tagname='presurvey')
 

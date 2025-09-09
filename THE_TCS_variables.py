@@ -26,11 +26,13 @@ catalog_YARARA = YARARA.loc[YARARA['nobs_DB']!=0]
 catalog_2ES = pd.read_csv(cwd+'/TACS_Material/THE_2ES_TCS_tool.csv',index_col=0)
 catalog_2ES  = catalog_2ES.loc[catalog_2ES['Rank_2ES']>0]
 
+catalog_GR8 = pd.read_csv(cwd+'/TACS_Material/THE_Master_table_v2.0.csv',index_col=0)
+
 cutoff_presurvey = {
-    'teff_mean<':6000,
+    'teff<':6000,
     'logg>':4.2,
-    'VSINI<':5,
-    'Fe/H>':-0.4,
+    'vsini<':5,
+    'feh>':-0.4,
     'ruwe_GAIA<':1.2,
     'multi_peak_GAIA<':1,
     'sky_contam_VIZIER<':0.1,
@@ -40,7 +42,16 @@ cutoff_presurvey = {
     'season_length_1.75>':240,
     'HJ<':0.5,
     'BDW<':0.5,
-    'RHK<':-4.7,
+    'logRHK<':-4.7,
+    'gmag<':7.5,
+    }
+
+cutoff_minimal = {
+    'teff<':6000,
+    'logg>':4.2,
+    'vsini<':5,
+    'sky_contam_VIZIER<':0.1,
+    'season_length_1.75>':180,
     'gmag<':7.5,
     }
 
