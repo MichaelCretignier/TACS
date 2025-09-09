@@ -70,11 +70,6 @@ def produce_gr8(version='2.0',verbose=True):
     gr8.loc[gr8['logRHK_known']!=gr8['logRHK_known'],'logRHK_known'] = -4.0
     gr8.loc[gr8['logRHK']!=gr8['logRHK'],'logRHK'] = -6.0
 
-    gr8['HWO'] = 0
-    gr8.loc[(gr8[Teff_var]>5300)&(gr8[Teff_var]<6000)&(gr8['distance']<20),'HWO'] = 1
-    gr8.loc[(gr8[Teff_var]>4500)&(gr8[Teff_var]<5300)&(gr8['distance']<12),'HWO'] = 1
-    gr8.loc[(gr8[Teff_var]<4500)&(gr8[Teff_var]<5300)&(gr8['distance']<5),'HWO'] = 1
-
     #based on Andreas comment, would be better to check RVs databases drift
     gr8.loc[gr8['logg']<3.5,'logg'] = 3.5
     gr8.loc[gr8['vmag']<5,'ruwe_GAIA'] = 0.1
@@ -82,6 +77,9 @@ def produce_gr8(version='2.0',verbose=True):
     gr8.loc[gr8['rv_trend_kms_DACE']>1,'rv_trend_kms_DACE'] = 1
     gr8.loc[gr8['sky_contam_VIZIER']>1,'sky_contam_VIZIER'] = 1
     gr8.loc[gr8['multi_peak_GAIA']>10,'multi_peak_GAIA'] = 10
+
+    gr8.loc[gr8['HWO']==1,'ruwe_GAIA'] = 0.0
+    gr8.loc[gr8['HWO']==1,'rv_trend_kms_DACE'] = 0.0
 
     gr8['SPclass'] = '-'
     gr8.loc[(gr8[Teff_var]>6000),'SPclass'] = 'F'
@@ -99,9 +97,10 @@ gr8_raw = {'1.0':v1[1],'2.0':v2[1]}
 #FUNCTIONS
 
 def mod_cutoff(cutoff,new_cutoff):
+    cutoff2 = cutoff.copy()
     for kw in new_cutoff:
-        cutoff[kw] = new_cutoff[kw]
-    return cutoff
+        cutoff2[kw] = new_cutoff[kw]
+    return cutoff2
 
 def auto_format(values):
     maxi = np.nanmax(values)

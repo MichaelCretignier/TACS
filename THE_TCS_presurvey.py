@@ -117,15 +117,19 @@ for j in range(1,9):
 
 tutorial = tcsc.tcs(sun_elevation=-12) 
 
-dust = tutorial.func_cutoff(tagname='bright',cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2,'vsini<':5})
+#23 over 28 rejected
+dust = tutorial.func_cutoff(tagname='bright',cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
 bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
+tutorial.which_cutoff(bright, tagname='presurvey')
 tutorial.which_cutoff(bright[0], tagname='presurvey')
 
-dust = tutorial.func_cutoff(tagname='TESS',cutoff={'TESS>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5})
+#5 over 7 rejected
+dust = tutorial.func_cutoff(tagname='TESS',cutoff={'TESS>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
 tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
+tutorial.which_cutoff(tess, tagname='presurvey')
 tutorial.which_cutoff(tess[0], tagname='presurvey')
 
-dust = tutorial.func_cutoff(tagname='HWO',cutoff={'HWO>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5})
+dust = tutorial.func_cutoff(tagname='HWO',cutoff={'HWO>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
 hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
 tutorial.which_cutoff(hwo[0], tagname='presurvey')
 

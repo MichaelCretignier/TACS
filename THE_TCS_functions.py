@@ -278,7 +278,13 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     table2 = table.copy()
     count=0
     nb_rows = (len(cutoff)-1)//5+1
-    old_value = np.nan
+    if par_crit!='':
+        p1c = par_crit.split('==')[0]
+        p1c_val = float(par_crit.split('==')[1])
+        mask_box = (table2[p1c].astype('float')==p1c_val)
+        old_value = sum(mask_box)
+    else:
+        old_value = np.nan
     old_value2 = len(table)
     for kw in cutoff.keys():
         count+=1
