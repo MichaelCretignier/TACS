@@ -159,5 +159,11 @@ cutoff_stefano = {
  'HZ_mp_min_osc+gr_texp15>':0.0,
  }
 
-
+cutoff_megan = {
+    'bp_rp<':0.87,
+    'bp_rp>':0.77,
+    'eff_nights_1.75>':180,
+    'season_length_1.75>':240,
+    'gmag<':7.0,
+    }
 
