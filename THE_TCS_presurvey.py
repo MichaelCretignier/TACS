@@ -113,23 +113,50 @@ for j in range(1,9):
     plt.scatter(loc,j,color='k')
     plt.text(loc,j,'%.0f'%(loc),ha='center',va='bottom')
 
-#4 some peculiar population to check:
+#4 
+
+#5 some peculiar population to check:
 
 tutorial = tcsc.tcs(sun_elevation=-12) 
 
-#23 over 28 rejected
+#BRIGHT SAMPLE
+#20 over 28 rejected
 dust = tutorial.func_cutoff(tagname='bright',cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
 bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
 tutorial.which_cutoff(bright, tagname='presurvey')
-tutorial.which_cutoff(bright[0], tagname='presurvey')
+for b in np.sort(bright):
+    tutorial.which_cutoff(b, tagname='presurvey')
 
-#5 over 7 rejected
-dust = tutorial.func_cutoff(tagname='TESS',cutoff={'TESS>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+#TESS SAMPLE
+#2 over 7 rejected
+dust = tutorial.func_cutoff(tagname='TESS',cutoff={'TESS>':0.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
 tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
 tutorial.which_cutoff(tess, tagname='presurvey')
-tutorial.which_cutoff(tess[0], tagname='presurvey')
+for t in np.sort(tess):
+    tutorial.which_cutoff(t, tagname='presurvey')
 
-dust = tutorial.func_cutoff(tagname='HWO',cutoff={'HWO>':0.0,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+
+#HWO SAMPLE
+#33 over 46 rejected
+dust = tutorial.func_cutoff(tagname='HWO',cutoff={'HWO>':0.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
 hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
-tutorial.which_cutoff(hwo[0], tagname='presurvey')
+tutorial.which_cutoff(hwo, tagname='presurvey')
+for h in np.sort(hwo)[0:20]:
+    tutorial.which_cutoff(h, tagname='presurvey')
 
+#HIGH DB measurement
+#13 over 26 rejected
+dust = tutorial.func_cutoff(tagname='HDB',cutoff={'nobs_DB>':200,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+hdb = np.array(tutorial.info_TA_stars_selected['HDB'].data['HD'])
+tutorial.which_cutoff(hdb, tagname='presurvey')
+for h in np.sort(hdb):
+    tutorial.which_cutoff(h, tagname='presurvey')
+
+#LOW DB measurement
+#14 over 20 rejected
+dust = tutorial.func_cutoff(tagname='LDB',cutoff={'nobs_DB<':1,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1,'logRHK_known<':-4.8})
+ldb = tutorial.info_TA_stars_selected['LDB'].data.sort_values(by=['HZ_mp_min_osc+gr_texp15'])
+ldb = np.array(ldb['HD'])[0:20]
+tutorial.which_cutoff(ldb, tagname='presurvey')
+for h in np.sort(ldb):
+    tutorial.which_cutoff(h, tagname='presurvey')

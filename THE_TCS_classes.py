@@ -48,6 +48,8 @@ db_exoplanets = crossmatch_names(db_exoplanets,'GAIA')
 db_exoplanets = db_exoplanets.sort_values(by='PRIMARY').reset_index(drop=True)
 
 db_tess_candidates = pd.read_csv(cwd+'/TACS_Material/TESS_candidates.csv',index_col=0)
+db_tess_candidates['name'] = 'TOI'+db_tess_candidates['TOI'].astype('str')
+db_tess_candidates['method'] = 'Transit'
 db_exoplanets = db_exoplanets.merge(db_tess_candidates,how='outer')
 
 def produce_gr8(version='2.0',verbose=True):
@@ -83,9 +85,9 @@ def produce_gr8(version='2.0',verbose=True):
 
     gr8['SPclass'] = '-'
     gr8.loc[(gr8[Teff_var]>6000),'SPclass'] = 'F'
-    gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<6000),'SPclass'] = 'S'
-    gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<5600),'SPclass'] = 'G'
-    gr8.loc[(gr8[Teff_var]<5200),'SPclass'] = 'K'
+    gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<=6000),'SPclass'] = 'S'
+    gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<=5600),'SPclass'] = 'G'
+    gr8.loc[(gr8[Teff_var]<=5200),'SPclass'] = 'K'
     return gr8, gr8_raw
 
 v1 = produce_gr8('1.0')
@@ -145,6 +147,17 @@ def resolve_starname(name,verbose=True):
         if verbose:
             print('\n[INFO] Starnames found:\n')
             print(output,'\n')
+            gaia_name = output['GAIA']
+            planets = db_exoplanets.loc[db_exoplanets['GAIA']==gaia_name]
+            if len(planets):
+                print('\n[INFO] Planets found:\n')
+                display = planets[['name','method','year','period','mass','radius']]
+                display.index = display['name']
+                display['period'] = np.round(display['period'],1)
+                display['mass'] = np.round(display['mass'],0)
+                display['radius'] = np.round(display['radius'],1)
+                del display['name']
+                print(display,'\n')
         return output
     else:
         print('[WARNING] Starname %s has not been found'%(name))
@@ -203,14 +216,20 @@ def star_info(entry, format='v1'):
         info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
 
-def plot_TESS_CVZ():
+def plot_TESS_CVZ(ra_unit='hours'):
     theta = np.linspace(0,2*np.pi,100)
-    plt.plot(np.cos(theta)*12/360*24+18,np.sin(theta)*12+66,lw=1,ls='-.',color='k')
+    if ra_unit=='hours':
+        plt.plot(np.cos(theta)*12/360*24+18,np.sin(theta)*12+66,lw=1,ls='-.',color='k')
+    else:
+        plt.plot(np.cos(theta)*12+18*360/24,np.sin(theta)*12+66,lw=1,ls='-.',color='k')
     plt.text(18,66,'TESS',ha='center',va='center')
 
-def plot_KEPLER_CVZ():
+def plot_KEPLER_CVZ(ra_unit='hours'):
     theta = np.linspace(0,2*np.pi,100)
-    plt.plot(np.cos(theta)*8/360*24+19.5,np.sin(theta)*8+44.5,lw=1,ls=':',color='k')
+    if ra_unit=='hours':
+        plt.plot(np.cos(theta)*8/360*24+19.5,np.sin(theta)*8+44.5,lw=1,ls=':',color='k')
+    else:
+        plt.plot(np.cos(theta)*8+19.5*360/24,np.sin(theta)*8+44.5,lw=1,ls=':',color='k')
     plt.text(19.5,44.5,'KEPLER',ha='center',va='center')
 
 def plot_exoplanets(y_var='k'):
@@ -466,12 +485,16 @@ class table_star(object):
         xval = np.array(dataframe[x])
         yval = np.array(dataframe[y])
         if c is None:
-            for t1,t2,color,marker in zip([4000,5200,5600,6000],[5200,5600,6000,7000],['r','C1','gold','cyan'],['o','s','*','x']):
-                mask3 = np.array((dataframe[Teff_var]>t1)&(dataframe[Teff_var]<=t2))
+            for spflag,color,marker in zip(['K','G','S','F'],['r','C1','gold','cyan'],['o','s','*','x']):
+                mask3 = np.array(dataframe['SPclass']==spflag)
                 plt.scatter(xval[mask3],yval[mask3],color=color,marker=marker,s=30,zorder=10,alpha=alpha)   
         else:
             if len(c)<3:
                 plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1, alpha=alpha)   
+
+        mask3 = np.array(dataframe['protected']==1)
+        if sum(mask3):
+            plt.scatter(xval[mask3],yval[mask3],facecolors="none",edgecolors='k',marker='o',s=100,zorder=10,alpha=alpha,)   
 
         if print_names:
             index = np.array(list(dataframe.index))
@@ -525,8 +548,12 @@ class tcs(object):
         self.info_SC_starname = None
         self.info_SC_instrument = instrument
 
-        self.info_TA_stars_selected = {
-            'GR8':table_star(gr8[version])}
+        GR8 = gr8[version]
+        protected = starname_resolver(tcsv.stars_protected)
+        protected = protected.dropna(subset=['PRIMARY'])
+        GR8['protected'] = 0
+        GR8.loc[np.array(protected.index),'protected'] = 1
+        self.info_TA_stars_selected = {'GR8':table_star(GR8)}
         
         self.info_TA_cutoff = {}
 
@@ -1351,14 +1378,33 @@ class tcs(object):
                         test = int(star[kw]>value)
                     else:
                         test = int(star[kw]<value)
-                    output.append([s,['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['<---',''][test]])
-                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','!!'])
+                    highlight=0
+                    if (kw=='gmag')&(star[kw]<5.75):
+                        highlight=1
+                    if (kw=='gmag')&(star[kw]<5.25):
+                        highlight=2
+                    if (kw=='HWO')&(star[kw]==1.0):
+                        highlight=1
+                    if (kw=='nobs_DB')&(star[kw]>130):
+                        highlight=1
+                    if (kw=='nobs_DB')&(star[kw]>250):
+                        highlight=2
+                    if (kw=='season_length_1.75')&(star[kw]>280):
+                        highlight=1
+                    if (kw=='season_length_1.75')&(star[kw]<225):
+                        highlight=-1
+                    if (kw=='season_length_1.5')&(star[kw]>300):
+                        highlight=2
+                    if (kw=='season_length_1.5')&(star[kw]<210):
+                        highlight=-1
+                    output.append([s,['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['','❂','❂❂','X'][highlight],['<---',''][test]])
+                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','❂','!!'])
                 output['value'] = np.round(output['value'],2)
                 if len(starname)==1:
                     if sum(output['test']=='FALSE'):
                         print('[INFO] -- NO -- %s was rejected.\n'%(s))
                     else:
-                        print('[INFO] --YES -- %s is still selected.\n'%(s))
+                        print('[INFO] -- YES -- %s is still selected.\n'%(s))
                     print(output[output.columns[1:]])
             else:
                 output.append([s,'--->','starname','!=','UNFOUND',s,'FALSE','<---'])

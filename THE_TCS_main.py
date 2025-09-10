@@ -12,14 +12,15 @@ presurvey = tcsc.tcs(version='2.0') #new catalog (default value)
 presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, tagname='presurvey') #this line is already running by default in tcsc.tsc()
 
 #testing if a star is in a list (otherwise why not)
-presurvey.which_cutoff('HD166620', tagname='presurvey') #can also take cutoff={} input
-presurvey.which_cutoff('HD16160', tagname='presurvey')
+presurvey.which_cutoff('HD219134', tagname='presurvey') 
+presurvey.which_cutoff('HD22049', tagname='presurvey')
 presurvey.which_cutoff('51Peg', tagname='presurvey')
 
 presurvey.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], tagname='presurvey')
+presurvey.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], tagname='presurvey',plot=True)
+
 presurvey.which_cutoff(tcsv.catalog_NEID['HD'], tagname='presurvey', plot=True)
 presurvey.which_cutoff(tcsv.catalog_2ES['GAIA'], tagname='presurvey',plot=True)
-presurvey.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], tagname='presurvey',plot=True)
 
 #following the K sample
 presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, show_sample='K', tagname='dustbin')
@@ -133,6 +134,7 @@ tutorial.create_table_scheduler(
     tagname='40stars'
     )
 
+presurvey.info_TA_stars_selected['presurvey'].plot(y='dec_j2000',x='ra_j2000')
 
 #TESS LIGHTCURVES
 star4 = tcsc.tcs(sun_elevation=-12, starname='HD99492')

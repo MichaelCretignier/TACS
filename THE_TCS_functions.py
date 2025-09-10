@@ -277,7 +277,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
 
     table2 = table.copy()
     count=0
-    nb_rows = (len(cutoff)-1)//5+1
+    nb_rows = (len(cutoff)-1)//6+1
     if par_crit!='':
         p1c = par_crit.split('==')[0]
         p1c_val = float(par_crit.split('==')[1])
@@ -290,13 +290,13 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
         count+=1
         value = cutoff[kw]
         if kw[-1]=='<':
-            mask = table2[kw[0:-1]]<=value
+            mask = (table2[kw[0:-1]]<=value)|(table2['protected']==1)
         else:
-            mask = table2[kw[0:-1]]>=value
+            mask = (table2[kw[0:-1]]>=value)|(table2['protected']==1)
         
         if plot:
-            plt.figure('cumulative'+tagname,figsize=(16,3.5*nb_rows))
-            plt.subplot(nb_rows,5,count)
+            plt.figure('cumulative'+tagname,figsize=(16,3*nb_rows))
+            plt.subplot(nb_rows,6,count)
             plt.title(kw+str(value))
             plt.hist(table2[kw[0:-1]],cumulative=True,bins=100)
             plt.axvline(x=value,label='%.0f / %.0f'%(sum(mask),len(mask)),color='k')
@@ -319,10 +319,10 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
                 p2 = par_space.split('&')[1].replace(' ','')
                 plt.figure('para'+tagname,figsize=(18,3.5*nb_rows))
                 if count==1:
-                    plt.subplot(nb_rows,5,count)
+                    plt.subplot(nb_rows,6,count)
                     ax1 = plt.gca()
                 else:
-                    plt.subplot(nb_rows,5,count,sharex=ax1,sharey=ax1)
+                    plt.subplot(nb_rows,6,count,sharex=ax1,sharey=ax1)
                 plt.scatter(table[p1],table[p2],color='k',alpha=0.1,marker='.')
                 plt.scatter(table2[p1],table2[p2],color='r',ec='k',marker='.',label='%.0f (-%.0f)'%(len(table2),old_value2-len(table2)))
                 old_value2 = len(table2)
