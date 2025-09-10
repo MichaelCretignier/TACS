@@ -1427,11 +1427,14 @@ class tcs(object):
 
         self.info_TA_stars_missing = outputs
 
-    def func_cutoff(self, tagname='handmade', tagname_fig='', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None):
+    def func_cutoff(self, tagname='handmade', tagname_fig='', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None, protection=True):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""
         GR8 = self.info_TA_stars_selected['GR8'].data.copy()
         if show_sample is not None:
             GR8 = GR8.loc[GR8['SPclass']==show_sample]
+
+        if protection is False:
+            GR8['protected'] = 0
 
         if cutoff is None:
             cutoff = self.info_TA_cutoff['presurvey']

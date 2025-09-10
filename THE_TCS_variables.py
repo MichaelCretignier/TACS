@@ -161,9 +161,6 @@ cutoff_stefano = {
  'HZ_mp_min_osc+gr_texp15>':0.0,
  }
 
-<<<<<<< Updated upstream
-
-=======
 cutoff_megan = {
     'bp_rp<':0.87,
     'bp_rp>':0.77,
@@ -171,7 +168,8 @@ cutoff_megan = {
     'season_length_1.75>':240,
     'vsini<':5,
     'sky_contam_VIZIER<':0.1,
+    'simbad_type<':1.5,
+    'sig_rv_arve_phot+osc_texp20<':0.30,
     'gmag<':7.0,
     }
->>>>>>> Stashed changes
 
