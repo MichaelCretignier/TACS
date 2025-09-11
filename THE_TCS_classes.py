@@ -1396,10 +1396,10 @@ class tcs(object):
                 output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','❂','!!'])
                 output['value'] = np.round(output['value'],2)
                 if len(starname)==1:
-                    protection = np.array(output.loc[output['feature']=='protected','value']==1)[0]
-                    if sum(output['test']=='FALSE')&(protection==0):
+                    protection = int(np.array(output.loc[output['feature']=='protected','value']==1)[0])
+                    if (sum(output['test']=='FALSE')!=0)&(protection==0):
                         print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
-                    elif sum(output['test']=='FALSE')&(protection==1):
+                    elif (sum(output['test']=='FALSE')!=0)&(protection==1):
                         print(Fore.YELLOW+'[INFO] -- NO -- %s was rejected (but is now protected!).\n'%(s)+Fore.RESET)                
                     else:
                         print(Fore.GREEN+'[INFO] -- YES -- %s is still selected.\n'%(s)+Fore.RESET)
