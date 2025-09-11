@@ -47,6 +47,7 @@ cutoff_presurvey = {
     'HWO>':-1,
     'nobs_DB>':-1,
     'gmag<':7.5,
+    'protected>':-1,
     }
 
 cutoff_minimal = {
@@ -54,6 +55,8 @@ cutoff_minimal = {
     'logg>':4.2,
     'vsini<':5,
     'sky_contam_VIZIER<':0.1,
+    'simbad_type<':1.5,
+    'BDW<':0.5,
     'gmag<':7.5,
     }
 

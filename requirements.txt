@@ -5,3 +5,4 @@ scipy==1.8
 matplotlib==3.5
 ipython==7.22.0
 PyQt5==5.15
+colorama==0.4.4

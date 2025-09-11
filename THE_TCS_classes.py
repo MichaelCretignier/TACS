@@ -3,6 +3,7 @@ import os
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
+from colorama import Fore
 from scipy.interpolate import interp1d
 
 import THE_TCS_functions as tcsf
@@ -1379,32 +1380,29 @@ class tcs(object):
                     else:
                         test = int(star[kw]<value)
                     highlight=0
-                    if (kw=='gmag')&(star[kw]<5.75):
+                    if (kw=='protected')&(star[kw]==1):
                         highlight=1
-                    if (kw=='gmag')&(star[kw]<5.25):
-                        highlight=2
+                    if (kw=='gmag'):
+                        highlight = np.sum(np.array([7.25, 5.75, 5.25, 4.5])>star[kw])-1
                     if (kw=='HWO')&(star[kw]==1.0):
                         highlight=1
-                    if (kw=='nobs_DB')&(star[kw]>130):
-                        highlight=1
-                    if (kw=='nobs_DB')&(star[kw]>250):
-                        highlight=2
-                    if (kw=='season_length_1.75')&(star[kw]>280):
-                        highlight=1
-                    if (kw=='season_length_1.75')&(star[kw]<225):
-                        highlight=-1
-                    if (kw=='season_length_1.5')&(star[kw]>300):
-                        highlight=2
-                    if (kw=='season_length_1.5')&(star[kw]<210):
-                        highlight=-1
-                    output.append([s,['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['','❂','❂❂','X'][highlight],['<---',''][test]])
+                    if (kw=='nobs_DB'):
+                        highlight = np.sum(np.array([-1, 130, 250, 400])<star[kw])-1
+                    if (kw=='season_length_1.75'):
+                        highlight = np.sum(np.array([225,275,290,305])<star[kw])-1
+                    if (kw=='season_length_1.5'):
+                        highlight = np.sum(np.array([210,260,275,285])<star[kw])-1
+                    output.append([s,['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['','❂','❂❂','❂❂❂','X'][highlight],['<---',''][test]])
                 output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','❂','!!'])
                 output['value'] = np.round(output['value'],2)
                 if len(starname)==1:
-                    if sum(output['test']=='FALSE'):
-                        print('[INFO] -- NO -- %s was rejected.\n'%(s))
+                    protection = np.array(output.loc[output['feature']=='protected','value']==1)[0]
+                    if sum(output['test']=='FALSE')&(protection==0):
+                        print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
+                    elif sum(output['test']=='FALSE')&(protection==1):
+                        print(Fore.YELLOW+'[INFO] -- NO -- %s was rejected (but is now protected!).\n'%(s)+Fore.RESET)                
                     else:
-                        print('[INFO] -- YES -- %s is still selected.\n'%(s))
+                        print(Fore.GREEN+'[INFO] -- YES -- %s is still selected.\n'%(s)+Fore.RESET)
                     print(output[output.columns[1:]])
             else:
                 output.append([s,'--->','starname','!=','UNFOUND',s,'FALSE','<---'])
