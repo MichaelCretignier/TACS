@@ -24,6 +24,33 @@ ipython = get_ipython()
 if ipython is not None:
     ipython.magic('%matplotlib qt')
 
+def format_number(nb,digit=3):
+    nb_log = int(np.round(np.log10(nb)-0.5,0))
+    nb_digit = digit-nb_log
+    if nb_digit<0:
+        nb_digit=0
+    
+    output = ['%.0f'%(nb),'%.1f'%(nb),'%.2f'%(nb),'%.3f'%(nb),'%.4f'%(nb),'%.5f'%(nb),'%.6f'%(nb)][nb_digit]
+    
+    return output
+
+def format_mass(mass_planet):
+    symbol = '⊕'
+    mass_printed = mass_planet
+    if mass_planet>3300:
+        symbol = '⊙'
+        mass_printed = mass_printed/333030
+    elif mass_planet>300:
+        symbol = '♃'
+        mass_printed = mass_printed/317.8   
+    elif mass_planet>95:
+        symbol = '♄'
+        mass_printed = mass_printed/95.16                    
+    elif mass_planet>15:
+        symbol = '♆'
+        mass_printed = mass_printed/17.15
+    return '%.1f M%s'%(mass_printed,symbol)
+
 def find_nearest(array,value,dist_abs=True,closest='abs'):
     if type(array)!=np.ndarray:
         array = np.array(array)
@@ -290,14 +317,17 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
         count+=1
         value = cutoff[kw]
         if kw[-1]=='<':
-            mask = (table2[kw[0:-1]]<=value)|(table2['protected']==1)
+            mask = (table2[kw[0:-1]]<value)|(table2['under_review']==1)
         else:
-            mask = (table2[kw[0:-1]]>=value)|(table2['protected']==1)
+            mask = (table2[kw[0:-1]]>value)|(table2['under_review']==1)
         
         if plot:
             plt.figure('cumulative'+tagname,figsize=(16,3*nb_rows))
             plt.subplot(nb_rows,6,count)
-            plt.title(kw+str(value))
+            if (kw[0:-1]!='under_review')&(kw[0:-1]!='HWO'):
+                plt.title(kw+str(value))
+            else:
+                plt.title(kw[0:-1]+'(%.0f)'%(sum(table2[kw[0:-1]])))
             plt.hist(table2[kw[0:-1]],cumulative=True,bins=100)
             plt.axvline(x=value,label='%.0f / %.0f'%(sum(mask),len(mask)),color='k')
             if len(table2):

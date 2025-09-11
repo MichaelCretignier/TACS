@@ -117,46 +117,109 @@ for j in range(1,9):
 
 #5 some peculiar population to check:
 
-tutorial = tcsc.tcs(sun_elevation=-12) 
+import os
+
+from PIL import ImageGrab
+
+tutorial = tcsc.tcs() 
 
 #BRIGHT SAMPLE
 #20 over 28 rejected
-dust = tutorial.func_cutoff(tagname='bright',cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'gmag<':5.5})
+dust = tutorial.func_cutoff(tagname='bright', cutoff=cutoff, protection=False)
+plt.close('cumulative')
 bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
 tutorial.which_cutoff(bright, tagname='presurvey')
 for b in np.sort(bright):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
     tutorial.which_cutoff(b, tagname='presurvey')
-
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(b))
+ 
 #TESS SAMPLE
 #2 over 7 rejected
-dust = tutorial.func_cutoff(tagname='TESS',cutoff={'TESS>':0.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'TESS>':0.5})
+dust = tutorial.func_cutoff(tagname='TESS',cutoff=cutoff,protection=False)
+plt.close('cumulative')
 tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
 tutorial.which_cutoff(tess, tagname='presurvey')
 for t in np.sort(tess):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
     tutorial.which_cutoff(t, tagname='presurvey')
-
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(t))
 
 #HWO SAMPLE
 #33 over 46 rejected
-dust = tutorial.func_cutoff(tagname='HWO',cutoff={'HWO>':0.5,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'HWO>':0.5})
+dust = tutorial.func_cutoff(tagname='HWO',cutoff=cutoff,protection=False)
+plt.close('cumulative')
 hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
 tutorial.which_cutoff(hwo, tagname='presurvey')
-for h in np.sort(hwo)[0:20]:
+for h in np.sort(hwo):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
     tutorial.which_cutoff(h, tagname='presurvey')
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
 #HIGH DB measurement
 #13 over 26 rejected
-dust = tutorial.func_cutoff(tagname='HDB',cutoff={'nobs_DB>':200,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1})
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'nobs_DB>':200})
+dust = tutorial.func_cutoff(tagname='HDB',cutoff=cutoff,protection=False)
+plt.close('cumulative')
 hdb = np.array(tutorial.info_TA_stars_selected['HDB'].data['HD'])
 tutorial.which_cutoff(hdb, tagname='presurvey')
 for h in np.sort(hdb):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
     tutorial.which_cutoff(h, tagname='presurvey')
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
 #LOW DB measurement
 #14 over 20 rejected
-dust = tutorial.func_cutoff(tagname='LDB',cutoff={'nobs_DB<':1,'teff<':6000,'logg>':4.2,'vsini<':5,'sky_contam_VIZIER<':0.1,'logRHK_known<':-4.8})
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'nobs_DB<':1,'logRHK_known<':4.8})
+dust = tutorial.func_cutoff(tagname='LDB',cutoff=cutoff,protection=False)
+plt.close('cumulative')
 ldb = tutorial.info_TA_stars_selected['LDB'].data.sort_values(by=['HZ_mp_min_osc+gr_texp15'])
 ldb = np.array(ldb['HD'])[0:20]
+ldb = ldb[ldb!='-']
 tutorial.which_cutoff(ldb, tagname='presurvey')
 for h in np.sort(ldb):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
     tutorial.which_cutoff(h, tagname='presurvey')
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
+
+
+#SG January-February stars
+
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'logRHK_known<':4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
+dust = tutorial.func_cutoff(tagname='SG',cutoff=cutoff,protection=False)
+
+sg = tutorial.info_TA_stars_selected['SG'].data.sort_values(by=['SG_NGT_Jan'])
+sg = np.array(sg['HD'])[0:20]
+tutorial.which_cutoff(sg, tagname='presurvey')
+for h in np.sort(sg):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
+    tutorial.which_cutoff(h, tagname='presurvey')
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
+

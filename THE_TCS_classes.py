@@ -155,7 +155,11 @@ def resolve_starname(name,verbose=True):
                 display = planets[['name','method','year','period','mass','radius']]
                 display.index = display['name']
                 display['period'] = np.round(display['period'],1)
-                display['mass'] = np.round(display['mass'],0)
+                p_units = (display['period']>365)
+                display.loc[p_units,'period'] = np.round(display.loc[p_units,'period']/365.25,1)
+                display.loc[p_units,'period'] = display.loc[p_units,'period'].astype('str')+' yr'
+                display.loc[~p_units,'period'] = display.loc[~p_units,'period'].astype('str')+' d'
+                display['mass'] = np.array([tcsf.format_mass(m) for m in np.array(display['mass'])])
                 display['radius'] = np.round(display['radius'],1)
                 del display['name']
                 print(display,'\n')
@@ -269,7 +273,7 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
     selected = np.in1d(np.array(db_exoplanets['GAIA']),np.array(table_gr8['GAIA']))
     db_exoplanets['pre_survey'] = selected.astype('int')
 
-    fig = plt.figure(figsize=(18,12))
+    fig = plt.figure(figsize=(18,10))
     count=0
     markersize = np.array(db_exoplanets['mass']>0)*10
     markersize += np.array(db_exoplanets['mass']>10)*20
@@ -493,7 +497,7 @@ class table_star(object):
             if len(c)<3:
                 plt.scatter(xval,yval,color=c,marker='o',s=10,zorder=1, alpha=alpha)   
 
-        mask3 = np.array(dataframe['protected']==1)
+        mask3 = np.array(dataframe['under_review']==1)
         if sum(mask3):
             plt.scatter(xval[mask3],yval[mask3],facecolors="none",edgecolors='k',marker='o',s=100,zorder=10,alpha=alpha,)   
 
@@ -550,10 +554,10 @@ class tcs(object):
         self.info_SC_instrument = instrument
 
         GR8 = gr8[version]
-        protected = starname_resolver(tcsv.stars_protected)
+        protected = starname_resolver(tcsv.stars_under_review)
         protected = protected.dropna(subset=['PRIMARY'])
-        GR8['protected'] = 0
-        GR8.loc[np.array(protected.index),'protected'] = 1
+        GR8['under_review'] = 0
+        GR8.loc[np.array(protected.index),'under_review'] = 1
         self.info_TA_stars_selected = {'GR8':table_star(GR8)}
         
         self.info_TA_cutoff = {}
@@ -923,7 +927,7 @@ class tcs(object):
         gr8 = self.info_TA_stars_selected['GR8'].data
 
         #add the info column
-        for selections in ['presurvey','minimal',selection]:
+        for selections in ['GR8','presurvey','minimal',selection]:
             table = self.info_TA_stars_selected[selections].data
             dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
             loc = np.argmin(dist,axis=0)
@@ -931,7 +935,7 @@ class tcs(object):
             self.info_TA_stars_selected[selections] = table_star(table.copy())
 
         if plot:
-            fig = plt.figure(figsize=(18,12))
+            fig = plt.figure(figsize=(18,10))
             fig.suptitle('Sun elevation = %.0f \nAirmass max = %.2f \nMonth = %s'%(sun_elevation,airmass_max,month_tag))
             #plt.title()
             cp = plt.contour(RA,DEC,np.reshape(output[:,month-1],np.shape(RA)),levels=[6,7,8,9,10])
@@ -1380,7 +1384,7 @@ class tcs(object):
                     else:
                         test = int(star[kw]<value)
                     highlight=0
-                    if (kw=='protected')&(star[kw]==1):
+                    if (kw=='under_review')&(star[kw]==1):
                         highlight=1
                     if (kw=='gmag'):
                         highlight = np.sum(np.array([7.25, 5.75, 5.25, 4.5])>star[kw])-1
@@ -1392,15 +1396,15 @@ class tcs(object):
                         highlight = np.sum(np.array([225,275,290,305])<star[kw])-1
                     if (kw=='season_length_1.5'):
                         highlight = np.sum(np.array([210,260,275,285])<star[kw])-1
-                    output.append([s,['--->',''][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['','❂','❂❂','❂❂❂','X'][highlight],['<---',''][test]])
-                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','❂','!!'])
+                    output.append([s,['--->','    '][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['   ','❂  ','❂❂ ','❂❂❂','X  '][highlight],['<---','    '][test]])
+                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','badge','!!'])
                 output['value'] = np.round(output['value'],2)
                 if len(starname)==1:
-                    protection = int(np.array(output.loc[output['feature']=='protected','value']==1)[0])
+                    protection = int(np.array(output.loc[output['feature']=='under_review','value']==1)[0])
                     if (sum(output['test']=='FALSE')!=0)&(protection==0):
                         print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
                     elif (sum(output['test']=='FALSE')!=0)&(protection==1):
-                        print(Fore.YELLOW+'[INFO] -- NO -- %s was rejected (but is now protected!).\n'%(s)+Fore.RESET)                
+                        print(Fore.YELLOW+'[INFO] -- NO -- %s was rejected (but is under review!).\n'%(s)+Fore.RESET)                
                     else:
                         print(Fore.GREEN+'[INFO] -- YES -- %s is still selected.\n'%(s)+Fore.RESET)
                     print(output[output.columns[1:]])
@@ -1432,7 +1436,7 @@ class tcs(object):
             GR8 = GR8.loc[GR8['SPclass']==show_sample]
 
         if protection is False:
-            GR8['protected'] = 0
+            GR8['under_review'] = 0
 
         if cutoff is None:
             cutoff = self.info_TA_cutoff['presurvey']

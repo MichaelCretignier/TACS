@@ -9,7 +9,9 @@ month_border = [0,31,59,90,120,151,181,212,243,273,304,334,365]
 month_len = [31,28,31,30,31,30,31,31,30,31,30,31]
 months_specie = np.repeat(np.arange(1, 13), month_len)
 
-stars_protected = ['HD101501','HD10780','HD110897','HD115404','HD116442','HD116443','HD131156A','HD131156B','HD144579','HD145675','HD1461','HD149661','HD157214','HD158633','HD185144','HD201092','HD208313','HD22049','HD26965','HD4614A','HD4628','HD55575','HD69830','HD82885','HD99492']
+stars_under_review = ['HD101501','HD10780','HD110897','HD115404','HD116442','HD116443','HD131156A','HD131156B','HD144579','HD145675','HD1461','HD149661','HD157214','HD158633','HD185144','HD19373',
+                   'HD201092','HD20630','HD208313','HD22049','HD26965',
+                   'HD4614A','HD4628','HD55575','HD69830','HD82885','HD99492']
 
 HARPN_standards = ['HD4628','HD166620','HD122064','HD127334','HD144579','HD151288','HD10476']
 
@@ -38,26 +40,29 @@ cutoff_presurvey = {
     'multi_peak_GAIA<':1,
     'sky_contam_VIZIER<':0.1,
     'rv_trend_kms_DACE<':0.1,
-    'simbad_type<':0.5,
+    'OBTP_type<':0.5,
     'eff_nights_1.75>':180,
     'season_length_1.75>':240,
     'HJ<':0.5,
     'BDW<':0.5,
     'logRHK<':-4.7,
-    'HWO>':-1,
     'nobs_DB>':-1,
     'gmag<':7.5,
-    'protected>':-1,
+    'HWO>':-1,
+    'under_review>':-1,
     }
 
 cutoff_minimal = {
-    'teff<':6000,
-    'logg>':4.2,
-    'vsini<':5,
+    'teff<':6050,
+    'logg>':4.15,
+    'vsini<':6,
     'sky_contam_VIZIER<':0.1,
-    'simbad_type<':1.5,
+    'OBTP_type<':1.5,
+    'HJ<':0.5,
     'BDW<':0.5,
     'gmag<':7.5,
+    'logRHK>':-6.1,
+    'under_review>':-1,
     }
 
 cutoff_tim = {
@@ -171,7 +176,7 @@ cutoff_megan = {
     'season_length_1.75>':240,
     'vsini<':5,
     'sky_contam_VIZIER<':0.1,
-    'simbad_type<':1.5,
+    'OBTP_type<':1.5,
     'sig_rv_arve_phot+osc_texp20<':0.30,
     'gmag<':7.0,
     }

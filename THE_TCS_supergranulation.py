@@ -19,7 +19,7 @@ plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
 
 #create a timesampling for star1
 star1.create_timeseries(airmass_max=1.75, nb_year=1, texp=10, weather=False)
-dustbin = star1.info_XY_timestamps.night_subset(obs_per_night=2,random=True,replace=False)
+dustbin = star1.info_XY_timestamps.night_subset(obs_per_night=3,random=False,replace=False)
 
 plt.figure()
 star1.info_XY_timestamps.plot()
@@ -30,7 +30,7 @@ star3 = tcsc.tcs()
 presurvey = star3.info_TA_cutoff['presurvey']
 
 #we can add or modify cutoff selection if needed
-cutoff = tcsc.mod_cutoff(presurvey,{'gmag<':7.5,'logRHK_known<':4.8,'vsini_known<':8}) # 'known' means we want an existing value in the DB
+cutoff = tcsc.mod_cutoff(presurvey,{'gmag<':7.5,'logRHK_known<':4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
 
 #compute the sky night length over the year
 star3.compute_SG_calendar(

@@ -5,12 +5,9 @@ import THE_TCS_variables as tcsv
 
 #### PRESURVEY CUTOFFF ####
 
-#backup
-#old_presurvey = tcsc.tcs(version='1.0') #old catalog
-#old_presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, tagname='presurvey') #this line is already running by default in tcsc.tsc()
-
-presurvey = tcsc.tcs(version='2.0') #new catalog (default value)
+presurvey = tcsc.tcs(version='2.0') #new catalog (default value) old = 1.0
 presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, tagname='presurvey') #this line is already running by default in tcsc.tsc()
+presurvey.func_cutoff(cutoff=tcsv.cutoff_minimal, tagname='minimal', protection=False) 
 presurvey.func_cutoff(cutoff=tcsv.cutoff_megan, tagname='megan', protection=False) 
 
 #testing if a star is in a list (otherwise why not)
