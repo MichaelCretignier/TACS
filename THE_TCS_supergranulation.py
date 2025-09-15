@@ -30,7 +30,7 @@ star3 = tcsc.tcs()
 presurvey = star3.info_TA_cutoff['presurvey']
 
 #we can add or modify cutoff selection if needed
-cutoff = tcsc.mod_cutoff(presurvey,{'gmag<':7.5,'logRHK_known<':4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
+cutoff = tcsc.mod_cutoff(presurvey,{'gmag<':7.5,'logRHK_known<':-4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
 
 #compute the sky night length over the year
 star3.compute_SG_calendar(

@@ -320,7 +320,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
             mask = (table2[kw[0:-1]]<value)|(table2['under_review']==1)
         else:
             mask = (table2[kw[0:-1]]>value)|(table2['under_review']==1)
-        
+            
         if plot:
             plt.figure('cumulative'+tagname,figsize=(16,3*nb_rows))
             plt.subplot(nb_rows,6,count)

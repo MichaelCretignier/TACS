@@ -89,6 +89,9 @@ def produce_gr8(version='2.0',verbose=True):
     gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<=6000),'SPclass'] = 'S'
     gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<=5600),'SPclass'] = 'G'
     gr8.loc[(gr8[Teff_var]<=5200),'SPclass'] = 'K'
+
+    gr8['SG_NGT_len'] = np.max(gr8[['SG_NGT_Jan','SG_NGT_Feb']],axis=1)
+
     return gr8, gr8_raw
 
 v1 = produce_gr8('1.0')
@@ -1357,14 +1360,37 @@ class tcs(object):
                 plt.xlim(4,30)
                 self.info_XY_survey_stat = tableXY(x=ti,y=nb_hours*60/((ti+overhead)*Nb_obs_per_year))
 
-    def which_cutoff(self,starname,cutoff=None,tagname=None,plot=False):
+    def print_sp_stat(self,sp=''):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
+        mini = self.info_TA_stars_selected['minimal'].data.copy()
+        pre = self.info_TA_stars_selected['presurvey'].data.copy()
+        mini = mini.loc[mini['under_review']==0]
+        pre = pre.loc[pre['under_review']==0]
+        review = gr8.loc[gr8['under_review']==1]
+        
+        output = []
+        output.append([sum(gr8['SPclass']=='K'),'|',sum(gr8['SPclass']=='G'),'|',sum(gr8['SPclass']=='S'),'|',sum(gr8['SPclass']=='F'),'| =',len(gr8)])
+        output.append([sum(mini['SPclass']=='K'),'|',sum(mini['SPclass']=='G'),'|',sum(mini['SPclass']=='S'),'|',sum(mini['SPclass']=='F'),'| =',len(mini)])
+        output.append([sum(pre['SPclass']=='K'),'|',sum(pre['SPclass']=='G'),'|',sum(pre['SPclass']=='S'),'|',sum(pre['SPclass']=='F'),'| =',len(pre)])
+        output.append([sum(review['SPclass']=='K'),'|',sum(review['SPclass']=='G'),'|',sum(review['SPclass']=='S'),'|',sum(pre['SPclass']=='F'),'| =',len(review)])
+        output.append([['','↑'][int(sp=='K')],'|',['','↑'][int(sp=='G')],'|',['','↑'][int(sp=='S')],'|',['','↑'][int(sp=='F')],'|  ',''])
+        output = pd.DataFrame(output,columns=['K ','| ','G ','| ','S ','| ','F ','|   ','sum '],index=['GR8','MINIMAL','PRESURVEY','MANUALLY_SAVED',' '])
+        print('\n[INFO] Teff statistic')
+        print('\n',output,'\n')
+
+    def which_cutoff(self, starname, cutoff=None, tagname=None, plot=False, display=None):
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
+
         if tagname is not None:
             try:
-                cutoff = self.info_TA_cutoff[tagname]
+                cutoff = self.info_TA_cutoff[tagname].copy()
             except:
                 print('[ERROR] this tagname is not found, current list is: ',list(self.info_TA_cutoff.keys()))
         
+        if display is not None:
+            for d in display:
+                cutoff[d+' '] = np.nan
+
         if type(starname)==str:
             starname = [starname]
         starname = np.array(starname)
@@ -1381,8 +1407,10 @@ class tcs(object):
                     value = cutoff[kws]
                     if condition=='>':
                         test = int(star[kw]>value)
-                    else:
+                    elif condition=='<':
                         test = int(star[kw]<value)
+                    else:
+                        test = 1
                     highlight=0
                     if (kw=='under_review')&(star[kw]==1):
                         highlight=1
@@ -1396,6 +1424,10 @@ class tcs(object):
                         highlight = np.sum(np.array([225,275,290,305])<star[kw])-1
                     if (kw=='season_length_1.5'):
                         highlight = np.sum(np.array([210,260,275,285])<star[kw])-1
+                    if (kw=='SG_NGT_len'):
+                        highlight = np.sum(np.array([-1,6,7.5,8.5])<star[kw])-1
+                    if (kw=='Rank_THE'):
+                        highlight = np.sum(np.array([750,200,100,50])>star[kw])-1
                     output.append([s,['--->','    '][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['   ','❂  ','❂❂ ','❂❂❂','X  '][highlight],['<---','    '][test]])
                 output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','badge','!!'])
                 output['value'] = np.round(output['value'],2)
@@ -1426,6 +1458,8 @@ class tcs(object):
                 plt.figure()
                 outputs['feature'].value_counts().plot.pie(autopct="%1.0f%%")
         pd.reset_option("display.max_rows")
+
+
 
         self.info_TA_stars_missing = outputs
 

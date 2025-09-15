@@ -46,7 +46,6 @@ cutoff_presurvey = {
     'HJ<':0.5,
     'BDW<':0.5,
     'logRHK<':-4.7,
-    'nobs_DB>':-1,
     'gmag<':7.5,
     'HWO>':-1,
     'under_review>':-1,

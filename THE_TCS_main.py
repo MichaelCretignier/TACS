@@ -6,6 +6,8 @@ import THE_TCS_variables as tcsv
 #### PRESURVEY CUTOFFF ####
 
 presurvey = tcsc.tcs(version='2.0') #new catalog (default value) old = 1.0
+presurvey.print_sp_stat()
+
 presurvey.func_cutoff(cutoff=tcsv.cutoff_presurvey, tagname='presurvey') #this line is already running by default in tcsc.tsc()
 presurvey.func_cutoff(cutoff=tcsv.cutoff_minimal, tagname='minimal', protection=False) 
 presurvey.func_cutoff(cutoff=tcsv.cutoff_megan, tagname='megan', protection=False) 
@@ -65,10 +67,10 @@ star.plot_night_length()
 
 #other instruments
 plt.figure(figsize=(18,5))
-for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF']):
+for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF','SOPHIE']):
     star = tcsc.tcs(sun_elevation=-12, instrument=ins)
-    star.set_star(ra=18,dec=20) # change for a DEC vs RA input
-    plt.subplot(1,5,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
+    star.set_star(ra=8,dec=5) # change for a DEC vs RA input
+    plt.subplot(1,6,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
 plt.subplots_adjust(left=0.05,right=0.96)
 
 ##### COMPUTE 10 YEARS TIME-SERIES #####

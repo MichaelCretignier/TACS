@@ -123,22 +123,6 @@ from PIL import ImageGrab
 
 tutorial = tcsc.tcs() 
 
-#BRIGHT SAMPLE
-#20 over 28 rejected
-cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'gmag<':5.5})
-dust = tutorial.func_cutoff(tagname='bright', cutoff=cutoff, protection=False)
-plt.close('cumulative')
-bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
-tutorial.which_cutoff(bright, tagname='presurvey')
-for b in np.sort(bright):
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print('======'*12)
-    tutorial.which_cutoff(b, tagname='presurvey')
-    if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
-        screenshot = ImageGrab.grab(bbox)
-        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(b))
- 
 #TESS SAMPLE
 #2 over 7 rejected
 cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'TESS>':0.5})
@@ -149,12 +133,29 @@ tutorial.which_cutoff(tess, tagname='presurvey')
 for t in np.sort(tess):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(t, tagname='presurvey')
+    tutorial.which_cutoff(t, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
     if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
         screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(t))
 
+#BRIGHT SAMPLE
+#20 over 28 rejected
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'gmag<':5.5})
+dust = tutorial.func_cutoff(tagname='bright', cutoff=cutoff, protection=False)
+plt.close('cumulative')
+bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
+tutorial.which_cutoff(bright, tagname='presurvey')
+for b in np.sort(bright):
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print('======'*12)
+    tutorial.which_cutoff(b, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==b,'SPclass'].values[0])
+    if len(tutorial.info_TA_stars_missing)>0:
+        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
+        screenshot = ImageGrab.grab(bbox)
+        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(b))
+ 
 #HWO SAMPLE
 #33 over 46 rejected
 cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'HWO>':0.5})
@@ -165,9 +166,10 @@ tutorial.which_cutoff(hwo, tagname='presurvey')
 for h in np.sort(hwo):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey')
+    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
         screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
@@ -181,9 +183,10 @@ tutorial.which_cutoff(hdb, tagname='presurvey')
 for h in np.sort(hdb):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey')
+    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
         screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
@@ -199,27 +202,29 @@ tutorial.which_cutoff(ldb, tagname='presurvey')
 for h in np.sort(ldb):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey')
+    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
         screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
-
 #SG January-February stars
 
-cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'logRHK_known<':4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
+cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'logRHK_known<':-4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
 dust = tutorial.func_cutoff(tagname='SG',cutoff=cutoff,protection=False)
 
-sg = tutorial.info_TA_stars_selected['SG'].data.sort_values(by=['SG_NGT_Jan'])
-sg = np.array(sg['HD'])[0:20]
+sg = tutorial.info_TA_stars_selected['SG'].data
+sg = sg.sort_values(by=['SG_NGT_len'],ascending=False)[['nobs_DB','HD','SPclass','SG_NGT_len','vmag']][0:30]
+sg = np.array(sg['HD'])
 tutorial.which_cutoff(sg, tagname='presurvey')
 for h in np.sort(sg):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey')
+    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (1000*2, 124*2, 1630*2, 830*2)  # adjust coordinates
+        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
         screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
