@@ -20,6 +20,8 @@ cwd = os.getcwd()
 
 Teff_var = 'teff'
 
+
+almanac_table = tcsf.load_nested_dict_npz(cwd+'/TACS_Material/almanac.npz')
 db_starname = pd.read_csv(cwd+'/TACS_Material/THE_SIMBAD.csv',index_col=0)
 table_time = pd.read_csv(cwd+'/TACS_Material/time_conversion.csv',index_col=0)
 
@@ -42,7 +44,7 @@ def crossmatch_names(tab1,kw):
         tab1[column] = np.array(db_starname.loc[index,column])
     return tab1
 
-lightcurves = pd.read_pickle(cwd+'/TACS_Material/Lightcurves.p')
+lightcurves = tcsf.load_nested_dict_npz(cwd+'/TACS_Material/Lightcurves.npz')
 db_exoplanets = pd.read_csv(cwd+'/TACS_Material/exoplanets_db.csv',index_col=0)
 db_exoplanets.loc[db_exoplanets['k']!=db_exoplanets['k'],'k'] = 0.1
 db_exoplanets = crossmatch_names(db_exoplanets,'GAIA')
@@ -610,8 +612,7 @@ class tcs(object):
     
 
     def compute_night_length(self, sun_elevation=-12, verbose=True, method='approximation'):
-        almanac_table = pd.read_pickle(cwd+'/TACS_Material/almanac.p')[self.info_SC_instrument]
-        almanac = almanac_table['sun']
+        almanac = almanac_table[self.info_SC_instrument]['sun']
         self.info_SC_night_def = sun_elevation
         self.info_IM_night = image(
             ((almanac>sun_elevation).T).astype('float'),

@@ -138,7 +138,8 @@ tutorial.create_table_scheduler(
 presurvey.info_TA_stars_selected['presurvey'].plot(y='dec_j2000',x='ra_j2000')
 
 #TESS LIGHTCURVES
-star4 = tcsc.tcs(sun_elevation=-12, starname='HD99492')
+star4 = tcsc.tcs(sun_elevation=-12, starname='HD4628')
+plt.figure()
 star4.show_lightcurve(rm_gap=True)
 
 #Investigate a pre-determined star list (cross-matched with GR8)
