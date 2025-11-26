@@ -10,7 +10,7 @@ star1 = tcsc.tcs(sun_elevation=-6)
 plt.figure(figsize=(16,8))
 for n,s in enumerate(standards): 
     star1.set_star(starname=s,verbose=False)
-    s1 = plt.subplot(len(standards)/3,3,n+1)
+    s1 = plt.subplot(int(np.ceil(len(standards)/3)),3,n+1)
     plt.title('%s'%(star1.info_SC_starname['HD']))
     star1.plot_night_length(figure=s1,legend=False) #peak in April
     plt.ylim(-1,10)
@@ -27,10 +27,6 @@ star1.info_XY_timestamps.subset.plot()
 
 #SG calendar
 star3 = tcsc.tcs()
-presurvey = star3.info_TA_cutoff['presurvey']
-
-#we can add or modify cutoff selection if needed
-cutoff = tcsc.mod_cutoff(presurvey,{'gmag<':7.5,'logRHK_known<':-4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
 
 #compute the sky night length over the year
 star3.compute_SG_calendar(
@@ -38,15 +34,15 @@ star3.compute_SG_calendar(
     airmass_max = 1.75, 
     alpha_step = 0.5, 
     dec_step = 1,
-    cutoff = cutoff)
+    selection = 'presurvey')
 
-star3.compute_SG_month(month=1, plot=False, selection='SG') #january
-star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jan',print_names=True)
-star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Jan',print_names=False,GUI=False,alpha=0.2)
+star3.compute_SG_month(month=3, plot=False, selection='SG')
+star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Mar',print_names=False,GUI=True,alpha=0.2)
+star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Mar',print_names=True,GUI=False)
 
-star3.compute_SG_month(month=2, plot=False, selection='SG') #february
-star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Feb',print_names=True)
-star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Feb',print_names=False,GUI=False,alpha=0.2)
+star3.compute_SG_month(month=4, plot=False, selection='SG')
+star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Apr',print_names=False,GUI=True,alpha=0.2)
+star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Apr',print_names=True,GUI=False)
 
 # you can also start with your own hardcoded list of stars
 star4 = tcsc.tcs(sun_elevation=-6, starname='HD55575') 
@@ -65,7 +61,7 @@ star4.compute_SG_month(month=1, plot=False, selection='my_selection') #january
 star4.info_TA_stars_selected['my_selection'].plot('vmag','night_length_Jan',print_names=True)
 
 # the code also work for other instruments and not only HARPS3
-for n,ins in enumerate(['HARPS3','NEID','KPF','EXPRES']):
+for n,ins in enumerate(['HARPS3','NEID','KPF','EXPRES','SOPHIE']):
     star5 = tcsc.tcs(sun_elevation=-6, starname='HD55575',instrument=ins) 
     #plt.subplot(2,2,1+n) ; star5.compute_nights(airmass_max=11, weather=False, plot=True)
     star5.create_timeseries(airmass_max=1.75, nb_year=1, month=1, texp=10, weather=False)

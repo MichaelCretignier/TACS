@@ -11,7 +11,8 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-print("""\n[INFO USER] READ ME CAREFULLY 
+print("""\n[INFO TACS]
+[INFO USER] READ ME CAREFULLY 
 [INFO USER] The RUWE is currently disabled for stars brighter than mv<5 
 [INFO USER] An issue or an upgrade? Contact me at:  michael.cretignier@physics.ox.ac.uk
       """)
@@ -20,7 +21,16 @@ cwd = os.getcwd()
 
 Teff_var = 'teff'
 
+db_prot = pd.read_csv(cwd+'/TACS_Material/Pmag_Prot.csv',index_col=0)
+db_binaries = pd.read_csv(cwd+'/TACS_Material/Binaries_db.csv',index_col=0)
+almanac_table = tcsf.load_nested_dict_npz(cwd+'/TACS_Material/almanac.npz')
 db_starname = pd.read_csv(cwd+'/TACS_Material/THE_SIMBAD.csv',index_col=0)
+wds_code = np.array(['-']*len(db_starname)).astype('<U11')
+for n,i in enumerate(np.array(db_starname['WDS'])):
+    if i!='-':
+        wds_code[n] = i[1:11]
+db_starname['WDS(code)'] = wds_code
+
 table_time = pd.read_csv(cwd+'/TACS_Material/time_conversion.csv',index_col=0)
 
 seeing = interp1d(table_time['deci'].astype('float')-2026,table_time['seeing'].astype('float'), kind='cubic', bounds_error=False, fill_value='extrapolate')(np.linspace(0,1,365))
@@ -42,7 +52,7 @@ def crossmatch_names(tab1,kw):
         tab1[column] = np.array(db_starname.loc[index,column])
     return tab1
 
-lightcurves = pd.read_pickle(cwd+'/TACS_Material/Lightcurves.p')
+lightcurves = tcsf.load_nested_dict_npz(cwd+'/TACS_Material/Lightcurves.npz')
 db_exoplanets = pd.read_csv(cwd+'/TACS_Material/exoplanets_db.csv',index_col=0)
 db_exoplanets.loc[db_exoplanets['k']!=db_exoplanets['k'],'k'] = 0.1
 db_exoplanets = crossmatch_names(db_exoplanets,'GAIA')
@@ -53,14 +63,29 @@ db_tess_candidates['name'] = 'TOI'+db_tess_candidates['TOI'].astype('str')
 db_tess_candidates['method'] = 'Transit'
 db_exoplanets = db_exoplanets.merge(db_tess_candidates,how='outer')
 
-def produce_gr8(version='2.0',verbose=True):
+def format_table(table, verbose=False):
+    default = {'PLATO':0, 'MHN':0}
+    for c in tcsv.master_columns:
+        if c not in table.columns:
+            if c in default.keys():
+                table[c] = default[c]    
+            else:
+                table[c] = -99.9
+            if verbose:
+                print('[WARNING] %s missing from the master table loaded.'%(c))
+    return table
+
+def produce_gr8(version='5.0',verbose=False):
     #GR8 TABLE FORMATION
 
     gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table_v'+version+'.csv',index_col=0)
+    print('[INFO USER] Downloading version %s...'%(version))
+
+    gr8_raw = format_table(gr8_raw, verbose=verbose)
     gr8 = gr8_raw.copy()
 
     if verbose:
-        if len(gr8)==1112:
+        if len(gr8)>1000:
             print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE members\n')
         else:
             print('[INFO USER] You are using the [PUBLIC] version of the code. If you are THE member, read the README.\n')
@@ -72,9 +97,11 @@ def produce_gr8(version='2.0',verbose=True):
     gr8['logRHK_known'] = np.array(gr8['logRHK'])
     gr8.loc[gr8['logRHK_known']!=gr8['logRHK_known'],'logRHK_known'] = -4.0
     gr8.loc[gr8['logRHK']!=gr8['logRHK'],'logRHK'] = -6.0
+    gr8.loc[gr8['prot']!=gr8['prot'],'prot'] = 100
 
     #based on Andreas comment, would be better to check RVs databases drift
     gr8.loc[gr8['logg']<3.5,'logg'] = 3.5
+    gr8.loc[gr8['vmag']<5,'multi_peak_GAIA'] = 0.0
     gr8.loc[gr8['vmag']<5,'ruwe_GAIA'] = 0.1
     gr8.loc[gr8['ruwe_GAIA']>4,'ruwe_GAIA'] = 4
     gr8.loc[gr8['rv_trend_kms_DACE']>1,'rv_trend_kms_DACE'] = 1
@@ -85,20 +112,22 @@ def produce_gr8(version='2.0',verbose=True):
     gr8.loc[gr8['HWO']==1,'rv_trend_kms_DACE'] = 0.0
 
     gr8['SPclass'] = '-'
-    gr8.loc[(gr8[Teff_var]>6000),'SPclass'] = 'F'
-    gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<=6000),'SPclass'] = 'S'
+    gr8.loc[(gr8[Teff_var]>5900),'SPclass'] = 'F'
+    gr8.loc[(gr8[Teff_var]>5600)&(gr8[Teff_var]<=5900),'SPclass'] = 'S'
     gr8.loc[(gr8[Teff_var]>5200)&(gr8[Teff_var]<=5600),'SPclass'] = 'G'
     gr8.loc[(gr8[Teff_var]<=5200),'SPclass'] = 'K'
 
     gr8['SG_NGT_len'] = np.max(gr8[['SG_NGT_Jan','SG_NGT_Feb']],axis=1)
-
+    
     return gr8, gr8_raw
 
-v1 = produce_gr8('1.0')
+v1 = produce_gr8('1.0',verbose=False)
 v2 = produce_gr8('2.0',verbose=False)
+v3 = produce_gr8('3.0',verbose=False)
+v5 = produce_gr8('5.0',verbose=True)
 
-gr8 = {'1.0':v1[0],'2.0':v2[0]}
-gr8_raw = {'1.0':v1[1],'2.0':v2[1]}
+gr8 = {'1.0':v1[0],'2.0':v2[0],'3.0':v3[0],'5.0':v5[0]}
+gr8_raw = {'1.0':v1[1],'2.0':v2[1],'3.0':v3[1],'5.0':v5[1]}
 
 #FUNCTIONS
 
@@ -130,21 +159,25 @@ def query_table(ra,dec,table):
     dist = abs(table['dec_j2000']-dec) + abs(table['ra_j2000']-ra)
     return table.loc[np.argmin(dist)]
 
-def resolve_starname(name,verbose=True):
+def get_info_starname(name,verbose=True):
     button = 0
-    for columns in list(db_starname.keys()):
-       loc =  np.where(np.array(db_starname[columns])==name)[0]
-       if len(loc):
-            loc = loc[0]
-            button = 1
-            break
-       else:
-           loc =  np.where(np.array(db_starname[columns])==name.replace(' ',''))[0]
-           if len(loc):
-                loc = loc[0]
-                button = 1
-                break
-            
+    if (type(name)!=int)&(type(name)!=np.int64):
+        for columns in list(db_starname.keys()):
+            loc =  np.where(np.array(db_starname[columns])==name)[0]
+            if len(loc):
+                    loc = loc[0]
+                    button = 1
+                    break
+            else:
+                loc = np.where(np.array(db_starname[columns])==name.replace(' ',''))[0]
+                if len(loc):
+                        loc = loc[0]
+                        button = 1
+                        break
+    else:
+        button = 1
+        loc = name
+    
     if button:
         output = db_starname.iloc[loc]
         output['INDEX'] = loc
@@ -175,7 +208,7 @@ def starname_resolver(stars):
     flag = []
     output = []
     for s in np.array(stars):
-        loc = resolve_starname(s,verbose=False)
+        loc = get_info_starname(s,verbose=False)
         if loc is not None:
             flag.append(1)
             output.append(loc['INDEX'])
@@ -187,6 +220,9 @@ def starname_resolver(stars):
 
     names = db_starname.loc[output]
     names[flag!=flag] = np.nan
+    index = np.array(names.index)
+    index[flag!=flag] = -1
+    names.index = index
     return names
 
 def create_gr8like(table,name_col,gr8_column='HD'):
@@ -197,13 +233,13 @@ def create_gr8like(table,name_col,gr8_column='HD'):
     table = table.drop_duplicates(subset=[gr8_column])
     stat_after = len(table)
     output = pd.merge(left=db_starname,right=table,on=gr8_column,how='left')
-    print('%.0f stars matched from the 1112 GR8 initial list'%(stat_after))
+    print('%.0f stars matched from the %.0f GR8 initial list'%(stat_after,len(db_starname)))
     return output
 
 def inner_gr8(list_names):
     inner = []
     for s in list_names:
-        a = resolve_starname(s,verbose=False)
+        a = get_info_starname(s,verbose=False)
         if a is not None:
             inner.append(s)
     return inner
@@ -224,21 +260,83 @@ def star_info(entry, format='v1'):
         info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
 
-def plot_TESS_CVZ(ra_unit='hours'):
-    theta = np.linspace(0,2*np.pi,100)
-    if ra_unit=='hours':
-        plt.plot(np.cos(theta)*12/360*24+18,np.sin(theta)*12+66,lw=1,ls='-.',color='k')
-    else:
-        plt.plot(np.cos(theta)*12+18*360/24,np.sin(theta)*12+66,lw=1,ls='-.',color='k')
-    plt.text(18,66,'TESS',ha='center',va='center')
+def get_info_prot(starname,verbose=False,verbose_name=False):
+    index = get_info_starname(starname, verbose=verbose_name)
 
-def plot_KEPLER_CVZ(ra_unit='hours'):
-    theta = np.linspace(0,2*np.pi,100)
-    if ra_unit=='hours':
-        plt.plot(np.cos(theta)*8/360*24+19.5,np.sin(theta)*8+44.5,lw=1,ls=':',color='k')
+    if sum(db_prot.index==index['INDEX'])==1:
+        prot_query = db_prot.loc[index['INDEX']].to_frame().T[['PRIMARY','HD','pmag','prot','origin']]
+    elif sum(db_prot.index==index['INDEX'])>1:
+        prot_query = db_prot.loc[index['INDEX']][['PRIMARY','HD','pmag','prot','origin']]
     else:
-        plt.plot(np.cos(theta)*8+19.5*360/24,np.sin(theta)*8+44.5,lw=1,ls=':',color='k')
-    plt.text(19.5,44.5,'KEPLER',ha='center',va='center')
+        prot_query = []
+
+    if len(prot_query):
+        ref = prot_query.reset_index(drop=True).loc[0].copy()
+        ref['prot'] = np.round(np.nanmean(prot_query['prot']),1)
+        ref['pmag'] = np.round(np.nanmean(prot_query['pmag']),1)
+        ref['origin'] = 'COMPOSITE'
+        ref = ref.to_frame().T
+        ref.index = np.array([-1])
+        merge = pd.concat([prot_query, ref])
+        if verbose:
+            print(merge)
+    else:
+        merge = {'PRIMARY':index['PRIMARY'],'HD':index['HD'],'pmag':np.nan,'prot':np.nan,'origin':np.nan}
+        merge = pd.DataFrame(merge,index=np.array([-1]))
+
+    return merge
+
+def get_info_binary(starname,verbose=False):
+    index = get_info_starname(starname, verbose=verbose)
+    
+    if index is not None:
+        ID = index['INDEX']
+        star = gr8['5.0'].loc[ID].copy()
+
+        info_binary = db_binaries.loc[db_binaries['GAIA']==index['GAIA']].copy()
+        info_binary = info_binary.loc[(info_binary['period']==info_binary['period'])|(info_binary['mv2']==info_binary['mv2'])]
+        if (len(info_binary)==0)&(index['WDS(code)']!='-'):
+            info_binary = db_binaries.loc[db_binaries['WDS(code)']==index['WDS(code)']].copy()
+            info_binary = info_binary.loc[(info_binary['period']==info_binary['period'])|(info_binary['mv2']==info_binary['mv2'])]
+            if len(info_binary):
+                info_binary['vmag'] = star['vmag']
+                info_binary['PRIMARY'] = star['PRIMARY']
+                info_binary['ID'] = ID
+                info_binary[['Ms','Ms2']] = np.array(info_binary[['Ms2','Ms']])
+                info_binary['Flux_ratio'] = 1/info_binary['Flux_ratio']
+                info_binary['omega'] = info_binary['omega']+180
+                if verbose:
+                    print(' [INFO] Binary has been found (companion)')
+        else:
+            if verbose:
+                print(' [INFO] Binary has been found')
+    else:
+        info_binary = None
+    return info_binary
+
+def plot_binary(starname,verbose=False,fibre=1.4,seeing=0.75,inc=None,t_eval=2026,traj='new',source='COMPOSITE', print_source=True):
+
+    info_binary = get_info_binary(starname,verbose=verbose)
+    output = np.nan
+    if len(info_binary):
+        print('\n',info_binary[['ID','PRIMARY','WDS','period','ecc','T0','omega','bibcode','node','Ms','Ms2','vmag','mv1','mv2','origin']],'\n')
+        if np.sum(info_binary['bibcode']==info_binary['bibcode'])>0:
+            output = tcsf.plot_binaries(
+                info_binary,
+                fibre=fibre,
+                seeing=seeing,
+                inc=inc,
+                traj=traj,
+                t_eval=t_eval,
+                print_source=print_source,
+                source=source)
+        else:
+            print(' [INFO] The binary only exist in the WDS, not reliable enough.')
+    else:
+        print(' [INFO] No binary reported in the DB')
+    
+    return output
+    
 
 def plot_exoplanets(y_var='k'):
     fig = plt.figure(figsize=(8,8))
@@ -289,7 +387,7 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
     db_exoplanets['p_eccmin'] = pmin
     db_exoplanets['p_eccmax'] = pmax
 
-    nraw = 33
+    nraw = 35
     ncol = len(np.unique(db_exoplanets['GAIA']))//nraw+1
     for j in range(ncol):
         plt.subplot(1,ncol,j+1) ; plt.xscale('log')
@@ -298,8 +396,8 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
         plt.xlim(0.5,99000)
         plt.xlabel('Period [days]',fontsize=13)
     
-    db = np.sort(np.unique(db_exoplanets['PRIMARY']))
-    db = np.array([np.where(np.array(db_starname['PRIMARY'])==d)[0][0] for d in db])
+    db = tcsf.sort_hd(np.sort(np.unique(db_exoplanets['HD'])))[0]
+    db = np.array([np.where(np.array(db_starname['HD'])==d)[0][0] for d in db])
 
     print(db_exoplanets)
 
@@ -313,6 +411,11 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
         plt.plot([1,50000],[count,count],lw=1,color='k',ls='-',alpha=0.2)
         plt.scatter(syst['period'],syst['period']*0+count,s=syst['marker'],color='k',zorder=10)
         plt.scatter(syst['period'],syst['period']*0+count,s=syst['marker'],c=syst['radius'],cmap='brg',vmin=1,vmax=8,zorder=10,edgecolor='k')
+        if np.sum(syst['p_eccmin']<60):
+            MHS = np.round(np.max(syst.loc[syst['p_eccmin']<60,'mass'])/95,2)
+            MHN = np.round(np.max(syst.loc[syst['p_eccmin']<60,'mass'])/17,2)
+        else:
+            MHS = 0 ; MHN = 0
         condition1 = np.sum((syst['p_eccmin']<400)&(syst['mass']>mcrit_inf)).astype('bool')
         condition2 = np.sum((syst['mass']>mcrit_sup)).astype('bool')
         condition_GZ = np.sum((syst['mass']>30)&(syst['mass']<=mcrit_sup)).astype('int')
@@ -325,12 +428,12 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
         if condition_imaging!=0:
             plt.arrow(0.6,count-0.25,0.0,0.5,color='k',head_width=0.1)
 
-        summary.append([system,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit)])       
+        summary.append([system,MHS,MHN,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit)])       
 
         condition_rejected = condition1|condition2
         color_condition = ['k','r'][int(condition_rejected)]
         indicator = ['x','•'][np.array(syst['pre_survey'])[0]]
-        plt.text(100000,count,indicator+' '+db_starname.loc[db_starname['GAIA']==system,'PRIMARY'].values[0],va='center',ha='left',color=color_condition,alpha=[0.25,1][np.array(syst['pre_survey'])[0]])
+        plt.text(120000,count,indicator+' '+db_starname.loc[db_starname['GAIA']==system,'HD'].values[0],va='center',ha='left',color=color_condition,alpha=[0.25,1][np.array(syst['pre_survey'])[0]])
         for p1,p2 in zip(syst['p_eccmin'],syst['p_eccmax']):
             plt.plot([p1,p2],[count,count],color='k',lw=3)
         for mass,period,p1 in np.array(syst[['mass','period','p_eccmin']]):
@@ -339,7 +442,7 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
             elif mass>mcrit_inf:
                 plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color=['white','r'][int(p1<400)],va='center',ha='center',zorder=1000)
     summary = np.array(summary)
-    summary = pd.DataFrame(summary,columns=['GAIA','HJ','BDW','GZ','NEP','SE','TRNS'])
+    summary = pd.DataFrame(summary,columns=['GAIA','MHS','MHN','HJ','BDW','GZ','NEP','SE','TRNS'])
     plt.subplots_adjust(left=0.03,right=0.93,wspace=0.30,top=0.96,bottom=0.09)
     return summary
 
@@ -483,10 +586,79 @@ class table_star(object):
     def print_columns(self):
         print(list(self.data.keys()))
 
+    def export(self, tablename, outdir=None):
+        if outdir is None:
+            self.data.sort_index().to_csv(cwd+'/TACS_OUTPUT/TAB_STARS/Star_selection_%s.csv'%(tablename))
+
+    def RA_balance(self,nbins=8, Nstars=None, protection=True):
+        data = self.data
+        ra = np.array(data['ra_j2000'])
+        bins = np.linspace(0,360,nbins+1)
+        groups = []
+        for i in range(nbins):
+            groups.append((ra>=bins[i])&(ra<bins[i+1]))
+        
+        min_groups = np.min([sum(i) for i in groups])
+        mean_groups = np.mean([sum(i) for i in groups]).astype('int')
+        max_groups = np.max([sum(i) for i in groups])
+
+        plt.plot([sum(i) for i in groups],marker='o')
+        plt.axhline(y=mean_groups)
+        plt.ylim(0,None)
+
+        rejection = [sum(i)-mean_groups for i in groups]
+
+        rejected = []
+        for r,i in zip(rejection,groups):
+            if r>0:
+                tab = data[i]
+                if protection:
+                    tab = tab.loc[tab['under_review']!=1]
+                tab = tab.sort_values(by='gmag',ascending=False)
+                rejected.append(np.array(tab['PRIMARY'])[0:r+1])
+        rejected = np.hstack(rejected)
+
+        kept = np.setdiff1d(data['PRIMARY'],rejected)
+        new_data = data.loc[np.in1d(np.array(data['PRIMARY']),kept)]
+
+        new = table_star(new_data)
+
+        return new
+
+    def plot_space_mission(self,newfig=True, protection=False):
+        if newfig:
+            plt.figure(figsize=(10,5))
+        tcsf.plot_TESS_sectors(ra_unit='deg')
+        tcsf.plot_TESS_CVZ(ra_unit='deg')
+        tcsf.plot_KEPLER(ra_unit='deg')
+        tcsf.plot_PLATO_North_LOP(ra_unit='deg')
+        plato = np.array(self.data['PLATO']).astype('bool')
+        #kepler = np.array(self.data['KEPLER']).astype('bool')
+        tess = np.array(self.data['TESS_CVZ']).astype('bool')
+        hwo = np.array(self.data['HWO']).astype('bool')
+        ra = self.data['ra_j2000']
+        dec = self.data['dec_j2000']
+        plt.scatter(ra,dec,color='k',marker='.')
+        plt.scatter(ra[plato],dec[plato],color='r',ec='k',label='PLATO (%.0f)'%(sum(plato)),marker='s',zorder=10)
+        #plt.scatter(self.data['ra_j2000'][kepler],self.data['dec_j2000'][kepler],color='b',ec='k',label='KEPLER (%.0f)'%(sum(kepler)))
+        plt.scatter(ra[tess],dec[tess],color='b',ec='k',label='TESS (%.0f)'%(sum(tess)),zorder=10)
+        plt.scatter(ra[hwo],dec[hwo],color='y',ec='k',label='HWO (%.0f)'%(sum(hwo)),marker='*',s=80,zorder=10)
+        
+        protected = self.data.loc[self.data['under_review']==1]
+
+        if (protection)&(len(protected)>1):
+            plt.scatter(protected['ra_j2000'],protected['dec_j2000'],facecolors="none",edgecolors='k',marker='o',s=100,zorder=10,alpha=0.3,label='Saved (%.0f)'%(len(protected)))   
+
+        leg = plt.legend(loc=3,ncol=3)
+        leg.set_zorder(100)
+        plt.ylim(np.min(dec)-10,np.max(dec)+10)
+        plt.xlabel('RA [hours]')
+        plt.ylabel('Dec [deg]')
+
     def plot(self, x, y, c=None, s=None, print_names=False, GUI=True, alpha=1.0):
         
         if GUI:
-            fig = plt.figure(figsize=(10,10))
+            fig = plt.figure(figsize=(9,9))
             plt.axes([0.1,0.1,0.85,0.75])
         
         dataframe = self.data
@@ -530,7 +702,7 @@ class table_star(object):
                     new_star = dataframe.loc[loc]
                     text_fmt = star_info(new_star)
                     self.info_text.set_text(text_fmt)
-                    self.marker.set_data([new_star[x],new_star[y]])
+                    self.marker.set_data(np.array([[new_star[x]],[new_star[y]]]))
                     
                     plt.draw()
                     fig.canvas.draw_idle()
@@ -547,7 +719,7 @@ class table_star(object):
 
 class tcs(object):
     
-    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version='2.0'):    
+    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version='5.0'):    
         self.info_XY_telescope_open = []
         self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
@@ -565,14 +737,23 @@ class tcs(object):
         
         self.info_TA_cutoff = {}
 
-        self.info_TA_cutoff['presurvey'] = tcsv.cutoff_presurvey
+        self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
         self.info_TA_cutoff['minimal'] = tcsv.cutoff_minimal
 
         self.func_cutoff(tagname='minimal',cutoff=tcsv.cutoff_minimal, verbose=False)
         plt.close('cumulative')
 
-        self.func_cutoff(tagname='presurvey',cutoff=tcsv.cutoff_presurvey, verbose=False)
+        self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000}, protection=False, verbose=False) 
         plt.close('cumulative')
+
+        self.func_cutoff(tagname='RVopti',cutoff=tcsv.cutoff_RVopti, verbose=False)
+        plt.close('cumulative')
+
+        self.func_cutoff(tagname='solartwins', cutoff=tcsv.cutoff_megan, protection=False, verbose=False,) 
+        plt.close('cumulative')
+
+        dustbin = self.union('RVopti','solartwins',union_name='presurvey')
+        plt.close()
 
         if type(verbose)!=list:
             verbose = [verbose]*3
@@ -591,17 +772,20 @@ class tcs(object):
         self.info_SC_instrument_noise = sig_ins
         self.info_XY_noise_instrument = self.create_ins_noise(sig_ins)
 
+    def export_table(self, tablename, outdir=None):
+        self.info_TA_stars_selected[tablename].export(tablename,outdir=outdir)
+
     def create_ins_noise(self, sig_ins=0.00, nb_years=10):
         ins_noise = tableXY(x=np.arange(365*nb_years),y=np.random.randn(365*nb_years)*sig_ins) #generate a 10-years instrument stability
         return ins_noise
-    
+
     def create_star_selection(self,starnames,tagname='my_selection'):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         if type(starnames) is not list:
                 starnames = list(starnames)
         gaia_names = []
         for s in starnames:
-            output = resolve_starname(s,verbose=False)
+            output = get_info_starname(s,verbose=False)
             if output is not None:
                 gaia_names.append(output['GAIA'])
         gaia_names = np.array(gaia_names)
@@ -610,8 +794,7 @@ class tcs(object):
     
 
     def compute_night_length(self, sun_elevation=-12, verbose=True, method='approximation'):
-        almanac_table = pd.read_pickle(cwd+'/TACS_Material/almanac.p')[self.info_SC_instrument]
-        almanac = almanac_table['sun']
+        almanac = almanac_table[self.info_SC_instrument]['sun']
         self.info_SC_night_def = sun_elevation
         self.info_IM_night = image(
             ((almanac>sun_elevation).T).astype('float'),
@@ -648,7 +831,7 @@ class tcs(object):
             starname = gr8.iloc[id]['PRIMARY']
 
         if starname is not None:
-            starname = resolve_starname(starname,verbose)
+            starname = get_info_starname(starname,verbose)
             self.info_TA_starnames = starname
             if starname is not None:
                 ra = np.array(gr8.loc[gr8['PRIMARY']==starname['PRIMARY'],'ra_j2000'])[0]/360*24
@@ -845,7 +1028,7 @@ class tcs(object):
             self.info_TA_stars_selected['SG'] = table_star(table_gr8.copy())
         else:
             if cutoff is None:
-                cutoff = self.info_TA_cutoff['presurvey']
+                cutoff = self.info_TA_cutoff['RVopti']
             
             table_gr8 = self.info_TA_stars_selected['GR8'].data.copy()
             for kw in cutoff.keys():
@@ -914,8 +1097,9 @@ class tcs(object):
             plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
             plt.scatter(table_gr8['ra_j2000']/360*24,table_gr8['dec_j2000'],s=(7.5-table_gr8['vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
             plt.scatter(table_gr8['ra_j2000']/360*24+24,table_gr8['dec_j2000'],s=(7.5-table_gr8['vmag'])*30,c=table_gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
-            plot_TESS_CVZ()
-            plot_KEPLER_CVZ()
+            tcsf.plot_TESS_CVZ()
+            tcsf.plot_KEPLER()
+            tcsf.plot_PLATO_North_LOP()
 
     def compute_SG_month(self, month=1, plot=False, selection='SG'):
         
@@ -930,7 +1114,7 @@ class tcs(object):
         gr8 = self.info_TA_stars_selected['GR8'].data
 
         #add the info column
-        for selections in ['GR8','presurvey','minimal',selection]:
+        for selections in ['GR8','RVopti','solartwins','presurvey','minimal',selection]:
             table = self.info_TA_stars_selected[selections].data
             dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
             loc = np.argmin(dist,axis=0)
@@ -948,8 +1132,8 @@ class tcs(object):
             plt.ylim(-30,90)
             plt.xlabel('RA [hours]')
             plt.ylabel('Dec [deg]')
-            plot_TESS_CVZ()
-            plot_KEPLER_CVZ()
+            tcsf.plot_TESS_CVZ()
+            tcsf.plot_PLATO_North_LOP()
             plt.scatter(gr8['ra_j2000']/360*24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
             plt.scatter(gr8['ra_j2000']/360*24+24,gr8['dec_j2000'],s=(7.5-gr8['vmag'])*30,alpha=0.15,c=gr8[Teff_var],cmap='jet_r',vmin=5000,vmax=6000)
             plt.scatter(table['ra_j2000']/360*24,table['dec_j2000'],s=(7.5-table['vmag'])*30,c=table[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
@@ -1007,7 +1191,7 @@ class tcs(object):
                 self.marker = None
             def update(self,newx,newy):
                 loc = np.argmin(abs(np.log10(db_exoplanets[y_var])-np.log10(newy))+abs(np.log10(db_exoplanets['period'])-np.log10(newx)))
-                info = resolve_starname(db_exoplanets.loc[loc,'GAIA'],verbose=False)
+                info = get_info_starname(db_exoplanets.loc[loc,'GAIA'],verbose=False)
                 new_star = gr8.iloc[info['INDEX']]
                 text_fmt = star_info(new_star,format='v2')
                 self.info_text.set_text(text_fmt)
@@ -1112,13 +1296,18 @@ class tcs(object):
         self.compute_night_length(sun_elevation=-12, verbose=False) 
         self.compute_nights(airmass_max=1.5, weather=False, plot=False)
         self.info_XY_night_duration.plot(figure=figure,label='Z=1.5 | S=-12',ytext=-0.5) 
-        
+
+        self.compute_night_length(sun_elevation=-18, verbose=False) #change the sunset/rise parameter
+        self.compute_nights(airmass_max=1.8, weather=False, plot=False)
+        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-18',ytext=-0.5)
+
         self.compute_nights(airmass_max=1.8, weather=False, plot=False)
         self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-12',ytext=-0.5) 
         
         self.compute_night_length(sun_elevation=-6, verbose=False) #change the sunset/rise parameter
         self.compute_nights(airmass_max=1.8, weather=False, plot=False)
         self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-6',ytext=-0.5)
+
         if legend:
             plt.legend()
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
@@ -1363,20 +1552,30 @@ class tcs(object):
     def print_sp_stat(self,sp=''):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         mini = self.info_TA_stars_selected['minimal'].data.copy()
+        twin = self.info_TA_stars_selected['solartwins'].data.copy()
+        rvopt = self.info_TA_stars_selected['RVopti'].data.copy()
         pre = self.info_TA_stars_selected['presurvey'].data.copy()
         mini = mini.loc[mini['under_review']==0]
-        pre = pre.loc[pre['under_review']==0]
+        rvopt = rvopt.loc[pre['under_review']==0]
         review = gr8.loc[gr8['under_review']==1]
         
         output = []
         output.append([sum(gr8['SPclass']=='K'),'|',sum(gr8['SPclass']=='G'),'|',sum(gr8['SPclass']=='S'),'|',sum(gr8['SPclass']=='F'),'| =',len(gr8)])
         output.append([sum(mini['SPclass']=='K'),'|',sum(mini['SPclass']=='G'),'|',sum(mini['SPclass']=='S'),'|',sum(mini['SPclass']=='F'),'| =',len(mini)])
-        output.append([sum(pre['SPclass']=='K'),'|',sum(pre['SPclass']=='G'),'|',sum(pre['SPclass']=='S'),'|',sum(pre['SPclass']=='F'),'| =',len(pre)])
+        output.append([sum(twin['SPclass']=='K'),'|',sum(twin['SPclass']=='G'),'|',sum(twin['SPclass']=='S'),'|',sum(twin['SPclass']=='F'),'| =',len(twin)])
+        output.append([sum(rvopt['SPclass']=='K'),'|',sum(rvopt['SPclass']=='G'),'|',sum(rvopt['SPclass']=='S'),'|',sum(rvopt['SPclass']=='F'),'| =',len(rvopt)])
         output.append([sum(review['SPclass']=='K'),'|',sum(review['SPclass']=='G'),'|',sum(review['SPclass']=='S'),'|',sum(pre['SPclass']=='F'),'| =',len(review)])
+        output.append([sum(pre['SPclass']=='K'),'|',sum(pre['SPclass']=='G'),'|',sum(pre['SPclass']=='S'),'|',sum(pre['SPclass']=='F'),'| =',len(pre)])
         output.append([['','↑'][int(sp=='K')],'|',['','↑'][int(sp=='G')],'|',['','↑'][int(sp=='S')],'|',['','↑'][int(sp=='F')],'|  ',''])
-        output = pd.DataFrame(output,columns=['K ','| ','G ','| ','S ','| ','F ','|   ','sum '],index=['GR8','MINIMAL','PRESURVEY','MANUALLY_SAVED',' '])
+        output = pd.DataFrame(output,columns=['K ','| ','G ','| ','S ','| ','F ','|   ','sum '],index=['GR8','MINIMAL','SOLARTWINS','RVOPTIMIZED','UNDER_REVIEW','PRESURVEY',' '])
         print('\n[INFO] Teff statistic')
         print('\n',output,'\n')
+
+    def RA_balance(self,selection='presurvey',tagname=None,nbins=8,protection=True):
+        if tagname is None:
+            tagname = selection+'&RAbalanced'
+        output = self.info_TA_stars_selected[selection].RA_balance(self, nbins=nbins, Nstars=None, protection=protection)
+        self.info_TA_stars_selected[tagname] = output
 
     def which_cutoff(self, starname, cutoff=None, tagname=None, plot=False, display=None):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
@@ -1393,11 +1592,13 @@ class tcs(object):
 
         if type(starname)==str:
             starname = [starname]
+        elif (type(starname)==int)|(type(starname)==np.int64):
+            starname = [starname]
         starname = np.array(starname)
 
         outputs = []
         for s in starname:
-            index = resolve_starname(s,verbose=(len(starname)==1))
+            index = get_info_starname(s,verbose=(len(starname)==1))
             output = []
             if index is not None:
                 star = gr8.loc[index['INDEX']]
@@ -1416,6 +1617,10 @@ class tcs(object):
                         highlight=1
                     if (kw=='gmag'):
                         highlight = np.sum(np.array([7.25, 5.75, 5.25, 4.5])>star[kw])-1
+                    if (kw=='PLATO')&(star[kw]==1.0):
+                        highlight=1
+                    if (kw=='TESS_CVZ')&(star[kw]==1.0):
+                        highlight=1
                     if (kw=='HWO')&(star[kw]==1.0):
                         highlight=1
                     if (kw=='nobs_DB'):
@@ -1540,9 +1745,9 @@ class tcs(object):
         table_scheduler['t0'] = 'NULL'
         table_scheduler['period'] = 1
         table_scheduler['delta'] = 0.3
-        table_scheduler['moonMaxFI'] = 0
+        table_scheduler['moonMaxFI'] = 0.40
         table_scheduler['minMoonDist1'] = 5
-        table_scheduler['ifExceedsMinFI1'] = 15
+        table_scheduler['ifExceedsMinFI1'] = 0.1
         table_scheduler['minMoonDist2'] = 0
         table_scheduler['ifExceedsMinFI2'] = 0
         table_scheduler['rvMoonRange'] = 10
@@ -1697,3 +1902,105 @@ class tcs(object):
         plt.savefig(cwd+'/TACS_OUTPUT/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.png'%(now,year,int(month_obs_baseline),tagname))
         table_scheduler_final.to_csv(cwd+'/TACS_OUTPUT/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.csv'%(now,year,int(month_obs_baseline),tagname))
 
+
+    def union(self,selection1,selection2,union_name=None,figname=None,ordering='vmag', Xmarker={'under_review>':0.5}, extra='under_review'):
+        table1  = self.info_TA_stars_selected[selection1].data
+        table2  = self.info_TA_stars_selected[selection2].data
+        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
+
+        name1 = np.array(table1['GAIA'])
+        name2 = np.array(table2['GAIA'])
+
+        exclu1 = starname_resolver(np.setdiff1d(name1,name2))
+        exclu2 = starname_resolver(np.setdiff1d(name2,name1))
+        intersect = starname_resolver(name1[np.in1d(name1,name2)])
+        union = starname_resolver(np.unique(list(name1)+list(name2)))
+
+        union = gr8.loc[np.in1d(np.array(gr8['GAIA']),np.array(union['GAIA']))]
+
+        union['selection_%s'%(selection1)] = (np.in1d(union['GAIA'],name1)).astype('int')
+        union['selection_%s'%(selection2)] = (np.in1d(union['GAIA'],name2)).astype('int')
+
+        plt.figure(figname,figsize=(9,10))
+        plt.axes([0,0,1,1])
+
+        yoffset = -1.3
+        plt.plot(0.4*np.sin(np.linspace(0,2*np.pi,100))-0.2,0.6*np.cos(np.linspace(0,2*np.pi,100))+yoffset)
+        plt.plot(0.4*np.sin(np.linspace(0,2*np.pi,100))+0.2,0.6*np.cos(np.linspace(0,2*np.pi,100))+yoffset)
+
+        plt.text(-0.4,0+yoffset,'S1/S2 = \n%.0f\n(%.0f %%)'%(len(exclu1),len(exclu1)*100/len(table1)),color='C0',ha='center')
+        plt.text(0.4,0+yoffset,'S2/S1 = \n%.0f\n(%.0f %%)'%(len(exclu2),len(exclu2)*100/len(table2)),color='C1',ha='center')
+        plt.text(0,0+yoffset,'I=%.0f'%(len(intersect)),color='k',ha='center')
+        plt.text(0,0.6+yoffset,'U=%.0f'%(len(union)),color='k',ha='center')
+        plt.ylim(-2,4)
+        plt.xlim(-1.7,1.7)
+
+        plt.text(-1,0.0+yoffset,selection1,color='C0',ha='center')
+        plt.text(1,0.0+yoffset,selection2,color='C1',ha='center')
+
+        plt.tick_params(labelbottom=False,labelleft=False)
+        plt.axis('off')
+
+        gr8['Xmarker'] = 0
+        if type(Xmarker)==list:
+            names = starname_resolver(Xmarker).dropna(subset=['PRIMARY'])
+            gr8.loc[np.array(names.index),'Xmarker'] = 1
+            tag_title='X = Starnames'
+        else:
+            kw = list(Xmarker.keys())[0]
+            if kw[-1]=='<':
+                gr8.loc[gr8[kw[0:-1]]<Xmarker[kw],'Xmarker'] = 1
+                tag_title = '(X) = '+kw[0:-1]+' < '+str(Xmarker[kw])
+            else:
+                gr8.loc[gr8[kw[0:-1]]>Xmarker[kw],'Xmarker'] = 1
+                tag_title = '(X) = '+kw[0:-1]+' > '+str(Xmarker[kw])
+
+        if ordering=='HD':
+            p1 = gr8.loc[exclu1.index].reset_index()
+            p2 = gr8.loc[exclu2.index].reset_index()
+            p3 = gr8.loc[intersect.index].reset_index()
+            ord1 = np.array(tcsf.sort_hd(p1['HD'])[1] )
+            ord2 = np.array(tcsf.sort_hd(p2['HD'])[1] )
+            ord3 = np.array(tcsf.sort_hd(p3['HD'])[1] )
+            p1 = p1.loc[ord1] ; p1.index = np.array(p1['index']) ; del p1['index']
+            p2 = p2.loc[ord2] ; p2.index = np.array(p2['index']) ; del p2['index']
+            p3 = p3.loc[ord3] ; p3.index = np.array(p3['index']) ; del p3['index']
+        else:
+            p1 = gr8.loc[exclu1.index].sort_values(by=ordering)[0:42]
+            p2 = gr8.loc[exclu2.index].sort_values(by=ordering)[0:42]
+            p3 = gr8.loc[intersect.index].sort_values(by=ordering)[0:42]
+
+        #☠
+
+        plt.text(-0,3.7,'[%s]'%(extra)+'   |   '+tag_title+'   |   STARNAME   |   mv   |   # RV OBS',color='k',fontsize=15,ha='center')
+
+        plt.text(-1.42,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p1[extra])]),color='C0',va='top',ha='right')
+        plt.text(-0.35,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p3[extra])]),color='k',va='top',ha='right')
+        plt.text(0.75,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p2[extra])]),color='C1',va='top',ha='right')
+
+        plt.text(-1.40,3.5,'\n'.join(['%s'%(['(  )','(X)'][int(i)]) for i in np.array(p1['Xmarker'])]),color='C0',va='top',ha='left')
+        plt.text(-0.33,3.5,'\n'.join(['%s'%(['(  )','(X)'][int(i)]) for i in np.array(p3['Xmarker'])]),color='k',va='top',ha='left')
+        plt.text(0.79,3.5,'\n'.join(['%s'%(['(  )','(X)'][int(i)]) for i in np.array(p2['Xmarker'])]),color='C1',va='top',ha='left')
+
+        plt.text(-1.30,3.5,'\n'.join(['%s'%(i) for i in zip(np.array(p1['HD']))]),color='C0',va='top',ha='left')
+        plt.text(-0.22,3.5,'\n'.join(['%s'%(i) for i in zip(np.array(p3['HD']))]),color='k',va='top',ha='left')
+        plt.text(0.90,3.5,'\n'.join(['%s'%(i) for i in zip(np.array(p2['HD']))]),color='C1',va='top',ha='left')
+
+        plt.text(-1.00,3.5,'\n'.join([' - %.2f'%(i) for i in zip(np.array(p1['vmag']))]),color='C0',va='top',ha='left')
+        plt.text(0.09,3.5,'\n'.join([' - %.2f'%(i) for i in zip(np.array(p3['vmag']))]),color='k',va='top',ha='left')
+        plt.text(1.21,3.5,'\n'.join([' - %.2f'%(i) for i in zip(np.array(p2['vmag']))]),color='C1',va='top',ha='left')
+
+        plt.text(-0.84,3.5,'\n'.join([' - %.0f'%(i) for i in zip(np.array(p1['nobs_DB']))]),color='C0',va='top',ha='left')
+        plt.text(0.26,3.5,'\n'.join([' - %.0f'%(i) for i in zip(np.array(p3['nobs_DB']))]),color='k',va='top',ha='left')
+        plt.text(1.38,3.5,'\n'.join([' - %.0f'%(i) for i in zip(np.array(p2['nobs_DB']))]),color='C1',va='top',ha='left')
+
+        if union_name is None:
+            union_name = '%s|%s'%(selection1,selection2)
+        
+        self.info_TA_stars_selected[union_name] = table_star(union)
+
+        exclu1 = union.loc[union['selection_%s'%(selection1)]==1]
+        exclu2 = union.loc[union['selection_%s'%(selection2)]==1]
+        intersect = union.loc[(union['selection_%s'%(selection1)] + union['selection_%s'%(selection2)])==2] 
+
+        return  {'union':table_star(union),  'exclu1':table_star(exclu1),  'exclu2':table_star(exclu2),  'inter':table_star(intersect)}
