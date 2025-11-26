@@ -11,7 +11,10 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
+version_tacs = '1.2'
+
 print("""\n[INFO TACS]
+[INFO USER] TACS version = """+version_tacs+""" 
 [INFO USER] READ ME CAREFULLY 
 [INFO USER] The RUWE is currently disabled for stars brighter than mv<5 
 [INFO USER] An issue or an upgrade? Contact me at:  michael.cretignier@physics.ox.ac.uk
@@ -84,7 +87,7 @@ def produce_gr8(version='5.0',verbose=False):
     gr8_raw = format_table(gr8_raw, verbose=verbose)
     gr8 = gr8_raw.copy()
 
-    if verbose:
+    if False:
         if len(gr8)>1000:
             print('[INFO USER] You are using the [PRIVATE] version of the code, do NOT share it outside THE members\n')
         else:
@@ -121,6 +124,7 @@ def produce_gr8(version='5.0',verbose=False):
     
     return gr8, gr8_raw
 
+print('[INFO USER] Downloading Master table...')
 v1 = produce_gr8('1.0',verbose=False)
 v2 = produce_gr8('2.0',verbose=False)
 v3 = produce_gr8('3.0',verbose=False)

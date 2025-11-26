@@ -15,15 +15,13 @@ source tcs/bin/activate \
 pip install --upgrade pip \
 pip install -r requirements.txt
 
-[IMPORTANT]
-
-THE members should download the Master_table_v2.0.csv on the Google drive
-
 [REFERENCES]
+
+GR8 table is coming from Freckelton et al. +25 (2025yCat..75401786F)
 
 The computation of the RV budget is made using:
  
-1) ARVE (Al Moulla, K et al. in prep.)
+1) ARVE (Al Moulla + 25, 2025A&A...701A.266A)
 2) GP (O'Sullivan et al. in prep.)
 
 If you have any problem, please contact me at:
