@@ -70,6 +70,34 @@ def load_nested_dict_npz(filename):
     data = np.load(filename, allow_pickle=True)
     return _unflatten_dict({k: data[k] for k in data.files})
 
+def _flatten_dict(d, parent_key=""):
+    items = {}
+    for k, v in d.items():
+        new_key = f"{parent_key}/{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.update(_flatten_dict(v, new_key))
+        else:
+            items[new_key] = v
+    return items
+
+def _unflatten_dict(d):
+    result = {}
+    for key, value in d.items():
+        parts = key.split("/")
+        cur = result
+        for p in parts[:-1]:
+            cur = cur.setdefault(p, {})
+        cur[parts[-1]] = value
+    return result
+
+def save_nested_dict_npz(d, filename):
+    flat = _flatten_dict(d)
+    np.savez(filename, **flat)
+
+def load_nested_dict_npz(filename):
+    data = np.load(filename, allow_pickle=True)
+    return _unflatten_dict({k: data[k] for k in data.files})
+
 def format_number(nb,digit=3):
     nb_log = int(np.round(np.log10(nb)-0.5,0))
     nb_digit = digit-nb_log
