@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.2'
+version_tacs = '1.21'
 
 print("""\n[INFO TACS]
 [INFO USER] TACS version = """+version_tacs+""" 
