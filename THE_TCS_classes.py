@@ -1317,6 +1317,11 @@ class tcs(object):
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
         plt.ylim(-1)
 
+    def compare_obs_strategy(self,selection=None):
+        total_time = self.info_SC_nb_hours_per_yr_eff
+        total_time_min = total_time*60
+
+
     def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, budget='_phot'):
         """ budget = '_arve_osc+gr' """
         
@@ -1335,7 +1340,7 @@ class tcs(object):
         texp_snr_crit = 15*(snr/snr_texp15)**2
 
         if budget!='_phot':
-            texp_tabulated = np.array([1,5,8,10,12,15,20,25,30])
+            texp_tabulated = np.arange(1,30)
             kws = ['sig_rv'+budget+'_texp%.0f'%(j) for j in texp_tabulated]
             sig_rvi = np.array(selection[kws])<=sig_rv
             texp_sig_rv_crit = []
@@ -1749,12 +1754,12 @@ class tcs(object):
         table_scheduler['t0'] = 'NULL'
         table_scheduler['period'] = 1
         table_scheduler['delta'] = 0.3
-        table_scheduler['moonMaxFI'] = 0.40
+        table_scheduler['moonMaxFI'] = 0.99
         table_scheduler['minMoonDist1'] = 5
-        table_scheduler['ifExceedsMinFI1'] = 0.1
-        table_scheduler['minMoonDist2'] = 0
-        table_scheduler['ifExceedsMinFI2'] = 0
-        table_scheduler['rvMoonRange'] = 10
+        table_scheduler['ifExceedsMinFI1'] = 0.5
+        table_scheduler['minMoonDist2'] = 10
+        table_scheduler['ifExceedsMinFI2'] = 0.75
+        table_scheduler['rvMoonRange'] = 15
         table_scheduler['rvMoonMinFI'] = 0.5
         table_scheduler['rvMoonMinAlt'] = -5
         table_scheduler['twilight'] = -12
@@ -1791,11 +1796,27 @@ class tcs(object):
             self.plot_survey_stars(Nb_star=len(table_scheduler))
             pouet
 
-        if type(texp)==str:
-            texp = 900
+        if texp=='optimal':
+            texp = np.array(table_scheduler['texp_optimal']*60)
+            texp[texp!=texp] = 15
+            texp = np.array(np.ceil(texp)).astype('int')
+        else:
+            texp = (np.ones(len(table_scheduler))*texp).astype('int')
 
-        loc = tcsf.find_nearest(self.info_XY_survey_stat.x*60,texp)[0][0]
-        nobs_max = self.info_XY_survey_stat.y[loc]
+        texp_mean = np.mean(texp)
+
+        print('[INFO] Texp mean = %.1f min (%.0f s)'%(texp_mean/60,texp_mean))
+
+        total_max = self.info_SC_nb_hours_per_yr
+        total_max_eff = self.info_SC_nb_hours_per_yr_eff
+
+        nobs_max_eff = total_max_eff*60/len(table_scheduler)/(texp_mean/60+1)
+        nobs_max = total_max*60/len(table_scheduler)/(texp_mean/60+1)
+
+        #loc = tcsf.find_nearest(self.info_XY_survey_stat.x*60,texp_mean)[0][0]
+        #nobs_max = self.info_XY_survey_stat.y[loc]
+        print('[INFO] Nobs max eff = %.0f'%(nobs_max_eff))
+        print('[INFO] Nobs max = %.0f'%(nobs_max))
 
         warning = 0
         if type(n_obs)==str:
@@ -1808,10 +1829,8 @@ class tcs(object):
 
         table_scheduler['expTime'] = texp
 
+        print('[INFO] You asked for N=%.0f observations'%(n_obs))
         total_time = np.sum(table_scheduler['obsN']*(table_scheduler['expTime']+60))/3600
-        total_max = self.info_SC_nb_hours_per_yr
-        total_max_eff = self.info_SC_nb_hours_per_yr_eff
-
         fraction = 100*total_time/total_max
         fraction_eff = 100*total_time/total_max_eff
         if fraction>125:
@@ -1904,6 +1923,8 @@ class tcs(object):
         now = tcsf.now()[0:19].replace(':','-')
 
         plt.savefig(cwd+'/TACS_OUTPUT/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.png'%(now,year,int(month_obs_baseline),tagname))
+
+        #table_scheduler['texp'] = table_scheduler['texp'].astype('int')
         table_scheduler_final.to_csv(cwd+'/TACS_OUTPUT/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.csv'%(now,year,int(month_obs_baseline),tagname))
 
 

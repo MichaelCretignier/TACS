@@ -24,22 +24,53 @@ tutorial.plot_survey_stars(Nb_star=40)
 #to get 130 measurements per year (1 night over 2), texp_max = 18 minutes
 #to get 260 measurements per year (every night), texp_max = 9 minutes
 
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_phot', selection='start')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='start')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', selection='start')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='start')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='start')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_phot', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='presurvey')
 
-tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=20, selection='start')
-tutorial.compute_optimal_texp(snr=250, sig_rv=0.55, budget='_arve_phot+osc+gr', texp_crit=20, selection='start')
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=20, selection='presurvey')
+print(int(60*tutorial.info_SC_nb_hours_per_yr_eff/(1+np.mean(tutorial.info_TA_stars_selected['presurvey'].data['texp_optimal']))/len(tutorial.info_TA_stars_selected['presurvey'].data)))
 
-tutorial.func_cutoff(cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['start'],
+tutorial.create_table_scheduler(
+    selection='presurvey',
+    year=2026,
+    texp='optimal',
+    n_obs=90,
+    ranking=None,
+    month_obs_baseline=3,
+    )
+
+tutorial.create_table_scheduler(
+    selection='presurvey',
+    year=2026,
+    texp=687,
+    n_obs=90,
+    ranking=None,
+    month_obs_baseline=3,
+    )
+
+tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=20, selection='presurvey')
+print(int(60*tutorial.info_SC_nb_hours_per_yr_eff/(np.mean(tutorial.info_TA_stars_selected['presurvey'].data['texp_optimal'])+1)/len(tutorial.info_TA_stars_selected['presurvey'].data)))
+
+tutorial.create_table_scheduler(
+    selection='presurvey',
+    year=2026,
+    texp='optimal',
+    n_obs=132,
+    ranking=None,
+    month_obs_baseline=5,
+    )
+
+
+tutorial.func_cutoff(cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['presurvey'],
     {'snr_C22_texp15>':250, 
     'sig_rv_phot_texp20<':0.30}),
     par_space='ra_j2000&dec_j2000',par_crit='HWO==1')
 
 tutorial.func_cutoff(tagname='final',
-    cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['start'],
+    cutoff=tcsc.mod_cutoff(tutorial.info_TA_cutoff['presurvey'],
     {'snr_C22_texp15>':250, 
     'sig_rv_phot_texp20<':0.30,
     'season_length_1.75>':240,
