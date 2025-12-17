@@ -12,8 +12,8 @@ If bug, install a Python environment:
 # Python environment (Conda install [best option])
 
 [TERMINAL] conda create -n tcs python=3.8.8 \
-[TERMINAL]conda activate tcs \
-[TERMINAL]pip install -r requirements.txt
+[TERMINAL] conda activate tcs \
+[TERMINAL] pip install -r requirements.txt
 
 # Python environment (Venv install)
 
