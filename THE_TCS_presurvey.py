@@ -34,11 +34,15 @@ tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_
 tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='presurvey')
 tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='presurvey')
 
-tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=1, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey')
 
-tutorial.compute_optimal_texp(snr=1, sig_rv=0.30, budget='_arve_osc', texp_crit=50, selection='presurvey')
-tutorial.compute_optimal_texp(snr=1, sig_rv=0.20, budget='_arve_osc', texp_crit=50, selection='presurvey')
-tutorial.compute_optimal_texp(snr=1, sig_rv=0.10, budget='_arve_osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_gp_phot+osc', texp_crit=50, selection='presurvey')
+
+tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey')
+tutorial.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C0', figname='texp')
+
+tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=50, selection='presurvey')
+tutorial.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C1', figname='texp')
 
 tutorial.create_table_scheduler(
     selection='presurvey',
@@ -59,13 +63,14 @@ tutorial.create_table_scheduler(
     )
 
 tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=20, selection='presurvey')
-print(int(60*tutorial.info_SC_nb_hours_per_yr_eff/(np.mean(tutorial.info_TA_stars_selected['presurvey'].data['texp_optimal'])+1)/len(tutorial.info_TA_stars_selected['presurvey'].data)))
+nmax = int(60*tutorial.info_SC_nb_hours_per_yr/(np.mean(tutorial.info_TA_stars_selected['presurvey'].data['texp_optimal'])+1)/len(tutorial.info_TA_stars_selected['presurvey'].data))
+print(nmax)
 
 tutorial.create_table_scheduler(
     selection='presurvey',
     year=2026,
     texp='optimal',
-    n_obs=132,
+    n_obs=nmax,
     ranking=None,
     month_obs_baseline=5,
     )

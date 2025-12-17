@@ -1371,7 +1371,7 @@ class tcs(object):
             snr_550 = np.array(table_scheduler['snr_550_texp15'])*np.sqrt(texp/15)
 
             rv_sig_phot = 100*table_scheduler['sig_rv_phot_texp15']*np.sqrt(15/texp)
-            rv_sig_osc = 100*np.array([table_scheduler.loc[j,'sig_rv_arve_phot+osc_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
+            rv_sig_osc = 100*np.array([table_scheduler.loc[j,'sig_rv'+budget+'_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
             rv_sig_gran = 100*np.array([table_scheduler.loc[j,'sig_rv_arve_phot+osc+gr_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
             
             nobs_max_eff = int(np.ceil(total_time_eff*60/len(table_scheduler)/(texp_mean+1)))
