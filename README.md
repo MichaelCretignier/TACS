@@ -25,7 +25,7 @@ If bug, install a Python environment:
 # Tutorial (run the main.py in a iPython shell)
 
 [TERMINAL] cd ../TACS/Python \
-[TERMINAL] ipython
+[TERMINAL] ipython \
 [IPYTHON] run THE_TCS_main.py
 
 # References
