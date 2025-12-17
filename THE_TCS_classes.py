@@ -190,7 +190,7 @@ def get_info_starname(name,verbose=True):
         loc = name
     
     if button:
-        output = db_starname.iloc[loc]
+        output = db_starname.iloc[loc].copy()
         output['INDEX'] = loc
         if verbose:
             print('\n[INFO] Starnames found:\n')
