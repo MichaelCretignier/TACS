@@ -8,6 +8,11 @@ import THE_TCS_variables as tcsv
 #let's select -12 for the twilght (in best case, extratime for very bright targets)
 
 tutorial = tcsc.tcs(sun_elevation=-12) 
+star = 'HD146233'
+tutorial.plot_rv_texp(star,kw='_arve_osc_')
+tutorial.plot_rv_texp(star,kw='_gp_osc_')
+tutorial.plot_rv_texp(star,kw='_extempo_osc_')
+
 
 # let's compute the average season length of the presurvey
 
@@ -24,14 +29,17 @@ tutorial.plot_survey_stars(Nb_star=40)
 #to get 130 measurements per year (1 night over 2), texp_max = 18 minutes
 #to get 260 measurements per year (every night), texp_max = 9 minutes
 
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_phot', selection='presurvey')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='presurvey')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', selection='presurvey')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='presurvey')
-tutorial.plot_survey_snr_texp(texp=20, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_phot', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_arve_osc', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='presurvey')
+tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='presurvey')
 
-tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=20, selection='presurvey')
-print(int(60*tutorial.info_SC_nb_hours_per_yr_eff/(1+np.mean(tutorial.info_TA_stars_selected['presurvey'].data['texp_optimal']))/len(tutorial.info_TA_stars_selected['presurvey'].data)))
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=50, selection='presurvey')
+
+tutorial.compute_optimal_texp(snr=1, sig_rv=0.30, budget='_arve_osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=1, sig_rv=0.20, budget='_arve_osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=1, sig_rv=0.10, budget='_arve_osc', texp_crit=50, selection='presurvey')
 
 tutorial.create_table_scheduler(
     selection='presurvey',
@@ -160,11 +168,13 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'TESS>':0.5})
 dust = tutorial.func_cutoff(tagname='TESS',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
-tutorial.which_cutoff(tess, tagname='presurvey')
+tutorial.which_cutoff(tess, tagname='RVopti')
 for t in np.sort(tess):
     os.system('cls' if os.name == 'nt' else 'clear')
+    tcsc.get_info_prot(t)
+    tcsc.plot_binary(t,seeing=0.75,source='COMPOSITE')
     print('======'*12)
-    tutorial.which_cutoff(t, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.which_cutoff(t, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -176,7 +186,7 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'gmag<':5.5})
 dust = tutorial.func_cutoff(tagname='bright', cutoff=cutoff, protection=False)
 plt.close('cumulative')
 bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
-tutorial.which_cutoff(bright, tagname='presurvey')
+tutorial.which_cutoff(bright, tagname='RVopti')
 for b in np.sort(bright):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)

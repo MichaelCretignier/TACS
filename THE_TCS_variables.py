@@ -95,7 +95,7 @@ cutoff_RVopti = {
     'multi_peak_GAIA<':1,
     'rv_trend_kms_DACE<':0.1,
     'prot>':10,
-    'vmag<':7.3,
+    'gmag<':7.2,
     'distance<':30,
     'HWO>':-1,
     'PLATO>':-1,
@@ -140,13 +140,14 @@ cutoff_megan_old = {
 cutoff_minimal = {
     'teff<':6050,
     'logg>':4.15,
-    'vsini<':6,
+    'vsini<':100,
+    'SB2<':1,
     'sky_contam_VIZIER<':0.1,
+    'SB_composite<':0.5,
     'OBTP_type<':1.5,
-    'HJ<':0.5,
-    'BDW<':0.5,
+    'eff_nights_1.75>':150,
+    'season_length_1.75>':240,
     'gmag<':7.5,
-    'logRHK>':-6.1,
     'under_review>':-1,
     }
 

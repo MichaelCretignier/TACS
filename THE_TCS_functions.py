@@ -18,6 +18,7 @@ from matplotlib import MatplotlibDeprecationWarning
 from matplotlib.collections import LineCollection
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 warnings.filterwarnings('ignore', message='ERFA function.*yielded.*')
 
@@ -69,6 +70,19 @@ def save_nested_dict_npz(d, filename):
 def load_nested_dict_npz(filename):
     data = np.load(filename, allow_pickle=True)
     return _unflatten_dict({k: data[k] for k in data.files})
+
+def string_contained_in(array,string,inv=False,exclusion=[]):
+    array = np.array(array)
+    split = np.array([len(i.split(string))-1 for i in array])
+    mask = split.astype('bool')
+    if inv:
+        mask = ~mask
+
+    for exclu in exclusion:
+        split = np.array([len(i.split(exclu))-1 for i in array])
+        mask = mask&(~split.astype('bool'))
+
+    return mask, array[mask]
 
 def format_number(nb,digit=3):
     nb_log = int(np.round(np.log10(nb)-0.5,0))
@@ -641,9 +655,16 @@ def orbit_secondary_relative_to_primary(times, a, e, P, T0,
 def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COMPOSITE', t_eval=2026, print_source=True):
     t = np.linspace(0,2*np.pi,1000)
     sb = info.copy()
+    sb['node'] = np.round(sb['node'],1)
+    sb['omega'] = np.round(sb['omega'],1)
+    sb['inc'] = np.round(sb['inc'],0)
+
     ref = sb.loc[sb['origin']=='COMPOSITE'].reset_index(drop=True).loc[0].copy()
     if source!='COMPOSITE':
-        ref1 = sb.loc[sb['origin']==source].reset_index(drop=True).loc[0].copy()
+        if type(source)==str:
+            ref1 = sb.loc[sb['origin']==source].reset_index(drop=True).loc[0].copy()
+        elif type(source)==int:
+            ref1 = sb.loc[sb['src']==source].reset_index(drop=True).loc[0].copy()
         for kw in ref1.keys():
             if ref1[kw]==ref1[kw]:
                 ref[kw] = ref1[kw]
@@ -765,6 +786,8 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
         contam = np.sqrt(x_arcsec**2+y_arcsec**2)<(0.5*(fibre+seeing))
         plt.scatter(x_arcsec[contam],y_arcsec[contam],color='r',marker='x',zorder=7,label='CONTAM DANGER!')
 
+    danger1 = [np.round(amin_arcsec,4), np.round(the_amin_arcsec,4), danger1]
+
     plt.legend()
     plt.xlabel('X ["]',fontsize=14)
     plt.ylabel('Y ["]',fontsize=14)
@@ -786,14 +809,14 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
     plt.ylabel('Y [AU]',fontsize=14)
     plt.title('Orbital plan\na = %.1f AU | $a_{min}$ = %.1f AU | $a_{crit}$ = %.1f AU'%(a_au, amin_au, acrit_au))
 
-    plt.subplots_adjust(bottom=0.10+0.20*int(print_source),top=0.86)
+    plt.subplots_adjust(bottom=0.10+0.22*int(print_source),top=0.90)
 
     if print_source:
         summary = ''
         sb = sb.sort_values(by='origin').reset_index(drop=True)
         for source in sb.index:
             text = ''
-            ss = sb.loc[source][['sep_arcsec','mv1','mv2','Ms','Ms2','omega','node','inc','ecc','period','origin']]
+            ss = sb.loc[source][['sep_arcsec','mv1','mv2','Ms','Ms2','omega','node','inc','ecc','period','origin','src']]
             for kw in ss.keys():
                 value = ss[kw]
                 if value==value:
@@ -803,7 +826,7 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
                     value = ' '*4+' '
                 text = text + '%s = %s | '%(kw,value) 
             summary = summary+text+'\n'
-        plt.axes([0,0,1,0.22])
+        plt.axes([0,0,1,0.24])
         plt.axis('off')
         plt.xlim(0,1) ; plt.ylim(0,1)
         plt.text(0.05,1,summary,ha='left',va='top',fontsize=9)

@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.21'
+version_tacs = '1.23'
 
 print("""\n[INFO TACS]
 [INFO USER] TACS version = """+version_tacs+""" 
@@ -67,18 +67,25 @@ db_tess_candidates['method'] = 'Transit'
 db_exoplanets = db_exoplanets.merge(db_tess_candidates,how='outer')
 
 def format_table(table, verbose=False):
-    default = {'PLATO':0, 'MHN':0}
+    default = {'PLATO': 0, 'MHN': 0, 'MP_stability': 101}
+
+    new_cols = {}
     for c in tcsv.master_columns:
         if c not in table.columns:
-            if c in default.keys():
-                table[c] = default[c]    
+            if c in default:
+                new_cols[c] = default[c]
             else:
-                table[c] = -99.9
+                new_cols[c] = -99.9
             if verbose:
-                print('[WARNING] %s missing from the master table loaded.'%(c))
+                print('[WARNING] %s missing from the master table loaded.' % (c))
+
+    if new_cols:
+        new_df = pd.DataFrame({k: [v] * len(table) for k, v in new_cols.items()}, index=table.index)
+        table = pd.concat([table, new_df], axis=1)
+
     return table
 
-def produce_gr8(version='5.0',verbose=False):
+def produce_gr8(version='5.1',verbose=False):
     #GR8 TABLE FORMATION
 
     gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table_v'+version+'.csv',index_col=0)
@@ -128,10 +135,10 @@ print('[INFO USER] Downloading Master table...')
 v1 = produce_gr8('1.0',verbose=False)
 v2 = produce_gr8('2.0',verbose=False)
 v3 = produce_gr8('3.0',verbose=False)
-v5 = produce_gr8('5.0',verbose=True)
+v5 = produce_gr8('5.1',verbose=True)
 
-gr8 = {'1.0':v1[0],'2.0':v2[0],'3.0':v3[0],'5.0':v5[0]}
-gr8_raw = {'1.0':v1[1],'2.0':v2[1],'3.0':v3[1],'5.0':v5[1]}
+gr8 = {'1.0':v1[0],'2.0':v2[0],'3.0':v3[0],'5.1':v5[0]}
+gr8_raw = {'1.0':v1[1],'2.0':v2[1],'3.0':v3[1],'5.1':v5[1]}
 
 #FUNCTIONS
 
@@ -295,7 +302,7 @@ def get_info_binary(starname,verbose=False):
     
     if index is not None:
         ID = index['INDEX']
-        star = gr8['5.0'].loc[ID].copy()
+        star = gr8['5.1'].loc[ID].copy()
 
         info_binary = db_binaries.loc[db_binaries['GAIA']==index['GAIA']].copy()
         info_binary = info_binary.loc[(info_binary['period']==info_binary['period'])|(info_binary['mv2']==info_binary['mv2'])]
@@ -427,17 +434,22 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
         condition_SE = np.sum((syst['mass']<=10)).astype('int')
         condition_transit = np.sum(syst['radius']==syst['radius'])
         condition_imaging = np.sum(syst['method']=='Imaging')
+        stab = np.nanmean(syst['MP_stability'])
+        if stab!=stab:
+            stab = 101
+
         if (condition_transit!=0)|(condition_imaging!=0):
             plt.arrow(0.5,count,0.2,0,color='k',head_width=0.1)
         if condition_imaging!=0:
             plt.arrow(0.6,count-0.25,0.0,0.5,color='k',head_width=0.1)
 
-        summary.append([system,MHS,MHN,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit)])       
+        summary.append([system,MHS,MHN,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit),int(np.round(stab,0))])
 
         condition_rejected = condition1|condition2
         color_condition = ['k','r'][int(condition_rejected)]
         indicator = ['x','•'][np.array(syst['pre_survey'])[0]]
-        plt.text(120000,count,indicator+' '+db_starname.loc[db_starname['GAIA']==system,'HD'].values[0],va='center',ha='left',color=color_condition,alpha=[0.25,1][np.array(syst['pre_survey'])[0]])
+        indicator2 = ['', '[%.0f]'%(stab)][int(stab!=101)]
+        plt.text(120000,count,indicator+' '+db_starname.loc[db_starname['GAIA']==system,'HD'].values[0]+' '+indicator2,va='center',ha='left',color=color_condition,alpha=[0.25,1][np.array(syst['pre_survey'])[0]])
         for p1,p2 in zip(syst['p_eccmin'],syst['p_eccmax']):
             plt.plot([p1,p2],[count,count],color='k',lw=3)
         for mass,period,p1 in np.array(syst[['mass','period','p_eccmin']]):
@@ -446,8 +458,8 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
             elif mass>mcrit_inf:
                 plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color=['white','r'][int(p1<400)],va='center',ha='center',zorder=1000)
     summary = np.array(summary)
-    summary = pd.DataFrame(summary,columns=['GAIA','MHS','MHN','HJ','BDW','GZ','NEP','SE','TRNS'])
-    plt.subplots_adjust(left=0.03,right=0.93,wspace=0.30,top=0.96,bottom=0.09)
+    summary = pd.DataFrame(summary,columns=['GAIA','MHS','MHN','HJ','BDW','GZ','NEP','SE','TRNS','MP_stability'])
+    plt.subplots_adjust(left=0.01,right=0.91,wspace=0.40,top=0.96,bottom=0.09)
     return summary
 
 def plot_tess_candidates():
@@ -723,7 +735,7 @@ class table_star(object):
 
 class tcs(object):
     
-    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version='5.0'):    
+    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version='5.1'):    
         self.info_XY_telescope_open = []
         self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
@@ -955,6 +967,28 @@ class tcs(object):
         if plot:
             self.info_IM_observable.plot()
         
+    def plot_rv_texp(self,star,kw='_arve_osc_',print_kws=False):
+        index = get_info_starname(star,verbose=False)
+        tab = self.info_TA_stars_selected['GR8'].data
+        star_tab = tab.loc[index['INDEX']]
+        dust,kws = tcsf.string_contained_in(star_tab.keys(),kw,exclusion=['err'])
+        if print_kws:
+            print(kws)
+        rvs_texp = np.array(star_tab[kws])
+        try:
+            rvs_texp_err = np.array(star_tab[kws+'_err'])
+        except:
+            rvs_texp_err = 0*rvs_texp
+
+        texp = np.array([float(k.split('texp')[1]) for k in kws])
+        
+        plt.subplot(2,1,1) ; plt.ylabel('RV [m/s]')
+        plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',label=kw[1:-1],capsize=0,ls='')
+        plt.legend()
+        plt.subplot(2,1,2) ; plt.ylabel('RV [m/s]') ; plt.xlabel('Texp [min]')
+        plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',capsize=0,ls='')
+        plt.yscale('log')
+
     def create_timeseries(self, airmass_max=1.5, nb_year=10, month=None, texp=15, weather=True):
 
         if weather:
@@ -1248,12 +1282,12 @@ class tcs(object):
             self.info_XY_keplerian_model = [[]]
             if len(keplerian_par)==0:
                 syst = db_exoplanets.loc[mask]
-                self.info_TA_exoplanets_known = syst[['name','period','k','mass','radius','ecc','peri','t0']]
+                self.info_TA_exoplanets_known = syst[['name','period','k','mass','radius','ecc','peri','Tc']]
             else:
                 syst = keplerian_par.copy()
 
             jdb_model = np.arange(np.min(jdb),np.max(jdb),np.min(syst['period'])/20)
-            for P,K,e,omega,t0 in np.array(syst[['period','k','ecc','peri','t0']]):
+            for P,K,e,omega,t0 in np.array(syst[['period','k','ecc','peri','Tc']]):
                 signal = tcsf.Keplerian_rv(jdb, P, K, e, omega, t0)
                 self.info_XY_keplerian.append(tableXY(x=jdb-j0, y=signal, xlabel=xlabel,ls='o', ylabel='RV [m/s]'))
                 signal2 = tcsf.Keplerian_rv(jdb_model, P, K, e, omega, t0)
@@ -1317,10 +1351,54 @@ class tcs(object):
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
         plt.ylim(-1)
 
-    def compare_obs_strategy(self,selection=None):
-        total_time = self.info_SC_nb_hours_per_yr_eff
-        total_time_min = total_time*60
+    def compare_obs_strategy(self,selection,budget='_arve_phot+osc',color='C0', figname='texp'):
 
+        total_time_eff = self.info_SC_nb_hours_per_yr_eff
+        total_time = self.info_SC_nb_hours_per_yr
+
+        table_scheduler = self.info_TA_stars_selected[selection].data.copy()
+        texp = np.array(table_scheduler['texp_optimal'])
+
+        nrows=2
+        for row in range(1,3):
+            texp_int = np.ceil(texp).astype('int')
+            texp_int[texp_int>30] = 30
+            texp_int[texp_int<1] = 1
+            texp_mean = np.nanmean(texp)
+
+            snr_420 = np.array(table_scheduler['snr_420_texp15'])*np.sqrt(texp/15)
+            snr_490 = np.array(table_scheduler['snr_C22_texp15'])*np.sqrt(texp/15)
+            snr_550 = np.array(table_scheduler['snr_550_texp15'])*np.sqrt(texp/15)
+
+            rv_sig_phot = 100*table_scheduler['sig_rv_phot_texp15']*np.sqrt(15/texp)
+            rv_sig_osc = 100*np.array([table_scheduler.loc[j,'sig_rv_arve_phot+osc_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
+            rv_sig_gran = 100*np.array([table_scheduler.loc[j,'sig_rv_arve_phot+osc+gr_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
+            
+            nobs_max_eff = int(np.ceil(total_time_eff*60/len(table_scheduler)/(texp_mean+1)))
+            nobs_max = int(np.ceil(total_time*60/len(table_scheduler)/(texp_mean+1)))
+
+            plt.figure(figname,figsize=(16,4*(nrows)))
+            plt.subplot(nrows,4,4*(row-1)+1)
+            txt = 'N = %.0f (%.0f) \n'%(nobs_max,nobs_max_eff)+r'<$T_{exp}$> = %.0f min'%(texp_mean)
+            #plt.title(txt)
+            plt.hist(texp,bins=np.arange(0,31,1),color=color,alpha=0.5) ; plt.xlabel('Texp [min]') 
+            plt.axvline(x=texp_mean,color=color,label=txt) ; plt.legend()
+            plt.subplot(nrows,4,4*(row-1)+2) ; plt.xlabel(r'$SNR_{490nm}$ []')
+            txt = r'<$SNR_{490}$> = %.0f'%(np.nanmean(snr_490))
+            plt.hist(snr_490,bins=np.arange(100,1200,25)-12.5,color=color,alpha=0.5)
+            plt.axvline(x=np.nanmean(snr_490),color=color,label=txt) ; plt.legend()
+            plt.xlim(125,None)
+            plt.subplot(nrows,4,4*(row-1)+3) ; plt.xlabel(r'$\sigma_{RV}(phot)$ [cm/s]')
+            txt = r'<$\sigma_{\gamma}$> = %.0f cm/s'%(np.nanmean(rv_sig_phot))
+            plt.hist(rv_sig_phot,bins=np.arange(0,45,1),color=color,alpha=0.5)
+            plt.axvline(x=np.nanmean(rv_sig_phot),color=color,label=txt) ; plt.legend()
+            plt.subplot(nrows,4,4*(row-1)+4) ; plt.xlabel(r'$\sigma_{RV}(phot+osc)$ [cm/s]')
+            txt = r'<$\sigma_{\gamma+p}$> = %.0f cm/s'%(np.nanmean(rv_sig_osc))
+            plt.hist(rv_sig_osc,bins=np.arange(0,45,1),color=color,alpha=0.5)
+            plt.axvline(x=np.nanmean(rv_sig_osc),color=color,label=txt) ; plt.legend()
+            plt.subplots_adjust(left=0.05,right=0.95,bottom=0.08,top=0.93,hspace=0.30)
+
+            texp = np.ones(len(texp))*texp_mean
 
     def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, budget='_phot'):
         """ budget = '_arve_osc+gr' """
@@ -1444,7 +1522,7 @@ class tcs(object):
         plt.axvspan(xmin=0,xmax=snr_crit,color='k',alpha=0.2)
         plt.axhspan(ymin=sig_rv_crit,ymax=1.0,color='k',alpha=0.2)
         plt.xlabel('SNR continuum',fontsize=14)
-        plt.ylabel(r'$\sigma_{{\gamma}}$ $RV$ [m/s]',fontsize=14)
+        plt.ylabel(r'$\sigma_{RV}$ [m/s]',fontsize=14)
         plt.legend(loc=1,markerscale=2.0)
         plt.xlim(0,1299)
         plt.ylim(0,1.00)

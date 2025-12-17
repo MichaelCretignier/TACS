@@ -14,7 +14,7 @@ tcsc.plot_binary('HD16160',seeing=0.75,source='COMPOSITE')
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
 
-presurvey = tcsc.tcs(version='5.0') #last catalog = 5.0 (default value) old = [1.0,2.0]
+presurvey = tcsc.tcs(version='5.1') #last catalog = 5.1 (default value) old = [1.0,2.0]
 presurvey.print_sp_stat()
 
 #these lines are already run by default in tcsc.tsc()
