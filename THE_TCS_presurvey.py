@@ -8,11 +8,10 @@ import THE_TCS_variables as tcsv
 #let's select -12 for the twilght (in best case, extratime for very bright targets)
 
 tutorial = tcsc.tcs(sun_elevation=-12) 
-star = 'HD146233'
+star = 'HD146233' # try also with HD111398
 tutorial.plot_rv_texp(star,kw='_arve_osc_')
 tutorial.plot_rv_texp(star,kw='_gp_osc_')
 tutorial.plot_rv_texp(star,kw='_extempo_osc_')
-
 
 # let's compute the average season length of the presurvey
 
@@ -203,12 +202,12 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'HWO>':0.5})
 dust = tutorial.func_cutoff(tagname='HWO',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
-tutorial.which_cutoff(hwo, tagname='presurvey')
+tutorial.which_cutoff(hwo, tagname='RVopti')
 for h in np.sort(hwo):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
+    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['5.1'].loc[tcsc.gr8['5.1']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -220,12 +219,12 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'nobs_DB>':200})
 dust = tutorial.func_cutoff(tagname='HDB',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 hdb = np.array(tutorial.info_TA_stars_selected['HDB'].data['HD'])
-tutorial.which_cutoff(hdb, tagname='presurvey')
+tutorial.which_cutoff(hdb, tagname='RVopti')
 for h in np.sort(hdb):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
+    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['5.1'].loc[tcsc.gr8['5.1']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -239,12 +238,12 @@ plt.close('cumulative')
 ldb = tutorial.info_TA_stars_selected['LDB'].data.sort_values(by=['HZ_mp_min_osc+gr_texp15'])
 ldb = np.array(ldb['HD'])[0:20]
 ldb = ldb[ldb!='-']
-tutorial.which_cutoff(ldb, tagname='presurvey')
+tutorial.which_cutoff(ldb, tagname='RVopti')
 for h in np.sort(ldb):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
+    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.print_sp_stat(tcsc.gr8['5.1'].loc[tcsc.gr8['5.1']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -258,11 +257,11 @@ dust = tutorial.func_cutoff(tagname='SG',cutoff=cutoff,protection=False)
 sg = tutorial.info_TA_stars_selected['SG'].data
 sg = sg.sort_values(by=['SG_NGT_len'],ascending=False)[['nobs_DB','HD','SPclass','SG_NGT_len','vmag']][0:30]
 sg = np.array(sg['HD'])
-tutorial.which_cutoff(sg, tagname='presurvey')
+tutorial.which_cutoff(sg, tagname='RVopti')
 for h in np.sort(sg):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
     tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
