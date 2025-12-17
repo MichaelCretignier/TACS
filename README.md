@@ -1,3 +1,9 @@
+# TaCS (Targets Characterisation and Selection) for the Terra Hunting Experiment
+
+<p align="center">
+  <img src="logo.png" alt="Project logo" width="400">
+</p>
+
 # Contact Me
 
 If you have any problem, please contact me at:
