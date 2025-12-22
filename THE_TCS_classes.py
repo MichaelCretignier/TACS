@@ -13,12 +13,12 @@ import THE_TCS_variables as tcsv
 
 version_tacs = '1.23'
 
-print("""\n[INFO TACS]
+print(Fore.GREEN+"""\n[INFO TACS]
 [INFO USER] TACS version = """+version_tacs+""" 
 [INFO USER] READ ME CAREFULLY 
 [INFO USER] The RUWE is currently disabled for stars brighter than mv<5 
 [INFO USER] An issue or an upgrade? Contact me at:  michael.cretignier@physics.ox.ac.uk
-      """)
+      """+Fore.RESET)
 
 cwd = os.getcwd()
 
