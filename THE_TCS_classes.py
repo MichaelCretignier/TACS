@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.37'
+version_tacs = '1.38'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -277,8 +277,92 @@ def star_info(entry, format='v1'):
     elif format=='v2':
         info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     else:
-        info = ' ID : %.0f \n HD : %s \n HIP : %s \n GAIA : %s \n WDS : %s \n Mv = %.2f \n Ra = %.2f  \n Dec = %.2f \n Ms = %.2f \n Rs = %.2f \n Teff = %.0f \n Logg = %.2f  \n FeH = %.2f  \n RHK = %.2f \n Vsini = %.1f \n RUWE = %.2f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,HD,HIP,GAIA,WDS,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry['Ms'], entry['Rs'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
+        info = ' ID : %.0f \n HD : %s \n HIP : %s \n GAIA : %s \n WDS : %s \n Gmag = %.2f \n Vmag = %.2f \n Ra = %.2f  \n Dec = %.2f \n Ms = %.2f \n Rs = %.2f \n Teff = %.0f \n Logg = %.2f  \n FeH = %.2f  \n RHK = %.2f \n Vsini = %.1f \n RUWE = %.2f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,HD,HIP,GAIA,WDS,entry['gmag'],entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry['Ms'], entry['Rs'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
+
+def which_cutoff(starname, cutoff, plot=False, display=None, version=None):
+    if version is None:
+        version = last_catalog
+    GR8 = gr8[version]
+    if display is not None:
+        for d in display:
+            cutoff[d+' '] = np.nan
+
+    if type(starname)==str:
+        starname = [starname]
+    elif (type(starname)==int)|(type(starname)==np.int64):
+        starname = [starname]
+    starname = np.array(starname)
+
+    outputs = []
+    for s in starname:
+        index = get_info_starname(s,verbose=(len(starname)==1))
+        output = []
+        if index is not None:
+            star = GR8.loc[index['INDEX']]
+            for kws in cutoff.keys():
+                kw = kws[:-1]
+                condition = kws[-1]
+                value = cutoff[kws]
+                if condition=='>':
+                    test = int(star[kw]>value)
+                elif condition=='<':
+                    test = int(star[kw]<value)
+                else:
+                    test = 1
+                highlight=0
+                if (kw=='under_review')&(star[kw]==1):
+                    highlight=1
+                if (kw=='gmag'):
+                    highlight = np.sum(np.array([7.25, 6.2, 5.9, 5.4])>star[kw])-1
+                if (kw=='PLATO')&(star[kw]==1.0):
+                    highlight=1
+                if (kw=='TESS_CVZ')&(star[kw]==1.0):
+                    highlight=1
+                if (kw=='HWO')&(star[kw]==1.0):
+                    highlight=1
+                if (kw=='nobs_DB'):
+                    highlight = np.sum(np.array([-1, 130, 250, 400])<star[kw])-1
+                if (kw=='season_length_1.75'):
+                    highlight = np.sum(np.array([225,275,290,305])<star[kw])-1
+                if (kw=='season_length_1.5'):
+                    highlight = np.sum(np.array([210,260,275,285])<star[kw])-1
+                if (kw=='SG_NGT_len'):
+                    highlight = np.sum(np.array([-1,6,7.5,8.5])<star[kw])-1
+                if (kw=='Rank_THE'):
+                    highlight = np.sum(np.array([750,200,100,50])>star[kw])-1
+                output.append([s,['--->','    '][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['   ','❂  ','❂❂ ','❂❂❂','X  '][highlight],['<---','    '][test]])
+            output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','badge','!!'])
+            output['value'] = np.round(output['value'],2)
+            if len(starname)==1:
+                protection = int(np.array(output.loc[output['feature']=='under_review','value']==1)[0])
+                if (sum(output['test']=='FALSE')!=0)&(protection==0):
+                    print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
+                elif (sum(output['test']=='FALSE')!=0)&(protection==1):
+                    print(Fore.YELLOW+'[INFO] -- NO -- %s was rejected (but is under review!).\n'%(s)+Fore.RESET)                
+                else:
+                    print(Fore.GREEN+'[INFO] -- YES -- %s is still selected.\n'%(s)+Fore.RESET)
+                print(output[output.columns[1:]])
+        else:
+            output.append([s,'--->','starname','!=','UNFOUND',s,'FALSE','<---'])
+            output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','!!'])
+        if sum(output['test']=='FALSE'):
+            outputs.append(output.loc[output['test']=='FALSE'])
+    
+    pd.set_option("display.max_rows", None)
+    if len(starname)!=1:
+        outputs = pd.concat(outputs)
+        print(outputs)
+        rejected = len(np.unique(outputs['starname']))
+        total = len(starname)
+        missing = len(np.unique(outputs.loc[outputs['feature']=='starname','starname']))
+        print('\n[INFO] %.0f (%.0f%%) stars rejected from the %.0f stars in the list (%.0f stars not in GR8, %.0f rejected).\n'%(rejected,100*rejected/total,total,missing,rejected-missing))
+        if plot:
+            plt.figure()
+            outputs['feature'].value_counts().plot.pie(autopct="%1.0f%%")
+    pd.reset_option("display.max_rows")
+
+    return outputs
 
 def get_info_prot(starname,verbose=False,verbose_name=False):
     index = get_info_starname(starname, verbose=verbose_name)
@@ -494,7 +578,7 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
     plt.ylim(-0.5,0.5)
     plt.axvline(x=365.25,ls=':',color='k')
     for j in range(0,5):
-        plt.plot([10**j]*2,[-0.1,0.1],color='k')
+        plt.plot([10**j]*2,[-0.1,0.1],color='k',zorder=100)
     plt.xscale('log')
     plt.axvspan(xmin=60,xmax=400,color='gray',alpha=0.3)
 
@@ -616,7 +700,7 @@ def plot_rv_texp(star,budget='osc',codes=['arve','extempo','gp'], version=None, 
             plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',capsize=0,ls='')
             plt.yscale('log')
 
-def plot_summary(starname, version=None, show_private=False, selection=None):    
+def plot_summary(starname, version=None, show_private=False, selection=None, cutoff=None):    
     if version is None:
         version = last_catalog
 
@@ -642,28 +726,30 @@ def plot_summary(starname, version=None, show_private=False, selection=None):
         plt.figure(figsize=(23,9))
 
         if selection is not None:
+            print(selection)
             entry = selection.loc[selection['HD']==index['HD']]
+            print(entry)
             if len(entry):
                 entry = entry.loc[entry.index[0]]
-                plt.axes([0.4,0.87,0.25,0.07]) ; plt.ylim(0,1) ; plt.xlim(0,1) ; plt.axis('off')
-                text3 = 'SP. type = '+entry['SPclass']
+                plt.axes([0.03,0.83,0.25,0.05]) ; plt.ylim(0,1) ; plt.xlim(0,1) ; plt.axis('off')
+                text3 = ' | SP. type = '+entry['SPclass']
                 text3 = text3+' | under review:'+['□','⊠'][int(entry['under_review'])]
                 text3 = text3+' | RV opti:'+['□','⊠'][int(entry['selection_RVopti'])]
-                text3 = text3+' | Sun Twins:'+['□','⊠'][int(entry['selection_solartwins'])]
-                plt.text(0.5,0.5,text3,ha='center',va='center',fontsize=13)
+                text3 = text3+' | Sun Twins:'+['□','⊠'][int(entry['selection_solartwins'])]+' |'
+                plt.text(0.0,0.5,text3,ha='left',va='center')
                 #print(entry)
 
-        plt.axes([0.00,0.92,1.0,0.08])
+        plt.axes([0.40,0.92,0.6,0.08])
         plt.axis('off')
         plot_spectrum(starname,newfig=False)
         plt.axes([0.03,0.48,0.25,0.35])
         plt.axis('off') ; plt.xlim(0,1) ; plt.ylim(0,1)
         plt.text(0,1,text,va='top')
         plt.text(0,0.0,text2,va='top')
-        plt.axes([0.07,0.82,0.25,0.07])
+        plt.axes([0.4,0.82,0.25,0.07])
         plt.axis('off')
         plot_planetary_system(starname,newfig=False)
-        plt.axes([0.4,0.48,0.25,0.38])
+        plt.axes([0.4,0.48,0.25,0.28])
         plot_ccf(starname,newfig=False)
         plt.axes([0.73,0.68,0.25,0.18])
         plot_season(starname,newfig=False,selection=selection)
@@ -677,6 +763,14 @@ def plot_summary(starname, version=None, show_private=False, selection=None):
                 plt.axes([0.73,0.07,0.25,0.30]) ; ax1 = plt.gca()
                 plt.axes([1.10,0.07,0.25,0.36]) ; ax2 = plt.gca()
                 output = plot_binary(starname,ax1=ax1,ax2=ax2)
+        if cutoff is not None:
+            text = which_cutoff(starname,cutoff)
+            if len(text):
+                text = text[0]
+                plt.axes([0.03,0.95,0.1,0.05]) ; plt.xlim(0,1) ; plt.ylim(0,1) ; plt.axis('off')
+                del text['starname'] ; del text['!'] ; del text['test'] ; del text['badge'] ; del text['!!']
+                text = text.to_string(index=False)
+                plt.text(0.0, 0.5, text, ha='left', va='top', family='monospace')
 
 
 def plot_exoplanets(y_var='k'):
@@ -1991,96 +2085,7 @@ class tcs(object):
         output = self.info_TA_stars_selected[selection].RA_balance(self, nbins=nbins, Nstars=None, protection=protection)
         self.info_TA_stars_selected[tagname] = output
 
-    def which_cutoff(self, starname, cutoff=None, tagname=None, plot=False, display=None):
-        gr8 = self.info_TA_stars_selected['GR8'].data.copy()
 
-        if tagname is not None:
-            try:
-                cutoff = self.info_TA_cutoff[tagname].copy()
-            except:
-                print('[ERROR] this tagname is not found, current list is: ',list(self.info_TA_cutoff.keys()))
-        
-        if display is not None:
-            for d in display:
-                cutoff[d+' '] = np.nan
-
-        if type(starname)==str:
-            starname = [starname]
-        elif (type(starname)==int)|(type(starname)==np.int64):
-            starname = [starname]
-        starname = np.array(starname)
-
-        outputs = []
-        for s in starname:
-            index = get_info_starname(s,verbose=(len(starname)==1))
-            output = []
-            if index is not None:
-                star = gr8.loc[index['INDEX']]
-                for kws in cutoff.keys():
-                    kw = kws[:-1]
-                    condition = kws[-1]
-                    value = cutoff[kws]
-                    if condition=='>':
-                        test = int(star[kw]>value)
-                    elif condition=='<':
-                        test = int(star[kw]<value)
-                    else:
-                        test = 1
-                    highlight=0
-                    if (kw=='under_review')&(star[kw]==1):
-                        highlight=1
-                    if (kw=='gmag'):
-                        highlight = np.sum(np.array([7.25, 5.75, 5.25, 4.5])>star[kw])-1
-                    if (kw=='PLATO')&(star[kw]==1.0):
-                        highlight=1
-                    if (kw=='TESS_CVZ')&(star[kw]==1.0):
-                        highlight=1
-                    if (kw=='HWO')&(star[kw]==1.0):
-                        highlight=1
-                    if (kw=='nobs_DB'):
-                        highlight = np.sum(np.array([-1, 130, 250, 400])<star[kw])-1
-                    if (kw=='season_length_1.75'):
-                        highlight = np.sum(np.array([225,275,290,305])<star[kw])-1
-                    if (kw=='season_length_1.5'):
-                        highlight = np.sum(np.array([210,260,275,285])<star[kw])-1
-                    if (kw=='SG_NGT_len'):
-                        highlight = np.sum(np.array([-1,6,7.5,8.5])<star[kw])-1
-                    if (kw=='Rank_THE'):
-                        highlight = np.sum(np.array([750,200,100,50])>star[kw])-1
-                    output.append([s,['--->','    '][test],kw,condition,value,star[kw],['FALSE','TRUE'][test],['   ','❂  ','❂❂ ','❂❂❂','X  '][highlight],['<---','    '][test]])
-                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','badge','!!'])
-                output['value'] = np.round(output['value'],2)
-                if len(starname)==1:
-                    protection = int(np.array(output.loc[output['feature']=='under_review','value']==1)[0])
-                    if (sum(output['test']=='FALSE')!=0)&(protection==0):
-                        print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
-                    elif (sum(output['test']=='FALSE')!=0)&(protection==1):
-                        print(Fore.YELLOW+'[INFO] -- NO -- %s was rejected (but is under review!).\n'%(s)+Fore.RESET)                
-                    else:
-                        print(Fore.GREEN+'[INFO] -- YES -- %s is still selected.\n'%(s)+Fore.RESET)
-                    print(output[output.columns[1:]])
-            else:
-                output.append([s,'--->','starname','!=','UNFOUND',s,'FALSE','<---'])
-                output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','!!'])
-            if sum(output['test']=='FALSE'):
-                outputs.append(output.loc[output['test']=='FALSE'])
-        
-        pd.set_option("display.max_rows", None)
-        if len(starname)!=1:
-            outputs = pd.concat(outputs)
-            print(outputs)
-            rejected = len(np.unique(outputs['starname']))
-            total = len(starname)
-            missing = len(np.unique(outputs.loc[outputs['feature']=='starname','starname']))
-            print('\n[INFO] %.0f (%.0f%%) stars rejected from the %.0f stars in the list (%.0f stars not in GR8, %.0f rejected).\n'%(rejected,100*rejected/total,total,missing,rejected-missing))
-            if plot:
-                plt.figure()
-                outputs['feature'].value_counts().plot.pie(autopct="%1.0f%%")
-        pd.reset_option("display.max_rows")
-
-
-
-        self.info_TA_stars_missing = outputs
 
     def func_cutoff(self, tagname='handmade', tagname_fig='', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None, protection=True):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""

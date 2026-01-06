@@ -173,17 +173,6 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'TESS>':0.5})
 dust = tutorial.func_cutoff(tagname='TESS',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
-tutorial.which_cutoff(tess, tagname='RVopti')
-for t in np.sort(tess):
-    os.system('cls' if os.name == 'nt' else 'clear')
-    tcsc.get_info_prot(t)
-    tcsc.plot_binary(t,seeing=0.75,source='COMPOSITE')
-    print('======'*12)
-    tutorial.which_cutoff(t, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
-        screenshot = ImageGrab.grab(bbox)
-        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(t))
 
 #BRIGHT SAMPLE
 #20 over 28 rejected
@@ -191,33 +180,13 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'gmag<':5.5})
 dust = tutorial.func_cutoff(tagname='bright', cutoff=cutoff, protection=False)
 plt.close('cumulative')
 bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
-tutorial.which_cutoff(bright, tagname='RVopti')
-for b in np.sort(bright):
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print('======'*12)
-    tutorial.which_cutoff(b, tagname='presurvey',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==b,'SPclass'].values[0])
-    if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
-        screenshot = ImageGrab.grab(bbox)
-        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(b))
- 
+
 #HWO SAMPLE
 #33 over 46 rejected
 cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'HWO>':0.5})
 dust = tutorial.func_cutoff(tagname='HWO',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
-tutorial.which_cutoff(hwo, tagname='RVopti')
-for h in np.sort(hwo):
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print('======'*12)
-    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8[tcsc.last_catalog].loc[tcsc.gr8[tcsc.last_catalog]['HD']==h,'SPclass'].values[0])
-    if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
-        screenshot = ImageGrab.grab(bbox)
-        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
 #HIGH DB measurement
 #13 over 26 rejected
@@ -225,16 +194,6 @@ cutoff = tcsc.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'nobs_DB>':200})
 dust = tutorial.func_cutoff(tagname='HDB',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 hdb = np.array(tutorial.info_TA_stars_selected['HDB'].data['HD'])
-tutorial.which_cutoff(hdb, tagname='RVopti')
-for h in np.sort(hdb):
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print('======'*12)
-    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8[tcsc.last_catalog].loc[tcsc.gr8[tcsc.last_catalog]['HD']==h,'SPclass'].values[0])
-    if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
-        screenshot = ImageGrab.grab(bbox)
-        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
 #LOW DB measurement
 #14 over 20 rejected
@@ -244,16 +203,6 @@ plt.close('cumulative')
 ldb = tutorial.info_TA_stars_selected['LDB'].data.sort_values(by=['HZ_mp_min_osc+gr_texp15'])
 ldb = np.array(ldb['HD'])[0:20]
 ldb = ldb[ldb!='-']
-tutorial.which_cutoff(ldb, tagname='RVopti')
-for h in np.sort(ldb):
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print('======'*12)
-    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8[tcsc.last_catalog].loc[tcsc.gr8[tcsc.last_catalog]['HD']==h,'SPclass'].values[0])
-    if len(tutorial.info_TA_stars_missing)>0:
-        bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
-        screenshot = ImageGrab.grab(bbox)
-        screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
 #SG January-February stars
 
@@ -263,11 +212,11 @@ dust = tutorial.func_cutoff(tagname='SG',cutoff=cutoff,protection=False)
 sg = tutorial.info_TA_stars_selected['SG'].data
 sg = sg.sort_values(by=['SG_NGT_len'],ascending=False)[['nobs_DB','HD','SPclass','SG_NGT_len','vmag']][0:30]
 sg = np.array(sg['HD'])
-tutorial.which_cutoff(sg, tagname='RVopti')
+tcsc.which_cutoff(sg, tutorial.info_TA_cutoff['RVopti'])
 for h in np.sort(sg):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
-    tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
+    tcsc.which_cutoff(h, tutorial.info_TA_cutoff['RVopti'],display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
     tutorial.print_sp_stat(tcsc.gr8['2.0'].loc[tcsc.gr8['2.0']['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
@@ -292,17 +241,32 @@ for index in gr8.index:
 catalog_version = tcsc.last_catalog #last catalog = 5.2 
 presurvey = tcsc.tcs(version=catalog_version)
 table = presurvey.info_TA_stars_selected['presurvey'].data
+cutoff = presurvey.info_TA_cutoff['RVopti']
 gr8 = presurvey.info_TA_stars_selected['GR8'].data
 os.system('rm -f /Users/cretignier/Documents/THE/figures/Presurvey_summary/*.png')
 os.system('rm -f /Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/*.png')
 for index in table.index:
     hd = gr8.loc[index,'HD']
-    tcsc.plot_summary(index, show_private=False,selection=table)
-    plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary/THE%s_%s.png'%(str(index).zfill(4),hd))
+    tcsc.plot_summary(hd, show_private=False,selection=table,cutoff=cutoff)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary/%s_THE%s.png'%(hd,str(index).zfill(4)))
     plt.close('all')
-    tcsc.plot_summary(index, show_private=True,selection=table)
-    plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/THE%s_%s.png'%(str(index).zfill(4),hd))
+    tcsc.plot_summary(hd, show_private=True,selection=table,cutoff=cutoff)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/%s_THE%s.png'%(hd,str(index).zfill(4)))
     plt.close('all')
+
+table = presurvey.info_TA_stars_selected['minimal'].data
+table = table.loc[~np.in1d(table['GAIA'],presurvey.info_TA_stars_selected['presurvey'].data['GAIA'])]
+table = table.sort_values(by='vmag')[0:30]
+cutoff = presurvey.info_TA_cutoff['RVopti']
+gr8 = presurvey.info_TA_stars_selected['GR8'].data
+os.system('rm -f /Users/cretignier/Documents/THE/figures/Bright_summary_PRIVATE/*.png')
+for index in table.index:
+    hd = gr8.loc[index,'HD']
+    tcsc.plot_summary(index, show_private=True,cutoff=cutoff)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/Bright_summary_PRIVATE/%s_THE%s.png'%(hd,str(index).zfill(4)))
+    plt.close('all')
+    cutoff = presurvey.info_TA_cutoff['RVopti'].copy()
+
 
 presurvey.compute_optimal_texp(
     snr=250, 

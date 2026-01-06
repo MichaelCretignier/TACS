@@ -16,6 +16,7 @@ tcsc.plot_planetary_system('HD99492')
 tcsc.plot_rv_texp('HD146233',budget='osc')
 tcsc.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 
+
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
@@ -23,6 +24,12 @@ tcsc.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 catalog_version = tcsc.last_catalog #last catalog = 5.2 
 presurvey = tcsc.tcs(version=catalog_version) 
 presurvey.print_sp_stat()
+
+tcsc.plot_summary(
+    'HD16160',
+    selection=presurvey.info_TA_stars_selected['presurvey'].data.copy(),
+    cutoff=presurvey.info_TA_cutoff['RVopti'])
+
 
 #these lines are already run by default in tcsc.tsc()
 presurvey.func_cutoff(cutoff=tcsv.cutoff_RVopti, tagname='RVopti') 
@@ -39,16 +46,19 @@ plt.subplot(2,2,4) ; presurvey.info_TA_stars_selected['presurvey'].plot_space_mi
 plt.subplots_adjust(left=0.08,right=0.96,top=0.95,bottom=0.09)
 
 #testing if a star is in a list (otherwise why not)
-presurvey.which_cutoff('51Peg', tagname='solartwins')
-presurvey.which_cutoff('51Peg', tagname='RVopti')
-presurvey.which_cutoff('HD219134', tagname='RVopti') 
-presurvey.which_cutoff('HD22049', tagname='RVopti')
+cutoff_rvopti = presurvey.info_TA_cutoff['RVopti'].copy()
+cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
 
-presurvey.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], tagname='RVopti')
-presurvey.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], tagname='RVopti',plot=True)
+tcsc.which_cutoff('51Peg', cutoff_suntwins)
+tcsc.which_cutoff('51Peg', cutoff_rvopti)
+tcsc.which_cutoff('HD219134',cutoff_rvopti) 
+tcsc.which_cutoff('HD22049', cutoff_rvopti)
 
-presurvey.which_cutoff(tcsv.catalog_NEID['HD'], tagname='RVopti', plot=True)
-presurvey.which_cutoff(tcsv.catalog_2ES['GAIA'], tagname='RVopti',plot=True)
+tcsc.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], cutoff_rvopti)
+tcsc.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], cutoff_rvopti,plot=True)
+
+tcsc.which_cutoff(tcsv.catalog_NEID['HD'], cutoff_rvopti, plot=True)
+tcsc.which_cutoff(tcsv.catalog_2ES['GAIA'], cutoff_rvopti,plot=True)
 
 #following the K sample
 presurvey.func_cutoff(cutoff=tcsv.cutoff_RVopti, show_sample='K', tagname='dustbin')
