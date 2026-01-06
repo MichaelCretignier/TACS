@@ -9,12 +9,19 @@ starnames = tcsc.get_info_starname('HD16160')
 tcsc.get_info_prot('HD16160')
 tcsc.get_info_binary('HD16160')
 tcsc.plot_binary('HD16160',seeing=0.75,source='COMPOSITE')
+tcsc.plot_ccf('HD16160')
+tcsc.plot_spectrum('HD16160')
+tcsc.plot_magcycle('HD16160')
+tcsc.plot_planetary_system('HD99492')
+tcsc.plot_rv_texp('HD146233',budget='osc')
+tcsc.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
 
-presurvey = tcsc.tcs(version='5.1') #last catalog = 5.1 (default value) old = [1.0,2.0]
+catalog_version = tcsc.last_catalog #last catalog = 5.2 
+presurvey = tcsc.tcs(version=catalog_version) 
 presurvey.print_sp_stat()
 
 #these lines are already run by default in tcsc.tsc()

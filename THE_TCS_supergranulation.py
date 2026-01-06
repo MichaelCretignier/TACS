@@ -2,6 +2,7 @@ import matplotlib.pylab as plt
 
 import THE_TCS_classes as tcsc
 import THE_TCS_variables as tcsv
+import numpy as np
 
 # standard stars based on NEID
 # HD86728, HD68017, HD51419, HD127334
@@ -25,10 +26,8 @@ plt.figure()
 star1.info_XY_timestamps.plot()
 star1.info_XY_timestamps.subset.plot()
 
-#SG calendar
-star3 = tcsc.tcs()
-
 #compute the sky night length over the year
+star3 = tcsc.tcs()
 star3.compute_SG_calendar(
     sun_elevation = -6, 
     airmass_max = 1.75, 
@@ -36,9 +35,9 @@ star3.compute_SG_calendar(
     dec_step = 1,
     selection = 'presurvey')
 
-star3.compute_SG_month(month=3, plot=False, selection='SG')
+star3.compute_SG_month(month=3, plot=True, selection='presurvey')
 star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Mar',print_names=False,GUI=True,alpha=0.2)
-star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Mar',print_names=True,GUI=False)
+star3.info_TA_stars_selected['presurvey'].plot('vmag','night_length_Mar',print_names=True,GUI=False)
 
 star3.compute_SG_month(month=4, plot=False, selection='SG')
 star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Apr',print_names=False,GUI=True,alpha=0.2)

@@ -1,0 +1,3 @@
+,code,star,ins,drs,pipeline,yvx,ra,dec,teff,logg,feh,mhk,mhk_err,rhk,rhk_err,fwhm_ins,fwhm_g2,fwhm_garfield,fwhm_kitty,vsini,sb1,sb2,IF_SPEC,IF_CCF
+0,Sun_HARPN_3.0.1_Snaky,Sun,HARPN,3.0.1,Snaky,YV0,,,5722.0,4.39,-0.02,,,,,3.13,7.36,6.02,5.7,1.87,0.0,0.0,0,1
+1,Sun_HARPS15_3.2.5_Snaky,Sun,HARPS15,3.2.5,Snaky,YV0,,,,,,,,,,3.55,,6.19,5.98,,,,1,1

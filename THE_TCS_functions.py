@@ -652,7 +652,7 @@ def orbit_secondary_relative_to_primary(times, a, e, P, T0,
 
     return out
 
-def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COMPOSITE', t_eval=2026, print_source=True):
+def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COMPOSITE', t_eval=2026, print_source=True, ax1=None, ax2=None):
     t = np.linspace(0,2*np.pi,1000)
     sb = info.copy()
     sb['node'] = np.round(sb['node'],1)
@@ -668,7 +668,6 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
         for kw in ref1.keys():
             if ref1[kw]==ref1[kw]:
                 ref[kw] = ref1[kw]
-    print(ref)
 
     j = ref['ID']
     starname = ref['PRIMARY']
@@ -760,9 +759,16 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
     points = np.array([x_arcsec, y_arcsec]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
 
-    fig = plt.figure(figsize=(13,9))
-    fig.suptitle('ID = %.0f | %s | %s | %s | plx = %.1f mas (%.1f pc) | $m_{v}$ = %.2f | %s'%(j,wds,starname,hip,plx,dist,vmag,obtp),fontsize=12)
-    plt.subplot(1,2,1)
+    if (ax1 is None)&(ax2 is None):
+        fig = plt.figure(figsize=(13,9))
+        fig.suptitle('ID = %.0f | %s | %s | %s | plx = %.1f mas (%.1f pc) | $m_{v}$ = %.2f | %s'%(j,wds,starname,hip,plx,dist,vmag,obtp),fontsize=12)
+    else:
+        print_source = False
+
+    if (ax1 is None):
+        plt.subplot(1,2,1)
+    else:
+        plt.sca(ax1) 
     plt.plot(np.cos(np.linspace(0,2*np.pi,9)+np.pi/8)*fibre*0.5,np.sin(np.linspace(0,2*np.pi,9)+np.pi/8)*fibre*0.5,color='k',ls='-',zorder=100)
     plt.plot(x_arcsec0,y_arcsec0,color='k',ls='-.',alpha=0.8,lw=1.5)
     plt.scatter(seeing_x,seeing_y,color='k',alpha=0.1,s=3)
@@ -793,7 +799,10 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
     plt.ylabel('Y ["]',fontsize=14)
     plt.title('i = %.0f° | P = %.1f yrs | e = %.2f | T0=%.0f yrs | $\omega$=%.0f° | $\Omega$=%.0f° \n a = %.2f" | $a_{min}$ = %.2f" | $a_{THE}$ = %.2f"'%(inc, period, ecc, T0, omega, node, a_arcsec, amin_arcsec, the_amin_arcsec))
 
-    plt.subplot(1,2,2)
+    if (ax2 is None):
+        plt.subplot(1,2,2)
+    else:
+        plt.sca(ax2) 
     plt.axis('equal')
     plt.plot(x_au,y_au,color='k',ls='-')
     plt.plot(np.cos(t)*amin_au,np.sin(t)*amin_au,color='r',ls=':')
@@ -809,7 +818,8 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
     plt.ylabel('Y [AU]',fontsize=14)
     plt.title('Orbital plan\na = %.1f AU | $a_{min}$ = %.1f AU | $a_{crit}$ = %.1f AU'%(a_au, amin_au, acrit_au))
 
-    plt.subplots_adjust(bottom=0.10+0.22*int(print_source),top=0.90)
+    if (ax1 is None)&(ax2 is None):
+        plt.subplots_adjust(bottom=0.10+0.22*int(print_source),top=0.90)
 
     if print_source:
         summary = ''
@@ -832,3 +842,11 @@ def plot_binaries(info, fibre=1.4, seeing=0.0, inc=None, traj='new', source='COM
         plt.text(0.05,1,summary,ha='left',va='top',fontsize=9)
 
     return danger1
+
+def mad(array,axis=0,sigma_conv=True):
+    """"""
+    if axis == 0:
+        step = abs(array-np.nanmedian(array,axis=axis))
+    else:
+        step = abs(array-np.nanmedian(array,axis=axis)[:,np.newaxis])
+    return np.nanmedian(step,axis=axis)*[1,1.48][int(sigma_conv)]

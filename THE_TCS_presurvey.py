@@ -9,9 +9,7 @@ import THE_TCS_variables as tcsv
 
 tutorial = tcsc.tcs(sun_elevation=-12) 
 star = 'HD146233' # try also with HD111398
-tutorial.plot_rv_texp(star,kw='_arve_osc_')
-tutorial.plot_rv_texp(star,kw='_gp_osc_')
-tutorial.plot_rv_texp(star,kw='_extempo_osc_')
+tcsc.plot_rv_texp(star,budget='osc',use_vsini=False)
 
 # let's compute the average season length of the presurvey
 
@@ -34,15 +32,18 @@ tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_
 tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.30, budget='_arve_phot+osc+gr', selection='presurvey')
 tutorial.plot_survey_snr_texp(texp=15, snr_crit=250, sig_rv_crit=0.55, budget='_arve_phot+osc+gr', selection='presurvey')
 
-tutorial.compute_optimal_texp(snr=1, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=1, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey', use_vsini=True)
 
-tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_gp_phot+osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey', use_vsini=True)
 
-tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey')
+tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_extempo_phot+osc', texp_crit=50, selection='presurvey', use_vsini=True)
 tutorial.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C0', figname='texp')
 
 tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=50, selection='presurvey')
 tutorial.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C1', figname='texp')
+
+tutorial = tcsc.tcs(sun_elevation=-12) 
+tutorial.compute_optimal_texp(snr=200, sig_rv=0.30, budget='_arve_phot+osc', texp_crit=50, selection='presurvey')
 
 tutorial.create_table_scheduler(
     selection='presurvey',
@@ -212,7 +213,7 @@ for h in np.sort(hwo):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
     tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['5.1'].loc[tcsc.gr8['5.1']['HD']==h,'SPclass'].values[0])
+    tutorial.print_sp_stat(tcsc.gr8[tcsc.last_catalog].loc[tcsc.gr8[tcsc.last_catalog]['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -229,7 +230,7 @@ for h in np.sort(hdb):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
     tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['5.1'].loc[tcsc.gr8['5.1']['HD']==h,'SPclass'].values[0])
+    tutorial.print_sp_stat(tcsc.gr8[tcsc.last_catalog].loc[tcsc.gr8[tcsc.last_catalog]['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -248,7 +249,7 @@ for h in np.sort(ldb):
     os.system('cls' if os.name == 'nt' else 'clear')
     print('======'*12)
     tutorial.which_cutoff(h, tagname='RVopti',display=['nobs_DB','prot','pmag','SG_NGT_len','Rank_THE'])
-    tutorial.print_sp_stat(tcsc.gr8['5.1'].loc[tcsc.gr8['5.1']['HD']==h,'SPclass'].values[0])
+    tutorial.print_sp_stat(tcsc.gr8[tcsc.last_catalog].loc[tcsc.gr8[tcsc.last_catalog]['HD']==h,'SPclass'].values[0])
     if len(tutorial.info_TA_stars_missing)>0:
         bbox = (970*2, 100*2, 1630*2, 930*2)  # adjust coordinates
         screenshot = ImageGrab.grab(bbox)
@@ -273,3 +274,40 @@ for h in np.sort(sg):
         screenshot = ImageGrab.grab(bbox)
         screenshot.save('/Users/cretignier/Documents/THE/TCS/STARS_TO_CHECK/%s.png'%(h))
 
+catalog_version = tcsc.last_catalog #last catalog = 5.2 
+presurvey = tcsc.tcs(version=catalog_version)
+table = presurvey.info_TA_stars_selected['presurvey'].data
+gr8 = presurvey.info_TA_stars_selected['GR8'].data
+os.system('rm -f /Users/cretignier/Documents/THE/figures/All_summary/*.png')
+os.system('rm -f /Users/cretignier/Documents/THE/figures/All_summary_PRIVATE/*.png')
+for index in gr8.index:
+    hd = gr8.loc[index,'HD']
+    tcsc.plot_summary(index, show_private=False,selection=table)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/All_summary/THE%s_%s.png'%(str(index).zfill(4),hd))
+    plt.close('all')
+    tcsc.plot_summary(index, show_private=True,selection=table)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/All_summary_PRIVATE/THE%s_%s.png'%(str(index).zfill(4),hd))
+    plt.close('all')
+
+catalog_version = tcsc.last_catalog #last catalog = 5.2 
+presurvey = tcsc.tcs(version=catalog_version)
+table = presurvey.info_TA_stars_selected['presurvey'].data
+gr8 = presurvey.info_TA_stars_selected['GR8'].data
+os.system('rm -f /Users/cretignier/Documents/THE/figures/Presurvey_summary/*.png')
+os.system('rm -f /Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/*.png')
+for index in table.index:
+    hd = gr8.loc[index,'HD']
+    tcsc.plot_summary(index, show_private=False,selection=table)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary/THE%s_%s.png'%(str(index).zfill(4),hd))
+    plt.close('all')
+    tcsc.plot_summary(index, show_private=True,selection=table)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/THE%s_%s.png'%(str(index).zfill(4),hd))
+    plt.close('all')
+
+presurvey.compute_optimal_texp(
+    snr=250, 
+    sig_rv=0.30, 
+    budget='_extempo_phot+osc', 
+    texp_crit=50, 
+    use_vsini=False,
+    selection='presurvey')

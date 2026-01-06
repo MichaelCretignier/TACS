@@ -11,7 +11,8 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.23'
+version_tacs = '1.36'
+last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
 [INFO USER] TACS version = """+version_tacs+""" 
@@ -85,9 +86,11 @@ def format_table(table, verbose=False):
 
     return table
 
-def produce_gr8(version='5.1',verbose=False):
+def produce_gr8(version=None,verbose=False):
     #GR8 TABLE FORMATION
 
+    if version is None:
+        version = last_catalog
     gr8_raw = pd.read_csv(cwd+'/TACS_Material/THE_Master_table_v'+version+'.csv',index_col=0)
     print('[INFO USER] Downloading version %s...'%(version))
 
@@ -135,10 +138,10 @@ print('[INFO USER] Downloading Master table...')
 v1 = produce_gr8('1.0',verbose=False)
 v2 = produce_gr8('2.0',verbose=False)
 v3 = produce_gr8('3.0',verbose=False)
-v5 = produce_gr8('5.1',verbose=True)
+v5 = produce_gr8(last_catalog,verbose=True)
 
-gr8 = {'1.0':v1[0],'2.0':v2[0],'3.0':v3[0],'5.1':v5[0]}
-gr8_raw = {'1.0':v1[1],'2.0':v2[1],'3.0':v3[1],'5.1':v5[1]}
+gr8 = {'1.0':v1[0],'2.0':v2[0],'3.0':v3[0],last_catalog:v5[0]}
+gr8_raw = {'1.0':v1[1],'2.0':v2[1],'3.0':v3[1],last_catalog:v5[1]}
 
 #FUNCTIONS
 
@@ -256,7 +259,7 @@ def inner_gr8(list_names):
     return inner
 
 def get_starname(entry):
-    gaia_ID = np.where(db_starname['GAIA']==entry['GAIA'])[0]
+    gaia_ID = np.where(db_starname['GAIA']==np.array(entry['GAIA']))[0]
     selected = db_starname.loc[gaia_ID]
     for order in ['HD','HIP','GJ','CSTL','PRIMARY']:
         if selected[order].values[0]!='-':
@@ -265,10 +268,16 @@ def get_starname(entry):
 
 def star_info(entry, format='v1'):
     name, ID = get_starname(entry)
+    HD = db_starname.loc[ID,'HD'].values[0]
+    HIP = db_starname.loc[ID,'HIP'].values[0]
+    GAIA = db_starname.loc[ID,'GAIA'].values[0]
+    WDS = db_starname.loc[ID,'WDS'].values[0]
     if format=='v1':
         info = ' ID : %.0f \n Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f   FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
-    else:
+    elif format=='v2':
         info = ' ID : %.0f   Star : %s   Mv = %.2f   Ra = %.2f    Dec = %.2f \n Teff = %.0f   Logg = %.2f    FeH = %.2f    RHK = %.2f   Vsini = %.1f \n RUWE = %.2f   HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,name,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
+    else:
+        info = ' ID : %.0f \n HD : %s \n HIP : %s \n GAIA : %s \n WDS : %s \n Mv = %.2f \n Ra = %.2f  \n Dec = %.2f \n Ms = %.2f \n Rs = %.2f \n Teff = %.0f \n Logg = %.2f  \n FeH = %.2f  \n RHK = %.2f \n Vsini = %.1f \n RUWE = %.2f \n HJ = %.0f   BDW = %.0f   GZ = %.0f   NEP = %.0f   SE = %.0f'%(ID,HD,HIP,GAIA,WDS,entry['vmag'], entry['ra_j2000'], entry['dec_j2000'], entry['Ms'], entry['Rs'], entry[Teff_var], entry['logg'], entry['feh'], entry['logRHK'], entry['vsini'], entry['ruwe_GAIA'], entry['HJ'], entry['BDW'], entry['GZ'], entry['NEP'], entry['SE'])
     return info
 
 def get_info_prot(starname,verbose=False,verbose_name=False):
@@ -302,7 +311,7 @@ def get_info_binary(starname,verbose=False):
     
     if index is not None:
         ID = index['INDEX']
-        star = gr8['5.1'].loc[ID].copy()
+        star = gr8[last_catalog].loc[ID].copy()
 
         info_binary = db_binaries.loc[db_binaries['GAIA']==index['GAIA']].copy()
         info_binary = info_binary.loc[(info_binary['period']==info_binary['period'])|(info_binary['mv2']==info_binary['mv2'])]
@@ -325,12 +334,132 @@ def get_info_binary(starname,verbose=False):
         info_binary = None
     return info_binary
 
-def plot_binary(starname,verbose=False,fibre=1.4,seeing=0.75,inc=None,t_eval=2026,traj='new',source='COMPOSITE', print_source=True):
+def plot_magcycle(starname,verbose=False,newfig=True,show_private=False):
+    index = get_info_starname(starname, verbose=verbose)
+    entries = []
+    if index is not None:
+        sun = pd.read_csv(cwd+'/TACS_Material/Sun_MG2.csv',index_col=0)
+        the_mhk = pd.read_csv(cwd+'/TACS_Material/SNAKY_THE_FINCH_mag.csv',index_col=0)
+        entries = the_mhk.loc[the_mhk['star']==index['HD']]
+
+        ylim = (None,None)
+        if len(entries):
+            kws = tcsf.string_contained_in(entries.keys(),'MHK',exclusion=['err'])[-1]
+            mhk = np.array(entries[kws])[0]
+            mhk_err = np.array(entries[tcsf.string_contained_in(entries.keys(),'MHK_err')[-1]])[0]
+            yeartime = np.array([k.split('_')[-1] for k in kws]).astype('float')
+
+            Kpred = entries['Kpred'].values[0] ; Lpred = entries['Lpred'].values[0] ; Lside = entries['Lside'].values[0]
+            Pmag = entries['Pmag'].values[0] ; Kmean = entries['Kmean'].values[0] ; Kamp= entries['Kamp'].values[0]
+
+            if newfig:
+                plt.figure('MHK_'+starname,figsize=(14,5))
+            plt.title('Pmag = %.1f years | <Kmag> = %.1f %% | Kamp = %.1f %%'%(Pmag,Kmean,Kamp))
+            plt.plot(yeartime,mhk,color='C0')
+            plt.fill_between(yeartime,mhk-mhk_err,mhk+mhk_err,color='C0',alpha=0.3)
+            plt.scatter(yeartime,mhk,marker='o',color='C0')
+            plt.scatter(yeartime[0],mhk[0],color='b',label='2026-01-01: MHK=%.1f(%.1f%s)'%(Kpred,Lpred,Lside))
+            for x,y in zip(yeartime[::2],mhk[::2]):
+                plt.text(x,y,'%.1f%%'%(y),color='k',ha='left',va='bottom')
+            plt.ylabel('MHK [%]',fontsize=14)
+            plt.xlabel('Date [year]',fontsize=14)
+            plt.plot(sun['deciyear'],sun['plage_fill'],color='k',label='Sun')
+            plt.legend(loc=2)
+            ylim = plt.gca().get_ylim()
+
+        if show_private:
+            finch_mhk = pd.read_csv(cwd+'/TACS_Material/PRIVATE_SNAKY_THE_FINCH.csv',index_col=0)
+            entries2 = finch_mhk.loc[finch_mhk['star']==index['HD']]
+            for ins in np.unique(entries2['species']):
+                mask = entries2['species']==ins
+                entries2.loc[mask,'deciyear'] = tcsf.conv_time(entries2.loc[mask,'jdb'])[1]
+                plt.errorbar(entries2.loc[mask,'deciyear'],entries2.loc[mask,'proxy'],yerr=entries2.loc[mask,'proxy_std'],ls='',marker='.')
+            plt.ylim(ylim)
+
+def plot_rv(starname,verbose=False,ins_color=False,newfig=True,show_private=False):
+    index = get_info_starname(starname, verbose=verbose)
+    if index is not None:
+        hd = index['HD']
+        if show_private:
+            #the_rv = pd.read_csv(cwd+'/TACS_Material/PRIVATE_SNAKY_THE_RV_infos.csv',index_col=0)
+            the_rv2 = pd.read_csv(cwd+'/TACS_Material/PRIVATE_RV_stars_binned_N.csv',index_col=0)
+            ins_color = True
+        else:
+            #the_rv = pd.read_csv(cwd+'/TACS_Material/SNAKY_THE_RV_infos.csv',index_col=0)
+            the_rv2 = pd.read_csv(cwd+'/TACS_Material/RV_stars_binned_N.csv',index_col=0)
+        entries = the_rv2.loc[the_rv2['star']==hd]        
+        rv_rms = tcsf.mad(entries['rv'])
+        entries = entries.loc[abs(entries['rv']-np.median(entries['rv']))<5*rv_rms]
+
+        if newfig:
+            plt.figure('RV_'+starname)
+
+        plt.errorbar(entries['jdb']-50000,entries['rv'],yerr=entries['rv_std'],ls='',marker='o',capsize=0,color='k',label='%.0f m/s'%(rv_rms*1000))
+        if ins_color:
+            for ins in np.unique(entries['ins']):
+                plt.errorbar(entries.loc[entries['ins']==ins,'jdb']-50000,entries.loc[entries['ins']==ins,'rv'],yerr=entries.loc[entries['ins']==ins,'rv_std'],ls='',marker='o',capsize=0,color=None)
+        plt.legend()
+        plt.ylabel('RV [km/s]',fontsize=14)
+        plt.xlabel('Jdb - 2,450,000 [days]',fontsize=14)
+
+def plot_ccf(starname,verbose=False,newfig=True,version=None):
+    if version is None:
+        version = last_catalog
+    index = get_info_starname(starname, verbose=verbose)
+    entries = []
+    if index is not None:
+        master = gr8[version]
+        the_ccf = np.load(cwd+'/TACS_Material/SNAKY_THE_ccf.npy')
+        the_infos = pd.read_csv(cwd+'/TACS_Material/SNAKY_THE_summary_infos.csv',index_col=0)
+        entries = the_infos.loc[the_infos['star']==index['HD']]
+        star_info = master.loc[np.where(master['HD']==index['HD'])[0]]
+
+    if len(entries):
+        sun_ccf = np.load(cwd+'/TACS_Material/SNAKY_Sun_ccf.npy')
+        vgrid = np.arange(0,150000,538)
+        vgrid = np.hstack([-vgrid[::-1],vgrid[1:]])
+        if newfig:
+            plt.figure('CCF_'+starname)
+        vsini = np.array(star_info['vsini'])[0]
+        plt.title('VSINI = %.1f km/s'%(vsini))
+        vlim = np.nanmax([30,3*vsini])
+        plt.xlim(-vlim,vlim)
+        plt.ylim(0,1.1)
+        plt.grid()
+        plt.plot(vgrid/1000,(sun_ccf[0]).astype('float')*1e-4,color='k',label='Sun (vsini = 1.89 km/s)',lw=2)
+        plt.plot(vgrid/1000,(the_ccf[entries.index].T).astype('float')*1e-4)
+        plt.legend()
+        plt.xlabel('RV [km/s]',fontsize=14)
+        plt.ylabel('CCF normalised []',fontsize=14)
+
+def plot_spectrum(starname,verbose=False,newfig=True):
+    index = get_info_starname(starname, verbose=verbose)
+    entries = []
+    if index is not None:
+        the_spec = np.load(cwd+'/TACS_Material/SNAKY_THE_spec_6100_6200.npy')
+        the_infos = pd.read_csv(cwd+'/TACS_Material/SNAKY_THE_summary_infos.csv',index_col=0)
+        entries = the_infos.loc[the_infos['star']==index['HD']]
+    
+    if len(entries):
+        sun_spec = np.load(cwd+'/TACS_Material/SNAKY_Sun_spec_6100_6200.npy')
+        wgrid = np.round(np.arange(6100,6200,0.01),2)
+        if newfig:
+            plt.figure('SPEC_'+starname)
+        plt.ylim(0,1.05)
+        plt.xlim(6100,6200)
+        plt.plot(wgrid,(the_spec[entries.index].T).astype('float')*1e-4,lw=1)
+        plt.plot(wgrid,(sun_spec[0]).astype('float')*1e-4,color='k',label='Sun',lw=1)
+        plt.legend(loc=1)
+        plt.xlabel(r'Wavelength [$\AA$]',fontsize=14)
+        plt.ylabel('Flux normalised',fontsize=14)
+
+def plot_binary(starname,verbose=False,fibre=1.4,seeing=0.75,inc=None,t_eval=2026,traj='new',source='COMPOSITE', print_source=True, ax1=None, ax2=None):
 
     info_binary = get_info_binary(starname,verbose=verbose)
     output = np.nan
     if len(info_binary):
-        print('\n',info_binary[['ID','PRIMARY','WDS','period','ecc','T0','omega','bibcode','node','Ms','Ms2','vmag','mv1','mv2','origin']],'\n')
+        if verbose:
+            print('\n',info_binary[['ID','PRIMARY','WDS','period','ecc','T0','omega','bibcode','node','Ms','Ms2','vmag','mv1','mv2','origin']],'\n')
         if np.sum(info_binary['bibcode']==info_binary['bibcode'])>0:
             output = tcsf.plot_binaries(
                 info_binary,
@@ -340,6 +469,8 @@ def plot_binary(starname,verbose=False,fibre=1.4,seeing=0.75,inc=None,t_eval=202
                 traj=traj,
                 t_eval=t_eval,
                 print_source=print_source,
+                ax1=ax1,
+                ax2=ax2,
                 source=source)
         else:
             print(' [INFO] The binary only exist in the WDS, not reliable enough.')
@@ -348,6 +479,205 @@ def plot_binary(starname,verbose=False,fibre=1.4,seeing=0.75,inc=None,t_eval=202
     
     return output
     
+def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
+    if version is None:
+        version = last_catalog
+    master = gr8[version]
+    index = get_info_starname(starname, verbose=verbose)
+    gaia_name = index['GAIA']
+    planets = db_exoplanets.loc[db_exoplanets['GAIA']==gaia_name]
+
+    if newfig:
+        plt.figure('PLANETS_'+starname)
+    plt.axhline(y=0,color='k',alpha=0.7)
+    plt.xlim(0.7,100000)
+    plt.ylim(-0.5,0.5)
+    plt.axvline(x=365.25,ls=':',color='k')
+    for j in range(0,5):
+        plt.plot([10**j]*2,[-0.1,0.1],color='k')
+    plt.xscale('log')
+    plt.axvspan(xmin=60,xmax=400,color='gray',alpha=0.3)
+
+    if index is not None:
+        entry = master.loc[master['GAIA']==gaia_name]
+        p1 = entry['HZ_period_inf'].values[0] 
+        p2 = entry['HZ_period_sup'].values[0]
+        plt.axvspan(xmin=p1,xmax=p2,color='g',alpha=0.3)
+
+    if len(planets):
+
+        for p in np.array(planets):
+            plt.plot([p[4]*(1-p[8])**(1.5),p[4]*(1+p[8])**(1.5)],[0,0],color='k',lw=4)
+            if p[6]<10:
+                plt.scatter(p[4],0,zorder=10,color='g',s=30,ec='k')
+                plt.text(p[4],0.65,r'%.0f'%(p[6]),ha='center')
+                plt.text(p[4],0.5,r'$⊕$',ha='center')
+            elif p[6]<100:
+                plt.scatter(p[4],0,zorder=10,color='b',s=100,ec='k')
+                plt.text(p[4],0.65,r'%.0f'%(p[6]/16),ha='center')
+                plt.text(p[4],0.5,r'$♆$',ha='center')
+            elif p[6]<1000:
+                plt.scatter(p[4],0,zorder=10,color='pink',s=200,ec='k')
+                plt.text(p[4],0.65,r'%.1f'%(p[6]/318),ha='center')
+                plt.text(p[4],0.5,r'$♃$',ha='center')
+            elif p[6]<20000:
+                plt.scatter(p[4],0,zorder=10,color='r',s=400,ec='k')
+                plt.text(p[4],0.65,r'%.1f'%(p[6]/318),ha='center')
+                plt.text(p[4],0.5,r'$♃$',ha='center')
+            elif p[6]>20000:
+                plt.scatter(p[4],0,zorder=10,color='white',s=400,ec='k')
+                plt.text(p[4],0.65,r'%.1f'%(p[6]/318),ha='center')
+                plt.text(p[4],0.5,r'$♃$',ha='center')
+
+def plot_season(starname,version=None,newfig=True,verbose=False,selection=None):
+    if version is None:
+        version = last_catalog
+    index = get_info_starname(starname, verbose=verbose)
+    master = gr8[version]
+    if newfig:
+        plt.figure('SKY_'+starname)
+    plt.scatter(master['RA'],master['DEC'],c=master['eff_nights_1.75'],alpha=0.3,vmin=160,vmax=240,cmap='jet',marker='.')
+    plt.axhline(y=0,color='k',alpha=0.4)
+    plt.xlim(0,360)
+    for j in np.arange(0,361,90):
+        plt.axvline(x=j,color='k',lw=1,alpha=0.3)
+    plt.ylabel('Dec [°]')
+    plt.xlabel('RA [°]')
+    if selection is not None:
+        plt.scatter(selection['RA'],selection['DEC'],marker='o',color='k',edgecolors='w',alpha=0.8)
+
+    ax = plt.gca()
+    ax.xaxis.set_label_position('top')
+    ax.tick_params(axis='x', bottom=False, labelbottom=False, top=True, labeltop=True)
+    if index is not None:
+        entry = master.loc[master['GAIA']==index['GAIA']]
+        t0 = entry['tyr_rise_1.75']
+        t1 = entry['tyr_set_1.75']
+        season_length = entry['season_length_1.5']
+        season = np.linspace(t0,t1,1000)%1
+        season_center = (t1+t0)*0.5%1*360
+        plt.plot([season_center,season_center],[-5,5],color='k')
+        plt.scatter(season*360,np.zeros(len(season)),color='k',marker='.')
+        plt.scatter(entry['RA'],entry['DEC'],marker='*',color='gold',edgecolors='k',s=100,zorder=100)
+        plt.text(t0%1*360,10,'S = %s'%(str(int(season_length))),ha='right')
+
+def plot_rv_texp(star,budget='osc',codes=['arve','extempo','gp'], version=None, use_vsini=False):
+    if version is None:
+        version = last_catalog
+    index = get_info_starname(star,verbose=False)
+    tab = gr8[version]
+
+    if (use_vsini)&(len(budget.split('+'))==1):
+        print(" [WARNING] Photon noise missing in your RV budget: "+budget)
+        print(" [INFO] Vsini contributation canceled")
+        use_vsini = False
+        index = None
+
+    if index is not None:
+        idx = index['INDEX']
+        hd = index['HD']
+        gaia = index['GAIA']
+        star_tab = tab.loc[index['INDEX']]
+
+        if use_vsini:
+            vsini = star_tab['vsini']
+            calib = tableXY(tcsv.vsini_calib,tcsv.RV_factor_calib)
+            calib.interpolate(vsini,method='linear')
+            RV_vsini_phot_factor = calib.y
+        else:
+            RV_vsini_phot_factor = 1
+
+        kw = []
+        for c in codes:
+            kw.append('_'+c+'_'+budget+'_')
+
+        plt.figure('RV_BUDGET_TEXP',figsize=(10,8))
+        for k in kw:
+            dust,kws = tcsf.string_contained_in(star_tab.keys(),k,exclusion=['err'])
+            if len(kws)==0:
+                print(tcsf.string_contained_in(star_tab.keys(),codes[0],exclusion=['err']))
+            rvs_texp = np.array(star_tab[kws]).astype('float')
+            try:
+                rvs_texp_err = np.array(star_tab[kws+'_err'])
+            except:
+                rvs_texp_err = 0*rvs_texp
+
+            texp = np.array([float(k.split('texp')[1]) for k in kws])
+            texp[0] = 0.1
+            
+            sig_rvi_phot = np.sqrt(star_tab['sig_rv_phot_texp15']/texp)
+            extra_comp = sig_rvi_phot*(1/RV_vsini_phot_factor-1)
+            rvs_texp = np.sqrt(rvs_texp**2+extra_comp**2)
+
+            plt.subplot(2,1,1) ; plt.ylabel('RV [m/s]') ; plt.title('ID = %.0F | HD = %s | GAIA = %s'%(idx,hd,gaia))
+            plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',label=k[1:-1],capsize=0,ls='')
+            plt.legend()
+            plt.subplot(2,1,2) ; plt.ylabel('RV [m/s]') ; plt.xlabel('Texp [min]')
+            plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',capsize=0,ls='')
+            plt.yscale('log')
+
+def plot_summary(starname, version=None, show_private=False, selection=None):    
+    if version is None:
+        version = last_catalog
+
+    index = get_info_starname(starname, verbose=True)
+    if index is not None:
+        master = gr8[version]
+        entry = master.loc[np.where(master['HD']==index['HD'])[0][0]]
+        text = star_info(entry, format='v3')
+        text2 = ''
+        for pm,pr,sc in np.array(get_info_prot(starname)[['pmag','prot','origin']]):
+            if pr==pr:
+                text2 = text2+' Prot = %.1f days'%(pr)
+            else:
+                text2 = text2+'                            '
+            if pm==pm:
+                text2 = text2+' | Pmag = %.1f yrs'%(pm)
+            else: 
+                text2 = text2+' |                           '
+            text2 = text2+' | %s \n'%(sc)
+
+        info_binary = get_info_binary(starname)
+
+        plt.figure(figsize=(23,9))
+
+        if selection is not None:
+            entry = selection.loc[selection['HD']==index['HD']]
+            if len(entry):
+                entry = entry.loc[entry.index[0]]
+                plt.axes([0.4,0.87,0.25,0.07]) ; plt.ylim(0,1) ; plt.xlim(0,1) ; plt.axis('off')
+                text3 = 'SP. type = '+entry['SPclass']
+                text3 = text3+' | under review:'+['□','⊠'][int(entry['under_review'])]
+                text3 = text3+' | RV opti:'+['□','⊠'][int(entry['selection_RVopti'])]
+                text3 = text3+' | Sun Twins:'+['□','⊠'][int(entry['selection_solartwins'])]
+                plt.text(0.5,0.5,text3,ha='center',va='center',fontsize=13)
+                #print(entry)
+
+        plt.axes([0.00,0.92,1.0,0.08])
+        plt.axis('off')
+        plot_spectrum(starname,newfig=False)
+        plt.axes([0.03,0.48,0.25,0.35])
+        plt.axis('off') ; plt.xlim(0,1) ; plt.ylim(0,1)
+        plt.text(0,1,text,va='top')
+        plt.text(0,0.0,text2,va='top')
+        plt.axes([0.07,0.82,0.25,0.07])
+        plt.axis('off')
+        plot_planetary_system(starname,newfig=False)
+        plt.axes([0.4,0.48,0.25,0.38])
+        plot_ccf(starname,newfig=False)
+        plt.axes([0.73,0.68,0.25,0.18])
+        plot_season(starname,newfig=False,selection=selection)
+        plt.axes([0.73,0.48,0.25,0.18])
+        plot_rv(starname,newfig=False,show_private=show_private)
+        #plt.axes([0.07,0.07,0.91,0.4])
+        plt.axes([0.07,0.07,0.60,0.30])
+        plot_magcycle(starname,newfig=False,show_private=show_private)
+        if len(info_binary):
+            if np.sum(info_binary['bibcode']==info_binary['bibcode'])>0:
+                plt.axes([0.73,0.07,0.25,0.30]) ; ax1 = plt.gca()
+                plt.axes([1.10,0.07,0.25,0.36]) ; ax2 = plt.gca()
+                output = plot_binary(starname,ax1=ax1,ax2=ax2)
+
 
 def plot_exoplanets(y_var='k'):
     fig = plt.figure(figsize=(8,8))
@@ -483,8 +813,8 @@ class tableXY(object):
         self.ylabel = ylabel
         self.ls = ls
 
-    def interpolate(self,new_grid):
-        self.y = interp1d(self.x,self.y, kind='cubic', bounds_error=False, fill_value='extrapolate')(new_grid)
+    def interpolate(self,new_grid,method='cubic'):
+        self.y = interp1d(self.x,self.y, kind=method, bounds_error=False, fill_value='extrapolate')(new_grid)
         self.x = new_grid
 
     def monthly_average(self):
@@ -716,7 +1046,7 @@ class table_star(object):
                     dist = abs((xval-newx)/np.nanstd(xval))+abs((yval-newy)/np.nanstd(yval))
                     loc = np.array(dataframe.index)[np.argmin(dist)]
                     new_star = dataframe.loc[loc]
-                    text_fmt = star_info(new_star)
+                    text_fmt = star_info(new_star,format='v1')
                     self.info_text.set_text(text_fmt)
                     self.marker.set_data(np.array([[new_star[x]],[new_star[y]]]))
                     
@@ -735,7 +1065,9 @@ class table_star(object):
 
 class tcs(object):
     
-    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version='5.1'):    
+    def __init__(self, sun_elevation=None, starname=None, instrument='HARPS3', verbose=True, method='fast', version=None):    
+        if version is None:
+            version = last_catalog
         self.info_XY_telescope_open = []
         self.info_XY_downtime = tableXY(x=np.arange(365),y=downtime)
         self.simu_SG_calendar = None
@@ -966,28 +1298,6 @@ class tcs(object):
         
         if plot:
             self.info_IM_observable.plot()
-        
-    def plot_rv_texp(self,star,kw='_arve_osc_',print_kws=False):
-        index = get_info_starname(star,verbose=False)
-        tab = self.info_TA_stars_selected['GR8'].data
-        star_tab = tab.loc[index['INDEX']]
-        dust,kws = tcsf.string_contained_in(star_tab.keys(),kw,exclusion=['err'])
-        if print_kws:
-            print(kws)
-        rvs_texp = np.array(star_tab[kws])
-        try:
-            rvs_texp_err = np.array(star_tab[kws+'_err'])
-        except:
-            rvs_texp_err = 0*rvs_texp
-
-        texp = np.array([float(k.split('texp')[1]) for k in kws])
-        
-        plt.subplot(2,1,1) ; plt.ylabel('RV [m/s]')
-        plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',label=kw[1:-1],capsize=0,ls='')
-        plt.legend()
-        plt.subplot(2,1,2) ; plt.ylabel('RV [m/s]') ; plt.xlabel('Texp [min]')
-        plt.errorbar(texp,rvs_texp,yerr=rvs_texp_err,marker='o',capsize=0,ls='')
-        plt.yscale('log')
 
     def create_timeseries(self, airmass_max=1.5, nb_year=10, month=None, texp=15, weather=True):
 
@@ -1160,8 +1470,8 @@ class tcs(object):
             self.info_TA_stars_selected[selections] = table_star(table.copy())
 
         if plot:
-            fig = plt.figure(figsize=(18,10))
-            fig.suptitle('Sun elevation = %.0f \nAirmass max = %.2f \nMonth = %s'%(sun_elevation,airmass_max,month_tag))
+            fig = plt.figure(figsize=(12,9))
+            fig.suptitle('Sun elevation = %.0f \nAirmass max = %.2f \nMonth = %s'%(sun_elevation,airmass_max,month_tag),ha='right',x=0.94)
             #plt.title()
             cp = plt.contour(RA,DEC,np.reshape(output[:,month-1],np.shape(RA)),levels=[6,7,8,9,10])
             plt.clabel(cp, inline=True, fontsize=8,fmt="%.0f")
@@ -1177,7 +1487,7 @@ class tcs(object):
             plt.scatter(table['ra_j2000']/360*24,table['dec_j2000'],s=(7.5-table['vmag'])*30,c=table[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
             plt.scatter(table['ra_j2000']/360*24+24,table['dec_j2000'],s=(7.5-table['vmag'])*30,c=table[Teff_var],cmap='jet_r',vmin=5000,vmax=6000,ec='k')
             plt.colorbar(pad=0)  
-            plt.subplots_adjust(left=0.05,right=1.1)          
+            plt.subplots_adjust(left=0.08,right=1.0)          
 
             info_text = plt.text(0,107,'Double click somewhere',fontsize=13,ha='left',va='top')
             l, = plt.plot([-5],[130],marker='x',color='k',markersize=10)
@@ -1188,9 +1498,9 @@ class tcs(object):
                     self.marker = None
                 def update(self,newx,newy):
                     new_star = query_table(newx/24*360,newy,table)
-                    text_fmt = star_info(new_star)
+                    text_fmt = star_info(new_star,format='v1')
                     self.info_text.set_text(text_fmt)
-                    self.marker.set_data([new_star['ra_j2000']/360*24,new_star['dec_j2000']])
+                    self.marker.set_data([[new_star['ra_j2000']/360*24],[new_star['dec_j2000']]])
                     
                     plt.draw()
                     fig.canvas.draw_idle()
@@ -1400,7 +1710,7 @@ class tcs(object):
 
             texp = np.ones(len(texp))*texp_mean
 
-    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, budget='_phot'):
+    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, budget='_phot', use_vsini=False):
         """ budget = '_arve_osc+gr' """
         
         if snr<1:
@@ -1417,21 +1727,38 @@ class tcs(object):
         snr_texp15 = np.array(0.5*(selection['snr_420_texp15']+selection['snr_550_texp15'])) #Cretignier et al. +22
         texp_snr_crit = 15*(snr/snr_texp15)**2
 
+        if use_vsini:
+            vsini = np.array(selection['vsini'])
+            calib = tableXY(tcsv.vsini_calib,tcsv.RV_factor_calib)
+            calib.interpolate(vsini,method='linear')
+            RV_vsini_phot_factor = calib.y
+        else:
+            RV_vsini_phot_factor = np.ones(len(texp_snr_crit))
+        print(RV_vsini_phot_factor)
+
+        sig_rv_texp15 = np.array(selection['sig_rv_phot_texp15'])
+        sig_rv_texp15 = sig_rv_texp15/RV_vsini_phot_factor
+        texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv)**2
+
         if budget!='_phot':
             texp_tabulated = np.arange(1,30)
             kws = ['sig_rv'+budget+'_texp%.0f'%(j) for j in texp_tabulated]
-            sig_rvi = np.array(selection[kws])<=sig_rv
+            sig_rvi = np.array(selection[kws])
+            sig_rvi_phot = np.sqrt(np.array(selection['sig_rv_phot_texp15'])/texp_tabulated[:,np.newaxis]).T
+            
+            if use_vsini:
+                extra_comp = sig_rvi_phot*(1/RV_vsini_phot_factor[:,np.newaxis]-1)
+                sig_rvi = np.sqrt(sig_rvi**2+extra_comp**2)
+
+            mask_values = (sig_rvi<=sig_rv)
             texp_sig_rv_crit = []
-            for s in sig_rvi:
+            for s in mask_values:
                 loc = np.where(s)[0]
                 if len(loc):
                     texp_sig_rv_crit.append(texp_tabulated[loc[0]])
                 else:
                     texp_sig_rv_crit.append(45)
             texp_sig_rv_crit = np.array(texp_sig_rv_crit)
-        else:
-            sig_rv_texp15 = np.array(selection['sig_rv_phot_texp15'])
-            texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv)**2
 
         optimal_time = np.max([texp_snr_crit,texp_sig_rv_crit],axis=0)
         statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
