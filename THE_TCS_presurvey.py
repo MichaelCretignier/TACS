@@ -226,15 +226,16 @@ for h in np.sort(sg):
 catalog_version = tcsc.last_catalog #last catalog = 5.2 
 presurvey = tcsc.tcs(version=catalog_version)
 table = presurvey.info_TA_stars_selected['presurvey'].data
+cutoff = presurvey.info_TA_cutoff['RVopti']
 gr8 = presurvey.info_TA_stars_selected['GR8'].data
 os.system('rm -f /Users/cretignier/Documents/THE/figures/All_summary/*.png')
 os.system('rm -f /Users/cretignier/Documents/THE/figures/All_summary_PRIVATE/*.png')
 for index in gr8.index:
     hd = gr8.loc[index,'HD']
-    tcsc.plot_summary(index, show_private=False,selection=table)
+    tcsc.plot_summary(index, show_private=False,selection=table,cutoff=cutoff)
     plt.savefig('/Users/cretignier/Documents/THE/figures/All_summary/THE%s_%s.png'%(str(index).zfill(4),hd))
     plt.close('all')
-    tcsc.plot_summary(index, show_private=True,selection=table)
+    tcsc.plot_summary(index, show_private=True,selection=table,cutoff=cutoff)
     plt.savefig('/Users/cretignier/Documents/THE/figures/All_summary_PRIVATE/THE%s_%s.png'%(str(index).zfill(4),hd))
     plt.close('all')
 

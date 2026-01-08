@@ -119,7 +119,7 @@ cutoff_megan = {
     'season_length_1.75>':240,
     'sky_contam_VIZIER<':0.1,
     'SB_composite<':0.5,
-#    'vsini<':12,
+    'vsini<':7,
 #    'ruwe_GAIA<':10,
     'logRHK<':-4.5,
 #    'feh>':-1.0,

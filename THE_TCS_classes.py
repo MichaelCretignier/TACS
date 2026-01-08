@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.38'
+version_tacs = '1.39'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -726,9 +726,7 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
         plt.figure(figsize=(23,9))
 
         if selection is not None:
-            print(selection)
             entry = selection.loc[selection['HD']==index['HD']]
-            print(entry)
             if len(entry):
                 entry = entry.loc[entry.index[0]]
                 plt.axes([0.03,0.83,0.25,0.05]) ; plt.ylim(0,1) ; plt.xlim(0,1) ; plt.axis('off')
@@ -1732,24 +1730,13 @@ class tcs(object):
                 plt.axhline(y=axhline,alpha=0.4,color='k',lw=1)
 
 
-    def plot_night_length(self,figure='NightLength',legend=True):
+    def plot_night_length(self,figure='NightLength',legend=True,airmass_max=[1.5,1.8], sun_elevation=[-18,-6]):
         backup = np.array([self.info_SC_night_def]).copy()
-        
-        self.compute_night_length(sun_elevation=-12, verbose=False) 
-        self.compute_nights(airmass_max=1.5, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure=figure,label='Z=1.5 | S=-12',ytext=-0.5) 
-
-        self.compute_night_length(sun_elevation=-18, verbose=False) #change the sunset/rise parameter
-        self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-18',ytext=-0.5)
-
-        self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-12',ytext=-0.5) 
-        
-        self.compute_night_length(sun_elevation=-6, verbose=False) #change the sunset/rise parameter
-        self.compute_nights(airmass_max=1.8, weather=False, plot=False)
-        self.info_XY_night_duration.plot(figure=figure,label='Z=1.8 | S=-6',ytext=-0.5)
-
+        for se in sun_elevation:
+            for am in airmass_max:
+                self.compute_night_length(sun_elevation=-12, verbose=False) 
+                self.compute_nights(airmass_max=1.5, weather=False, plot=False)
+                self.info_XY_night_duration.plot(figure=figure,label='Z=%.1f | S=%.0f'%(am,se),ytext=-0.5) 
         if legend:
             plt.legend()
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 
@@ -2134,13 +2121,23 @@ class tcs(object):
 
 
 
-    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False):
+    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standard_stars=['HD146233','HD4628','HD69830','HD186408']):
 
         if type(selection)==str:
             table_scheduler = self.info_TA_stars_selected[selection].data.copy()
         else:
             table_scheduler = selection.copy()
         table_scheduler['GR8_ID'] = table_scheduler.index
+
+        standard_index = []
+        for s in standard_stars:
+            idx = get_info_starname(s,verbose=False)
+            if idx is not None:
+                standard_index.append(idx['INDEX'])
+        standard_index = np.array(standard_index)
+
+        table_scheduler['standard'] = 0
+        table_scheduler.loc[standard_index,'standard'] = 1
 
         if tagname=='':
             tagname = '_'+selection

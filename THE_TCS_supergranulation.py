@@ -17,6 +17,15 @@ for n,s in enumerate(standards):
     plt.ylim(-1,10)
 plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
 
+standards = tcsc.inner_gr8(['HD4628','HD69830','HD146233','HD186408']) #remove HD4628 that is not quiet
+star1 = tcsc.tcs(sun_elevation=-6) 
+plt.figure(figsize=(16,8))
+s1 = plt.subplot(1,1,1)
+for n,s in enumerate(standards): 
+    star1.set_star(starname=s,verbose=False)
+    star1.plot_night_length(figure=s1,legend=False,airmass_max=[1.5],sun_elevation=[-12]) #peak in April
+    plt.ylim(-1,10)
+plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
 
 #create a timesampling for star1
 star1.create_timeseries(airmass_max=1.75, nb_year=1, texp=10, weather=False)
