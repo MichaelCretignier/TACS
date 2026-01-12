@@ -23,7 +23,7 @@ If bug, install a Python environment:
 
 # New Python environment (Conda install [best option]) (Python 3.13.5)
 
-[TERMINAL] conda create -n tcs python=3.15.5 \
+[TERMINAL] conda create -n tcs python=3.13.5 \
 [TERMINAL] conda activate tcs \
 [TERMINAL] pip install -r requirements_3.13.5.txt
 
