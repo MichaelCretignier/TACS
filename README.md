@@ -17,7 +17,7 @@ If bug, install a Python environment:
 
 # [Mac M4 Chip] Python environment (Conda install) (Python 3.13.5)
 
-[TERMINAL] 
+[TERMINAL] \
 conda create -n tcs -c conda-forge \
   python=3.13.5 \
   numpy=1.26.4 \
@@ -32,7 +32,7 @@ conda create -n tcs -c conda-forge \
 
 # [Mac M2 Chip] Python environment (Conda forge install) (Python 3.10)
 
-[TERMINAL]
+[TERMINAL] \
 conda create -n tcs -c conda-forge \
   python=3.10.0 \
   numpy=1.23.5 \
