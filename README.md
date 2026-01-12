@@ -32,7 +32,17 @@ conda create -n tcs -c conda-forge \\
 
 # [Mac M2 Chip] Python environment (Conda forge install) (Python 3.10)
 
-[TERMINAL] conda create -n tcs -c conda-forge python=3.10.0 numpy=1.23.5 pandas=1.4.1 scipy=1.8 astropy=5.2.2 matplotlib=3.5 ipython=8.11.0 colorama=0.4.4 pyqt=5.15 -y
+[TERMINAL] conda create -n tcs -c conda-forge \ 
+python=3.10.0 \
+numpy=1.23.5 \
+pandas=1.4.1 \
+scipy=1.8 \
+astropy=5.2.2 \
+matplotlib=3.5 \
+ipython=8.11.0 \
+colorama=0.4.4 \
+pyqt=5.15 \
+-y
 
 # [Mac Intel Chip] Python environment (Conda install) (Python 3.8.8)
 
