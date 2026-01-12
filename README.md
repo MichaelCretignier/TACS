@@ -15,7 +15,7 @@ michael.cretignier@physics.ox.ac.uk
 Download the directory and try to run THE_TCS_main.py with your own Python installation.
 If bug, install a Python environment:
 
-# New Python environment (Conda install [best option]) (Python 3.13.5)
+# New Python environment (Conda install) (Python 3.13.5) [best option]
 
 [TERMINAL] conda create -n tcs python=3.13.5 \
 [TERMINAL] conda activate tcs \
