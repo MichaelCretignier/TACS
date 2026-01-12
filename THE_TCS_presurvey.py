@@ -276,3 +276,14 @@ presurvey.compute_optimal_texp(
     texp_crit=50, 
     use_vsini=False,
     selection='presurvey')
+
+
+standards = tcsc.inner_gr8(['HD4628','HD69830','HD146233','HD186408']) #remove HD4628 that is not quiet
+star1 = tcsc.tcs(sun_elevation=-6) 
+plt.figure(figsize=(16,8))
+s1 = plt.subplot(1,1,1)
+for n,s in enumerate(standards): 
+    star1.set_star(starname=s,verbose=False)
+    star1.plot_night_length(figure=s1,legend=False,airmass_max=[1.5,1.75],sun_elevation=[-12,-18]) #peak in April
+    plt.ylim(-1,10)
+plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)

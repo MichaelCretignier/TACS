@@ -89,7 +89,7 @@ print(survey.info_TA_stars_selected['bright!'].data)
 ##### COMPUTE SEASON AND NIGHT LENGTH #####
 
 star = tcsc.tcs(sun_elevation=-18, instrument='HARPS3') #HARPS3 is the default
-star.set_star(starname='HD146233')
+star.set_star(starname='HD38858')
 
 plt.figure(figsize=(12,8))
 

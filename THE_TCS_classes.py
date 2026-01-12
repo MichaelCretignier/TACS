@@ -1264,7 +1264,7 @@ class tcs(object):
         self.info_XY_telescope_open.append(tableXY(y=output,xlabel='Nights [days]',ylabel='Telescope open'))
 
     def set_star(self,ra=0,dec=0,starname=None,id=None,verbose=True,method='fast'):
-        "ra in hours, dec in degree"
+        "ra in degree, dec in degree"
         self.info_TA_starnames = None
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         if id is not None:
@@ -1278,6 +1278,9 @@ class tcs(object):
                 dec = np.array(gr8.loc[gr8['PRIMARY']==starname['PRIMARY'],'dec_j2000'])[0]
             else:
                 print('[ERROR] STARNAME NOT FOUND')
+        else:
+            ra = ra/360*24
+        
         self.info_SC_ra = ra
         self.info_SC_dec = dec
         self.info_SC_starname = starname
@@ -1734,8 +1737,8 @@ class tcs(object):
         backup = np.array([self.info_SC_night_def]).copy()
         for se in sun_elevation:
             for am in airmass_max:
-                self.compute_night_length(sun_elevation=-12, verbose=False) 
-                self.compute_nights(airmass_max=1.5, weather=False, plot=False)
+                self.compute_night_length(sun_elevation=se, verbose=False) 
+                self.compute_nights(airmass_max=am, weather=False, plot=False)
                 self.info_XY_night_duration.plot(figure=figure,label='Z=%.1f | S=%.0f'%(am,se),ytext=-0.5) 
         if legend:
             plt.legend()
