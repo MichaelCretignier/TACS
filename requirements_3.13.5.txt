@@ -1,0 +1,8 @@
+pandas==2.3.2
+numpy==1.26.4
+astropy==7.1.0
+scipy==1.16.2
+matplotlib==3.10.6
+ipython==9.5.0
+PyQt5==5.15.14
+colorama==0.4.6
