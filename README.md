@@ -15,17 +15,17 @@ michael.cretignier@physics.ox.ac.uk
 Download the directory and try to run THE_TCS_main.py with your own Python installation.
 If bug, install a Python environment:
 
-# Old Python environment (Conda install [best option]) (Python 3.8.8)
-
-[TERMINAL] conda create -n tcs python=3.8.8 \
-[TERMINAL] conda activate tcs \
-[TERMINAL] pip install -r requirements_3.8.8.txt
-
 # New Python environment (Conda install [best option]) (Python 3.13.5)
 
 [TERMINAL] conda create -n tcs python=3.13.5 \
 [TERMINAL] conda activate tcs \
 [TERMINAL] pip install -r requirements_3.13.5.txt
+
+# Old Python environment (Conda install) (Python 3.8.8)
+
+[TERMINAL] conda create -n tcs python=3.8.8 \
+[TERMINAL] conda activate tcs \
+[TERMINAL] pip install -r requirements_3.8.8.txt
 
 # Python environment (Venv install)
 
