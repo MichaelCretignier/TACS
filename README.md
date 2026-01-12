@@ -36,10 +36,6 @@ If bug, install a Python environment:
 [TERMINAL] pip install --upgrade pip \
 [TERMINAL] pip install -r requirements_3.8.8.txt
 
-# Uninstall
-
-[TERMINAL] conda remove --name tcs --all
-
 # Tutorial (run the main.py in a iPython shell)
 
 [TERMINAL] conda activate env tcs \
@@ -57,3 +53,6 @@ The computation of the RV budget is made using:
 2) GP (O'Sullivan et al. in prep.)
 3) ExTEMPO (https://github.com/BRajkumar041992/ExTEMPO)
 
+# Uninstall
+
+[TERMINAL] conda remove --name tcs --all
