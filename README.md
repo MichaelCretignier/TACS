@@ -18,17 +18,17 @@ If bug, install a Python environment:
 # [Mac M4 Chip] Python environment (Conda install) (Python 3.13.5)
 
 [TERMINAL] \
-conda create -n tcs -c conda-forge \
-  python=3.13.5 \
-  numpy=1.26.4 \
-  pandas=2.3.2 \
-  scipy=1.16.2 \
-  astropy=7.1.0 \
-  matplotlib=3.10.6 \
-  ipython=9.50.0 \
-  colorama=0.4.4 \
-  pyqt=5.15.14 \
-  -y
+conda create -n tcs -c conda-forge \\
+  python=3.13.5 \\
+  numpy=1.26.4 \\
+  pandas=2.3.2 \\
+  scipy=1.16.2 \\
+  astropy=7.1.0 \\
+  matplotlib=3.10.6 \\
+  ipython=9.50.0 \\
+  colorama=0.4.4 \\
+  pyqt=5.15.14 \\
+  -y \
 
 # [Mac M2 Chip] Python environment (Conda forge install) (Python 3.10)
 
