@@ -42,6 +42,7 @@ If bug, install a Python environment:
 
 # Tutorial (run the main.py in a iPython shell)
 
+[TERMINAL] conda activate env tcs \
 [TERMINAL] cd ../TACS/Python \
 [TERMINAL] ipython \
 [IPYTHON] run THE_TCS_main.py
