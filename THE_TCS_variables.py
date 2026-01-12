@@ -64,6 +64,8 @@ stars_under_review = [
     'HD217813',
 ]
 
+THE_standards = ['HD146233','HD4628','HD69830','HD186408']
+
 HARPN_standards = ['HD4628','HD166620','HD122064','HD127334','HD144579','HD151288','HD10476']
 
 NEID_standards = ['HD4628','HD9407','HD10700','HD127334','HD185144','HD211354',

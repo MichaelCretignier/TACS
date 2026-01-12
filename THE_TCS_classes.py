@@ -1818,8 +1818,7 @@ class tcs(object):
             RV_vsini_phot_factor = calib.y
         else:
             RV_vsini_phot_factor = np.ones(len(texp_snr_crit))
-        print(RV_vsini_phot_factor)
-
+        
         sig_rv_texp15 = np.array(selection['sig_rv_phot_texp15'])
         sig_rv_texp15 = sig_rv_texp15/RV_vsini_phot_factor
         texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv)**2
@@ -2124,8 +2123,8 @@ class tcs(object):
 
 
 
-    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standard_stars=['HD146233','HD4628','HD69830','HD186408']):
-
+    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standard_stars=[]):
+        
         if type(selection)==str:
             table_scheduler = self.info_TA_stars_selected[selection].data.copy()
         else:

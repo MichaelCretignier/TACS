@@ -409,10 +409,10 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
                 p2 = par_space.split('&')[1].replace(' ','')
                 plt.figure('para'+tagname,figsize=(18,3.5*nb_rows))
                 if count==1:
-                    plt.subplot(nb_rows,6,count)
+                    plt.subplot(nb_rows,7,count)
                     ax1 = plt.gca()
                 else:
-                    plt.subplot(nb_rows,6,count,sharex=ax1,sharey=ax1)
+                    plt.subplot(nb_rows,7,count,sharex=ax1,sharey=ax1)
                 plt.scatter(table[p1],table[p2],color='k',alpha=0.1,marker='.')
                 plt.scatter(table2[p1],table2[p2],color='r',ec='k',marker='.',label='%.0f (-%.0f)'%(len(table2),old_value2-len(table2)))
                 old_value2 = len(table2)
