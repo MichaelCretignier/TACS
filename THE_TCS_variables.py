@@ -64,7 +64,7 @@ stars_under_review = [
     'HD217813',
 ]
 
-THE_standards = ['HD146233','HD4628','HD69830','HD186408']
+THE_standards = ['HD146233','HD4628','HD186408']
 
 HARPN_standards = ['HD4628','HD166620','HD122064','HD127334','HD144579','HD151288','HD10476']
 
@@ -641,3 +641,8 @@ master_columns = ['PRIMARY',
     'HZ_mp_min_osc_texp15',
     'HZ_mp_min_osc+gr_texp15']
 
+
+
+journal = {
+    '1.41':'Dynamic HZ score metric computed by the .compute_ranking()',
+    }

@@ -377,9 +377,9 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
         count+=1
         value = cutoff[kw]
         if kw[-1]=='<':
-            mask = (table2[kw[0:-1]]<value)|(table2['under_review']==1)
+            mask = (table2[kw[0:-1]]<value)|(table2['under_review']!=0)
         else:
-            mask = (table2[kw[0:-1]]>value)|(table2['under_review']==1)
+            mask = (table2[kw[0:-1]]>value)|(table2['under_review']!=0)
             
         if plot:
             plt.figure('cumulative'+tagname,figsize=(16,3*nb_rows))

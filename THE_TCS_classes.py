@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.39'
+version_tacs = '1.41'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -131,7 +131,7 @@ def produce_gr8(version=None,verbose=False):
     gr8.loc[(gr8[Teff_var]<=5200),'SPclass'] = 'K'
 
     gr8['SG_NGT_len'] = np.max(gr8[['SG_NGT_Jan','SG_NGT_Feb']],axis=1)
-    
+
     return gr8, gr8_raw
 
 print('[INFO USER] Downloading Master table...')
@@ -311,7 +311,7 @@ def which_cutoff(starname, cutoff, plot=False, display=None, version=None):
                 else:
                     test = 1
                 highlight=0
-                if (kw=='under_review')&(star[kw]==1):
+                if (kw=='under_review')&(star[kw]!=0):
                     highlight=1
                 if (kw=='gmag'):
                     highlight = np.sum(np.array([7.25, 6.2, 5.9, 5.4])>star[kw])-1
@@ -335,7 +335,7 @@ def which_cutoff(starname, cutoff, plot=False, display=None, version=None):
             output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','badge','!!'])
             output['value'] = np.round(output['value'],2)
             if len(starname)==1:
-                protection = int(np.array(output.loc[output['feature']=='under_review','value']==1)[0])
+                protection = int(np.array(output.loc[output['feature']=='under_review','value']!=0)[0])
                 if (sum(output['test']=='FALSE')!=0)&(protection==0):
                     print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
                 elif (sum(output['test']=='FALSE')!=0)&(protection==1):
@@ -376,7 +376,7 @@ def get_info_prot(starname,verbose=False,verbose_name=False):
 
     if len(prot_query):
         ref = prot_query.reset_index(drop=True).loc[0].copy()
-        ref['prot'] = np.round(np.nanmean(prot_query['prot']),1)
+        ref['prot'] = np.round(np.nanmedian(prot_query['prot']),1)
         ref['pmag'] = np.round(np.nanmean(prot_query['pmag']),1)
         ref['origin'] = 'COMPOSITE'
         ref = ref.to_frame().T
@@ -731,7 +731,7 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
                 entry = entry.loc[entry.index[0]]
                 plt.axes([0.03,0.83,0.25,0.05]) ; plt.ylim(0,1) ; plt.xlim(0,1) ; plt.axis('off')
                 text3 = ' | SP. type = '+entry['SPclass']
-                text3 = text3+' | under review:'+['□','⊠'][int(entry['under_review'])]
+                text3 = text3+' | under review:'+['□','⊠','✪'][int(entry['under_review'])]
                 text3 = text3+' | RV opti:'+['□','⊠'][int(entry['selection_RVopti'])]
                 text3 = text3+' | Sun Twins:'+['□','⊠'][int(entry['selection_solartwins'])]+' |'
                 plt.text(0.0,0.5,text3,ha='left',va='center')
@@ -1051,7 +1051,7 @@ class table_star(object):
             if r>0:
                 tab = data[i]
                 if protection:
-                    tab = tab.loc[tab['under_review']!=1]
+                    tab = tab.loc[tab['under_review']==0]
                 tab = tab.sort_values(by='gmag',ascending=False)
                 rejected.append(np.array(tab['PRIMARY'])[0:r+1])
         rejected = np.hstack(rejected)
@@ -1082,7 +1082,7 @@ class table_star(object):
         plt.scatter(ra[tess],dec[tess],color='b',ec='k',label='TESS (%.0f)'%(sum(tess)),zorder=10)
         plt.scatter(ra[hwo],dec[hwo],color='y',ec='k',label='HWO (%.0f)'%(sum(hwo)),marker='*',s=80,zorder=10)
         
-        protected = self.data.loc[self.data['under_review']==1]
+        protected = self.data.loc[self.data['under_review']!=0]
 
         if (protection)&(len(protected)>1):
             plt.scatter(protected['ra_j2000'],protected['dec_j2000'],facecolors="none",edgecolors='k',marker='o',s=100,zorder=10,alpha=0.3,label='Saved (%.0f)'%(len(protected)))   
@@ -1171,8 +1171,12 @@ class tcs(object):
         GR8 = gr8[version]
         protected = starname_resolver(tcsv.stars_under_review)
         protected = protected.dropna(subset=['PRIMARY'])
+        standards = starname_resolver(tcsv.THE_standards)
+        standards = standards.dropna(subset=['PRIMARY'])
         GR8['under_review'] = 0
         GR8.loc[np.array(protected.index),'under_review'] = 1
+        GR8.loc[np.array(standards.index),'under_review'] = 2
+
         self.info_TA_stars_selected = {'GR8':table_star(GR8)}
         
         self.info_TA_cutoff = {}
@@ -1753,48 +1757,54 @@ class tcs(object):
         table_scheduler = self.info_TA_stars_selected[selection].data.copy()
         texp = np.array(table_scheduler['texp_optimal'])
 
-        nrows=2
-        for row in range(1,3):
-            texp_int = np.ceil(texp).astype('int')
-            texp_int[texp_int>30] = 30
-            texp_int[texp_int<1] = 1
-            texp_mean = np.nanmean(texp)
+        texp_int = np.ceil(texp).astype('int')
+        texp_int[texp_int>30] = 30
+        texp_int[texp_int<1] = 1
+        texp_mean = np.nanmean(texp)
 
-            snr_420 = np.array(table_scheduler['snr_420_texp15'])*np.sqrt(texp/15)
-            snr_490 = np.array(table_scheduler['snr_C22_texp15'])*np.sqrt(texp/15)
-            snr_550 = np.array(table_scheduler['snr_550_texp15'])*np.sqrt(texp/15)
+        snr_420 = np.array(table_scheduler['snr_420_texp15'])*np.sqrt(texp/15)
+        snr_490 = np.array(table_scheduler['snr_C22_texp15'])*np.sqrt(texp/15)
+        snr_550 = np.array(table_scheduler['snr_550_texp15'])*np.sqrt(texp/15)
 
-            rv_sig_phot = 100*table_scheduler['sig_rv_phot_texp15']*np.sqrt(15/texp)
-            rv_sig_osc = 100*np.array([table_scheduler.loc[j,'sig_rv'+budget+'_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
-            rv_sig_gran = 100*np.array([table_scheduler.loc[j,'sig_rv_arve_phot+osc+gr_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
-            
-            nobs_max_eff = int(np.ceil(total_time_eff*60/len(table_scheduler)/(texp_mean+1)))
-            nobs_max = int(np.ceil(total_time*60/len(table_scheduler)/(texp_mean+1)))
+        rv_sig_phot = 100*table_scheduler['sig_rv_phot_texp15']*np.sqrt(15/texp)
+        rv_sig_osc = 100*np.array([table_scheduler.loc[j,'sig_rv'+budget+'_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
+        rv_sig_gran = 100*np.array([table_scheduler.loc[j,'sig_rv_arve_phot+osc+gr_texp%.0f'%(i)] for i,j in zip(texp_int,table_scheduler.index)])
+        
+        nobs_max_eff = int(np.ceil(total_time_eff*60/len(table_scheduler)/(texp_mean+2)))
+        nobs_max = int(np.ceil(total_time*60/len(table_scheduler)/(texp_mean+2)))
 
-            plt.figure(figname,figsize=(16,4*(nrows)))
-            plt.subplot(nrows,4,4*(row-1)+1)
-            txt = 'N = %.0f (%.0f) \n'%(nobs_max,nobs_max_eff)+r'<$T_{exp}$> = %.0f min'%(texp_mean)
-            #plt.title(txt)
-            plt.hist(texp,bins=np.arange(0,31,1),color=color,alpha=0.5) ; plt.xlabel('Texp [min]') 
-            plt.axvline(x=texp_mean,color=color,label=txt) ; plt.legend()
-            plt.subplot(nrows,4,4*(row-1)+2) ; plt.xlabel(r'$SNR_{490nm}$ []')
-            txt = r'<$SNR_{490}$> = %.0f'%(np.nanmean(snr_490))
-            plt.hist(snr_490,bins=np.arange(100,1200,25)-12.5,color=color,alpha=0.5)
-            plt.axvline(x=np.nanmean(snr_490),color=color,label=txt) ; plt.legend()
-            plt.xlim(125,None)
-            plt.subplot(nrows,4,4*(row-1)+3) ; plt.xlabel(r'$\sigma_{RV}(phot)$ [cm/s]')
-            txt = r'<$\sigma_{\gamma}$> = %.0f cm/s'%(np.nanmean(rv_sig_phot))
-            plt.hist(rv_sig_phot,bins=np.arange(0,45,1),color=color,alpha=0.5)
-            plt.axvline(x=np.nanmean(rv_sig_phot),color=color,label=txt) ; plt.legend()
-            plt.subplot(nrows,4,4*(row-1)+4) ; plt.xlabel(r'$\sigma_{RV}(phot+osc)$ [cm/s]')
-            txt = r'<$\sigma_{\gamma+p}$> = %.0f cm/s'%(np.nanmean(rv_sig_osc))
-            plt.hist(rv_sig_osc,bins=np.arange(0,45,1),color=color,alpha=0.5)
-            plt.axvline(x=np.nanmean(rv_sig_osc),color=color,label=txt) ; plt.legend()
-            plt.subplots_adjust(left=0.05,right=0.95,bottom=0.08,top=0.93,hspace=0.30)
+        plt.figure(figname,figsize=(16,8))
+        plt.subplot(2,3,1)
+        txt = 'N = %.0f (%.0f) \n'%(nobs_max,nobs_max_eff)+r'<$T_{exp}$> = %.1f min'%(texp_mean)
+        #plt.title(txt)
+        plt.hist(texp,bins=np.arange(0,31,1),color=color,alpha=0.5) ; plt.xlabel('Texp [min]') 
+        plt.axvline(x=texp_mean,color=color,label=txt) ; plt.legend()
+        plt.subplot(2,3,2) ; plt.xlabel(r'$\sigma_{RV}(phot)$ [cm/s]')
+        txt = r'<$\sigma_{\gamma}$> = %.0f cm/s'%(np.nanmean(rv_sig_phot))
+        plt.hist(rv_sig_phot,bins=np.arange(0,45,1),color=color,alpha=0.5)
+        plt.axvline(x=np.nanmean(rv_sig_phot),color=color,label=txt) ; plt.legend()
+        plt.subplot(2,3,3) ; plt.xlabel(r'$\sigma_{RV}(phot+osc)$ [cm/s]')
+        txt = r'<$\sigma_{\gamma+p}$> = %.0f cm/s'%(np.nanmean(rv_sig_osc))
+        plt.hist(rv_sig_osc,bins=np.arange(0,45,1),color=color,alpha=0.5)
+        plt.axvline(x=np.nanmean(rv_sig_osc),color=color,label=txt) ; plt.legend()
+        plt.subplot(2,3,4) ; plt.xlabel(r'$SNR_{420nm}$ []')
+        txt = r'<$SNR_{420}$> = %.0f'%(np.nanmean(snr_420))
+        plt.hist(snr_420,bins=np.arange(100,1200,25)-12.5,color=color,alpha=0.5)
+        plt.axvline(x=np.nanmean(snr_420),color=color,label=txt) ; plt.legend()
+        plt.xlim(125,None)
+        plt.subplot(2,3,5) ; plt.xlabel(r'$SNR_{490nm}$ []')
+        txt = r'<$SNR_{490}$> = %.0f'%(np.nanmean(snr_490))
+        plt.hist(snr_490,bins=np.arange(100,1200,25)-12.5,color=color,alpha=0.5)
+        plt.axvline(x=np.nanmean(snr_490),color=color,label=txt) ; plt.legend()
+        plt.xlim(125,None)
+        plt.subplot(2,3,6) ; plt.xlabel(r'$SNR_{550nm}$ []')
+        txt = r'<$SNR_{550}$> = %.0f'%(np.nanmean(snr_550))
+        plt.hist(snr_550,bins=np.arange(100,1200,25)-12.5,color=color,alpha=0.5)
+        plt.axvline(x=np.nanmean(snr_550),color=color,label=txt) ; plt.legend()
+        plt.xlim(125,None)
+        plt.subplots_adjust(left=0.05,right=0.95,bottom=0.08,top=0.93,hspace=0.30)
 
-            texp = np.ones(len(texp))*texp_mean
-
-    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, budget='_phot', use_vsini=False):
+    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, texp_extra=2, texp_min=0, budget='_phot', use_vsini=False):
         """ budget = '_arve_osc+gr' """
         
         if snr<1:
@@ -1818,7 +1828,7 @@ class tcs(object):
             RV_vsini_phot_factor = calib.y
         else:
             RV_vsini_phot_factor = np.ones(len(texp_snr_crit))
-        
+
         sig_rv_texp15 = np.array(selection['sig_rv_phot_texp15'])
         sig_rv_texp15 = sig_rv_texp15/RV_vsini_phot_factor
         texp_sig_rv_crit = 15*(sig_rv_texp15/sig_rv)**2
@@ -1844,9 +1854,10 @@ class tcs(object):
             texp_sig_rv_crit = np.array(texp_sig_rv_crit)
 
         optimal_time = np.max([texp_snr_crit,texp_sig_rv_crit],axis=0)
-        statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
+        optimal_time = optimal_time + texp_extra
+        optimal_time[optimal_time<texp_min] = texp_min
 
-        selection['texp_optimal'] = optimal_time
+        statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
 
         plt.figure(figsize=(18,6))
         plt.axes([0.03,0.33,0.2,0.8])
@@ -1860,6 +1871,7 @@ class tcs(object):
         plt.ylabel('Texp [min]') ; plt.ylim(0,50)
         plt.xlabel('Star ID')
         plt.axhline(y=texp_crit,color='r',ls=':')
+        plt.axhline(y=texp_min,color='g',ls=':')
         plt.title('Nb stars valid = %.0f / %.0f'%(np.sum(optimal_time<=texp_crit),len(selection)))
 
         plt.axes([0.05,0.1,0.2,0.35])
@@ -1867,6 +1879,50 @@ class tcs(object):
         plt.hist(texp_sig_rv_crit,bins=np.arange(0,46,1),color='C1',alpha=0.4,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv))
         plt.hist(optimal_time,bins=np.arange(0,46,1),color='k',alpha=0.4,label='Optimal')
         plt.xlabel('Texp [min]') ; plt.xlim(0,50)
+
+        optimal_time[optimal_time>texp_crit] = np.nan
+        selection['texp_optimal'] = optimal_time
+
+    def compute_ranking(self, selection=None, budget='arve_phot+osc+gr', use_vsini=True, texp='optimal'):
+
+        if selection is None:
+            selection = 'GR8'        
+        table = self.info_TA_stars_selected[selection].data.copy()
+
+        if texp=='optimal':
+            table = table.dropna(subset=['texp_optimal'])
+            texp = np.ceil(table['texp_optimal'].copy()).astype('int')
+            rv_budget = []
+            for n,t in enumerate(texp):
+                rv_budget.append(np.array(table['sig_rv_'+budget+'_texp%.0f'%(int(t))])[n])
+            rv_budget = np.array(rv_budget)
+        else:
+            texp = np.ones(len(table))*texp
+            rv_budget = table['sig_rv_'+budget+'_texp%.0f'%(int(teff))]
+
+        if use_vsini:
+            vsini = np.array(table['vsini'])
+            calib = tableXY(tcsv.vsini_calib,tcsv.RV_factor_calib)
+            calib.interpolate(vsini,method='linear')
+            RV_vsini_phot_factor = calib.y
+        else:
+            RV_vsini_phot_factor = np.ones(len(table))
+
+        sig_rvi_phot = np.sqrt(np.array(table['sig_rv_phot_texp15'])/texp)
+        extra_comp = sig_rvi_phot*(1/RV_vsini_phot_factor-1)
+        rv_budget = np.sqrt(rv_budget**2+extra_comp**2)
+
+        phz = (table['teff']/5772)**(3.)*table['Rs']**(3/2.)*table['Ms']**(-0.5) # 1 terrestrial insolation
+        khz = 0.089*(phz)**(-1/3.)*(table['Ms'])**(-2/3.)
+        
+        table['ranking'] = rv_budget/np.sqrt(table['eff_nights_1.5'])/0.5*np.sqrt(136)/khz
+        self.info_TA_stars_selected[selection].data['ranking'] = np.nan
+        self.info_TA_stars_selected[selection].data.loc[table.index,'ranking'] = np.array(table['ranking'])
+
+        table = table.sort_values(by='ranking')
+        print(table)
+
+        return table         
 
     def compute_nb_nights_required(self, selection='', texp=15, month=1):
         """Only thing missing is to check the number of star with season gap"""
@@ -2121,28 +2177,19 @@ class tcs(object):
         for tagname,cutoff in zip(['Tim','Jean','Sam1','Sam2','Miku','William1','William2','Stefano'],[tcsv.cutoff_tim,tcsv.cutoff_jean,tcsv.cutoff_sam,tcsv.cutoff_sam2,tcsv.cutoff_mick,tcsv.cutoff_william1,tcsv.cutoff_william2,tcsv.cutoff_stefano]):
             self.func_cutoff(tagname=tagname,cutoff=cutoff)
 
-
-
-    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standard_stars=[]):
+    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, t_slew=60, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standards=False):
         
         if type(selection)==str:
             table_scheduler = self.info_TA_stars_selected[selection].data.copy()
+            if tagname=='':
+                tagname = '_'+selection
         else:
             table_scheduler = selection.copy()
         table_scheduler['GR8_ID'] = table_scheduler.index
 
-        standard_index = []
-        for s in standard_stars:
-            idx = get_info_starname(s,verbose=False)
-            if idx is not None:
-                standard_index.append(idx['INDEX'])
-        standard_index = np.array(standard_index)
-
-        table_scheduler['standard'] = 0
-        table_scheduler.loc[standard_index,'standard'] = 1
-
-        if tagname=='':
-            tagname = '_'+selection
+        kept = np.array(table_scheduler['texp_optimal']==table_scheduler['texp_optimal'])
+        print('[INFO] %.0f stars in the final table'%(np.sum(kept)))
+        table_scheduler = table_scheduler.loc[kept]
 
         table_scheduler = table_scheduler.sort_values(by='ra_j2000').reset_index(drop=True)
 
@@ -2154,6 +2201,11 @@ class tcs(object):
         else:
             table_scheduler['priority'] = 9
 
+        if standards:
+            standards = np.array(table_scheduler['under_review']==2)
+        else:
+            standards = np.zeros(len(table_scheduler)).astype('bool')
+        
         table_scheduler['expN'] = 1
 
         table_scheduler['groupEnableTime'] = np.nan
@@ -2197,8 +2249,12 @@ class tcs(object):
         tyr_set[tyr_rise>year+1] = tyr_set[tyr_rise>year+1]-1
         tyr_rise[tyr_rise>year+1] = tyr_rise[tyr_rise>year+1]-1
 
+        tyr_rise[standards] = np.array(table_scheduler['tyr_rise_1.75'])[standards]-2025+year
+        tyr_set[standards] = np.array(table_scheduler['tyr_set_1.75'])[standards]-2025+year
+
         tyr_rise = tcsf.conv_time(list(tyr_rise))
         tyr_set = tcsf.conv_time(list(tyr_set))
+
         season_length = tyr_set[0]-tyr_rise[0]
 
         if need_help:
@@ -2207,7 +2263,6 @@ class tcs(object):
 
         if texp=='optimal':
             texp = np.array(table_scheduler['texp_optimal']*60)
-            texp[texp!=texp] = 15
             texp = np.array(np.ceil(texp)).astype('int')
         else:
             texp = (np.ones(len(table_scheduler))*texp).astype('int')
@@ -2219,8 +2274,8 @@ class tcs(object):
         total_max = self.info_SC_nb_hours_per_yr
         total_max_eff = self.info_SC_nb_hours_per_yr_eff
 
-        nobs_max_eff = total_max_eff*60/len(table_scheduler)/(texp_mean/60+1)
-        nobs_max = total_max*60/len(table_scheduler)/(texp_mean/60+1)
+        nobs_max_eff = total_max_eff*60/len(table_scheduler)/(texp_mean/60+t_slew/60)
+        nobs_max = total_max*60/len(table_scheduler)/(texp_mean/60+t_slew/60)
 
         #loc = tcsf.find_nearest(self.info_XY_survey_stat.x*60,texp_mean)[0][0]
         #nobs_max = self.info_XY_survey_stat.y[loc]
@@ -2235,6 +2290,9 @@ class tcs(object):
             table_scheduler['obsN'] = (season_length*freq_obs).astype('int')
         else:
             table_scheduler['obsN'] = n_obs
+        
+        standards = np.array(table_scheduler['under_review']==2)
+        table_scheduler.loc[standards,'obsN'] = np.array(table_scheduler.loc[standards,'season_length_1.75']).astype('int')
 
         table_scheduler['expTime'] = texp
 

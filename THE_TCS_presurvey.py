@@ -269,21 +269,69 @@ for index in table.index:
     cutoff = presurvey.info_TA_cutoff['RVopti'].copy()
 
 
-presurvey.compute_optimal_texp(
-    snr=250, 
-    sig_rv=0.30, 
-    budget='_extempo_phot+osc', 
-    texp_crit=50, 
-    use_vsini=False,
-    selection='presurvey')
+######
+
+#
+survey = tcsc.tcs(sun_elevation=-12) 
+
+survey.compute_optimal_texp(
+    snr = 250, 
+    sig_rv = 0.30, 
+    budget = '_arve_phot+osc', 
+    texp_crit = 25, 
+    texp_extra = 2, # +2min
+    texp_min = 8,   #  8min
+    use_vsini = True,
+    selection = 'presurvey')
+
+best = survey.compute_ranking(selection='presurvey', budget='arve_phot+osc+gr', use_vsini=True, texp='optimal')
+survey.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C1', figname='texp')
+
+config = {
+    '100':{'baseline':4,'texp_min':8,'nobs':100},
+    '80':{'baseline':5,'texp_min':8,'nobs':130},
+    '60':{'baseline':8,'texp_min':8,'nobs':200},
+    '40':{'baseline':12,'texp_min':12,'nobs':250},
+    }
+
+for N in [100,80,60,40]:
+    c = config[str(N)]
+    texp_min = c['texp_min']
+    baseline = c['baseline']
+    n_obs = c['nobs']
+    survey.compute_optimal_texp(
+        snr=250, 
+        sig_rv=0.30, 
+        budget='_arve_phot+osc', 
+        texp_crit = 25, 
+        texp_extra = 2, # +2min
+        texp_min = texp_min,   #  8min
+        use_vsini=True,
+        selection='presurvey')
+    survey.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C0', figname='texp')
+
+    survey_tab = survey.info_TA_stars_selected['presurvey'].data.copy()
+    survey_tab = survey_tab.loc[survey_tab['texp_optimal']<100]
+    survey_tab = survey_tab.sort_values(by='gmag')[0:N]
+    survey.create_table_scheduler(
+        selection=presurvey_tab,
+        year = 2026,
+        texp = 'optimal',
+        t_slew = 60,
+        n_obs = n_obs,
+        ranking = None,
+        month_obs_baseline = baseline,
+        standards = True
+        )
+    plt.savefig('/Users/cretignier/Documents/Analysis/N%.0f.pdf'%(N))
 
 
-standards = tcsc.inner_gr8(['HD4628','HD69830','HD146233','HD186408']) #remove HD4628 that is not quiet
+standards = tcsc.inner_gr8(['HD4628','HD146233','HD186408']) 
 star1 = tcsc.tcs(sun_elevation=-6) 
 plt.figure(figsize=(16,8))
 s1 = plt.subplot(1,1,1)
 for n,s in enumerate(standards): 
     star1.set_star(starname=s,verbose=False)
-    star1.plot_night_length(figure=s1,legend=False,airmass_max=[1.5,1.75],sun_elevation=[-12,-18]) #peak in April
+    star1.plot_night_length(figure=s1,legend=False,airmass_max=[1.5],sun_elevation=[-12]) #peak in April
     plt.ylim(-1,10)
 plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
