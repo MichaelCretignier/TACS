@@ -16,7 +16,6 @@ tcsc.plot_planetary_system('HD99492')
 tcsc.plot_rv_texp('HD146233',budget='osc')
 tcsc.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 
-
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
@@ -29,7 +28,6 @@ tcsc.plot_summary(
     'HD16160',
     selection=presurvey.info_TA_stars_selected['presurvey'].data.copy(),
     cutoff=presurvey.info_TA_cutoff['RVopti'])
-
 
 #these lines are already run by default in tcsc.tsc()
 presurvey.func_cutoff(cutoff=tcsv.cutoff_RVopti, tagname='RVopti') 
