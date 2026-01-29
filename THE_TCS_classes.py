@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.41'
+version_tacs = '1.42'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -569,7 +569,7 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
     master = gr8[version]
     index = get_info_starname(starname, verbose=verbose)
     gaia_name = index['GAIA']
-    planets = db_exoplanets.loc[db_exoplanets['GAIA']==gaia_name]
+    planets = db_exoplanets.loc[db_exoplanets['GAIA']==gaia_name].reset_index(drop=True)
 
     if newfig:
         plt.figure('PLANETS_'+starname)
@@ -587,31 +587,36 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
         p1 = entry['HZ_period_inf'].values[0] 
         p2 = entry['HZ_period_sup'].values[0]
         plt.axvspan(xmin=p1,xmax=p2,color='g',alpha=0.3)
-
+        plt.ylim(-1,1)
     if len(planets):
+        mp_stability = np.nanmedian(planets['MP_stability'])
+        plt.text(1.5*1e5,0.0,'Stab \n = %.0f %%'%(mp_stability),va='center',ha='left',fontsize=11)
+        for p in np.arange(len(planets)):
+            period = planets.loc[p,'period']
+            mass = planets.loc[p,'mass']
+            ecc = planets.loc[p,'ecc']
+            plt.plot([period*(1-ecc)**(1.5),period*(1+ecc)**(1.5)],[0,0],color='k',lw=4)
+            if mass<10:
+                plt.scatter(period,0,zorder=10,color='g',s=30,ec='k')
+                plt.text(period,0.8,r'%.0f'%(mass),ha='center')
+                plt.text(period,0.4,r'$⊕$',ha='center')
+            elif mass<100:
+                plt.scatter(period,0,zorder=10,color='b',s=100,ec='k')
+                plt.text(period,0.8,r'%.0f'%(mass/16),ha='center')
+                plt.text(period,0.4,r'$♆$',ha='center')
+            elif mass<1000:
+                plt.scatter(period,0,zorder=10,color='pink',s=200,ec='k')
+                plt.text(period,0.8,r'%.1f'%(mass/318),ha='center')
+                plt.text(period,0.4,r'$♃$',ha='center')
+            elif mass<20000:
+                plt.scatter(period,0,zorder=10,color='r',s=400,ec='k')
+                plt.text(period,0.8,r'%.1f'%(mass/318),ha='center')
+                plt.text(period,0.4,r'$♃$',ha='center')
+            elif mass>20000:
+                plt.scatter(period,0,zorder=10,color='white',s=400,ec='k')
+                plt.text(period,0.8,r'%.1f'%(mass/318),ha='center')
+                plt.text(period,0.4,r'$♃$',ha='center')
 
-        for p in np.array(planets):
-            plt.plot([p[4]*(1-p[8])**(1.5),p[4]*(1+p[8])**(1.5)],[0,0],color='k',lw=4)
-            if p[6]<10:
-                plt.scatter(p[4],0,zorder=10,color='g',s=30,ec='k')
-                plt.text(p[4],0.65,r'%.0f'%(p[6]),ha='center')
-                plt.text(p[4],0.5,r'$⊕$',ha='center')
-            elif p[6]<100:
-                plt.scatter(p[4],0,zorder=10,color='b',s=100,ec='k')
-                plt.text(p[4],0.65,r'%.0f'%(p[6]/16),ha='center')
-                plt.text(p[4],0.5,r'$♆$',ha='center')
-            elif p[6]<1000:
-                plt.scatter(p[4],0,zorder=10,color='pink',s=200,ec='k')
-                plt.text(p[4],0.65,r'%.1f'%(p[6]/318),ha='center')
-                plt.text(p[4],0.5,r'$♃$',ha='center')
-            elif p[6]<20000:
-                plt.scatter(p[4],0,zorder=10,color='r',s=400,ec='k')
-                plt.text(p[4],0.65,r'%.1f'%(p[6]/318),ha='center')
-                plt.text(p[4],0.5,r'$♃$',ha='center')
-            elif p[6]>20000:
-                plt.scatter(p[4],0,zorder=10,color='white',s=400,ec='k')
-                plt.text(p[4],0.65,r'%.1f'%(p[6]/318),ha='center')
-                plt.text(p[4],0.5,r'$♃$',ha='center')
 
 def plot_season(starname,version=None,newfig=True,verbose=False,selection=None):
     if version is None:
@@ -794,7 +799,7 @@ def plot_exoplanets(y_var='k'):
     plt.subplots_adjust(left=0.10,right=0.95)
     return fig 
 
-def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50):
+def plot_exoplanets2(selection,cutoff={'teff<':8000},mcrit_sup=10000,mcrit_inf=10000,stab_min=50):
     
     table_gr8 = selection.copy()
     
@@ -851,6 +856,7 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
             MHS = 0 ; MHN = 0
         condition1 = np.sum((syst['p_eccmin']<400)&(syst['mass']>mcrit_inf)).astype('bool')
         condition2 = np.sum((syst['mass']>mcrit_sup)).astype('bool')
+        condition3 = np.sum((syst['MP_stability']<stab_min)).astype('bool')
         condition_GZ = np.sum((syst['mass']>30)&(syst['mass']<=mcrit_sup)).astype('int')
         condition_NE = np.sum((syst['mass']>10)&(syst['mass']<=30)).astype('int')
         condition_SE = np.sum((syst['mass']<=10)).astype('int')
@@ -867,7 +873,7 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
 
         summary.append([system,MHS,MHN,int(condition1),int(condition2),int(condition_GZ),int(condition_NE),int(condition_SE),int(condition_transit),int(np.round(stab,0))])
 
-        condition_rejected = condition1|condition2
+        condition_rejected = condition3#condition1|condition2
         color_condition = ['k','r'][int(condition_rejected)]
         indicator = ['x','•'][np.array(syst['pre_survey'])[0]]
         indicator2 = ['', '[%.0f]'%(stab)][int(stab!=101)]
@@ -877,8 +883,8 @@ def plot_exoplanets2(selection,cutoff={'teff<':6000},mcrit_sup=4000,mcrit_inf=50
         for mass,period,p1 in np.array(syst[['mass','period','p_eccmin']]):
             if mass>mcrit_sup:
                 plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color='r',va='center',ha='center',zorder=1000)
-            elif mass>mcrit_inf:
-                plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color=['white','r'][int(p1<400)],va='center',ha='center',zorder=1000)
+            elif mass>50:
+                plt.text(period,count,'%.0f'%(np.round(mass/95,0)),color=['white','white','r'][int(p1<400)],va='center',ha='center',zorder=1000)
     summary = np.array(summary)
     summary = pd.DataFrame(summary,columns=['GAIA','MHS','MHN','HJ','BDW','GZ','NEP','SE','TRNS','MP_stability'])
     plt.subplots_adjust(left=0.01,right=0.91,wspace=0.40,top=0.96,bottom=0.09)
@@ -1882,6 +1888,8 @@ class tcs(object):
 
         optimal_time[optimal_time>texp_crit] = np.nan
         selection['texp_optimal'] = optimal_time
+        selection['snr_550_texp_optimal'] = selection['snr_550_texp15']*np.sqrt(selection['texp_optimal']/15)
+        selection['snr_420_texp_optimal'] = selection['snr_420_texp15']*np.sqrt(selection['texp_optimal']/15)
 
     def compute_ranking(self, selection=None, budget='arve_phot+osc+gr', use_vsini=True, texp='optimal'):
 
@@ -1927,8 +1935,6 @@ class tcs(object):
     def compute_nb_nights_required(self, selection='', texp=15, month=1):
         """Only thing missing is to check the number of star with season gap"""
         tab = self.info_TA_stars_selected[selection].data
-
-
 
         nights = (1-self.info_IM_night.data)
         observing = 1 - downtime/100
@@ -2179,6 +2185,9 @@ class tcs(object):
 
     def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, t_slew=60, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standards=False):
         
+        # nb sub exposure given to individual exposure to SNR=450 at 550 nm
+        # all_output['nb_subexp'] = np.round(np.ceil((all_output['snr_550_texp15']/450)**2),0).astype('int') #SNR=450 SATURATION
+
         if type(selection)==str:
             table_scheduler = self.info_TA_stars_selected[selection].data.copy()
             if tagname=='':

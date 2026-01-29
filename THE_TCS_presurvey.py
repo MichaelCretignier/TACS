@@ -278,7 +278,7 @@ survey.compute_optimal_texp(
     snr = 250, 
     sig_rv = 0.30, 
     budget = '_arve_phot+osc', 
-    texp_crit = 25, 
+    texp_crit = 50, 
     texp_extra = 2, # +2min
     texp_min = 8,   #  8min
     use_vsini = True,
@@ -288,7 +288,7 @@ best = survey.compute_ranking(selection='presurvey', budget='arve_phot+osc+gr', 
 survey.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C1', figname='texp')
 
 config = {
-    '100':{'baseline':4,'texp_min':8,'nobs':100},
+    '100':{'baseline':4,'texp_min':8,'nobs':90},
     '80':{'baseline':5,'texp_min':8,'nobs':130},
     '60':{'baseline':8,'texp_min':8,'nobs':200},
     '40':{'baseline':12,'texp_min':12,'nobs':250},
@@ -314,7 +314,7 @@ for N in [100,80,60,40]:
     survey_tab = survey_tab.loc[survey_tab['texp_optimal']<100]
     survey_tab = survey_tab.sort_values(by='gmag')[0:N]
     survey.create_table_scheduler(
-        selection=presurvey_tab,
+        selection=survey_tab,
         year = 2026,
         texp = 'optimal',
         t_slew = 60,

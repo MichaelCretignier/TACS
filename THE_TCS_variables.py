@@ -113,7 +113,8 @@ cutoff_RVopti = {
     'SB2<':0.5,
     'season_length_1.75>':240,
     'eff_nights_1.75>':180,
-    'MHN<':1,
+#    'MHN<':1,
+    'MP_stability>':50,
     'sky_contam_VIZIER<':0.01,
     'SB_composite<':0.5,
     'logRHK<':-4.7,
@@ -122,9 +123,9 @@ cutoff_RVopti = {
 #    'feh>':-1.0,
     'multi_peak_GAIA<':1,
     'rv_trend_kms_DACE<':0.1,
-    'prot>':10,
+#    'prot>':10,
     'gmag<':7.0,#'gmag<':7.2,
-    'distance<':30,
+#    'distance<':30,
     'HWO>':-1,
     'PLATO>':-1,
     'under_review>':-1,
@@ -144,7 +145,7 @@ cutoff_megan = {
 #    'ruwe_GAIA<':10,
     'logRHK<':-4.5,
 #    'feh>':-1.0,
-    'MHN>':-1,
+    'MP_stability>':-1,
     'gmag<':7.3,#'gmag<':7.3,
     'distance<':50,
     'prot>':0,
@@ -166,14 +167,15 @@ cutoff_megan_old = {
     }
 
 cutoff_minimal = {
-    'teff<':6050,
+    'teff<':6100,
+    'teff>':3900,
     'logg>':4.15,
-    'vsini<':8,
+    'vsini<':7,
     'SB2<':1,
     'sky_contam_VIZIER<':0.1,
     'SB_composite<':0.5,
     'OBTP_type<':1.5,
-    'eff_nights_1.75>':150,
+    'eff_nights_1.75>':180,
     'season_length_1.75>':240,
     'gmag<':7.5,
     'under_review>':-1,
@@ -644,5 +646,6 @@ master_columns = ['PRIMARY',
 
 
 journal = {
-    '1.41':'Dynamic HZ score metric computed by the .compute_ranking()',
+    '1.41':'• Dynamic HZ score metric computed by the .compute_ranking() \n• Add of the minimal and critical exposure time',
+    '1.42':'• Planetary systems bug fixed \n• MP stability value displayed'
     }
