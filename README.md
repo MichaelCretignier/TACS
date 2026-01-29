@@ -48,7 +48,9 @@ pip install --upgrade pip
 pip install -r requirements_3.8.8.txt
 ```
 
-# Tutorial (run the main.py in a iPython shell)
+# Tutorial
+
+Let's run the main test file containing all the useful features in a iPython shell. 
 
 ```
 [TERMINAL]
