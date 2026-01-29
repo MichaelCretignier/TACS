@@ -37,17 +37,24 @@ pip install -r requirements_3.8.8.txt
 
 # Python environment (Venv install)
 
-[TERMINAL] python3 -m venv tcs \
-[TERMINAL] source tcs/bin/activate \
-[TERMINAL] pip install --upgrade pip \
-[TERMINAL] pip install -r requirements_3.8.8.txt
+```
+python3 -m venv tcs \
+source tcs/bin/activate \
+pip install --upgrade pip \
+pip install -r requirements_3.8.8.txt
+```
 
 # Tutorial (run the main.py in a iPython shell)
 
-[TERMINAL] conda activate env tcs \
-[TERMINAL] cd ../TACS/Python \
-[TERMINAL] ipython \
-[IPYTHON] run THE_TCS_main.py
+```
+conda activate env tcs \
+cd ../TACS/Python \
+ipython \
+```
+[IPYTHON] 
+```
+run THE_TCS_main.py
+```
 
 # References
 
