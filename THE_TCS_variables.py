@@ -647,5 +647,6 @@ master_columns = ['PRIMARY',
 
 journal = {
     '1.41':'• Dynamic HZ score metric computed by the .compute_ranking() \n• Add of the minimal and critical exposure time',
-    '1.42':'• Planetary systems bug fixed \n• MP stability value displayed'
+    '1.42':'• Planetary systems bug fixed \n• MP stability value displayed',
+    '1.43':'• Construction of a minimal cutoff wide sample as a backup pool',
     }

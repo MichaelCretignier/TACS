@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.42'
+version_tacs = '1.43'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
