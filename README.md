@@ -4,13 +4,13 @@
   <img src="logo.png" alt="Project logo" width="400">
 </p>
 
-# Contact Me
+## Contact Me
 
 If you have any problem, please contact me at:
 
 michael.cretignier@physics.ox.ac.uk
 
-# Installation
+## Installation
 
 Download the directory and try to run THE_TCS_main.py with your own Python installation.
 If bug, install a Python environment:
@@ -48,7 +48,7 @@ pip install --upgrade pip
 pip install -r requirements_3.8.8.txt
 ```
 
-# Tutorial
+## Tutorial
 
 Let's run the main test file containing all the useful features in a iPython shell (with the local python environment if needed). 
 
@@ -74,7 +74,7 @@ run THE_TCS_main.py
 
 A lot of figures will pop but just check you don't get any error message.
 
-# References
+## References
 
 GR8 table is coming from Freckelton et al. +25 (2025yCat..75401786F)
 
@@ -84,6 +84,10 @@ The computation of the RV budget is made using:
 2) GP (O'Sullivan et al. in prep.)
 3) ExTEMPO (https://github.com/BRajkumar041992/ExTEMPO)
 
-# Uninstall
+## Uninstall
 
-[TERMINAL] conda remove --name tcs --all
+
+```
+[TERMINAL] 
+conda remove --name tcs --all
+```
