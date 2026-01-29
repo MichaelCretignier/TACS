@@ -13,7 +13,7 @@ michael.cretignier@physics.ox.ac.uk
 ## Installation
 
 Download the directory and try to run THE_TCS_main.py with your own Python installation.
-If bug, install a Python environment:
+If it crashes, install a Python environment:
 
  [Mac M4 Chip] Python environment (Conda install) (Python 3.12.5)
 
