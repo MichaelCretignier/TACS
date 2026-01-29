@@ -54,12 +54,16 @@ pip install -r requirements_3.8.8.txt
 [TERMINAL]
 conda activate env tcs 
 cd ../TACS/Python 
+```
+
+Now launch iPython
+
+```
 ipython 
 ```
 
-[IPYTHON] 
-
 ```
+[IPYTHON] 
 run THE_TCS_main.py
 ```
 
