@@ -18,40 +18,47 @@ If bug, install a Python environment:
 # [Mac M4 Chip] Python environment (Conda install) (Python 3.12.5)
 
 ```
+[TERMINAL]
 conda create -n tcs -c conda-forge python=3.12.5 numpy=1.26.4 pandas=2.3.2 scipy=1.16.2 astropy=7.1.0 matplotlib=3.10.6 ipython=9.5.0 colorama=0.4.4 pyqt=5.15 -y 
 ```
 
 # [Mac M2 Chip] Python environment (Conda forge install) (Python 3.10)
 
 ```
+[TERMINAL]
 conda create -n tcs -c conda-forge python=3.10.0 numpy=1.23.5 pandas=1.4.1 scipy=1.8 astropy=5.2.2 matplotlib=3.5 ipython=8.11.0 colorama=0.4.4 pyqt=5.15 -y
 ```
 
 # [Mac Intel Chip] Python environment (Conda install) (Python 3.8.8)
 
 ```
-conda create -n tcs python=3.8.8 \
-conda activate tcs \
+[TERMINAL]
+conda create -n tcs python=3.8.8 
+conda activate tcs 
 pip install -r requirements_3.8.8.txt
 ```
 
 # Python environment (Venv install)
 
 ```
-python3 -m venv tcs \
-source tcs/bin/activate \
-pip install --upgrade pip \
+[TERMINAL]
+python3 -m venv tcs 
+source tcs/bin/activate 
+pip install --upgrade pip 
 pip install -r requirements_3.8.8.txt
 ```
 
 # Tutorial (run the main.py in a iPython shell)
 
 ```
-conda activate env tcs \
-cd ../TACS/Python \
-ipython \
+[TERMINAL]
+conda activate env tcs 
+cd ../TACS/Python 
+ipython 
 ```
+
 [IPYTHON] 
+
 ```
 run THE_TCS_main.py
 ```
