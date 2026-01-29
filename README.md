@@ -38,7 +38,7 @@ conda activate tcs
 pip install -r requirements_3.8.8.txt
 ```
 
- Python environment (Venv install)
+[Alternative to conda] Python environment (Venv install)
 
 ```
 [TERMINAL]
