@@ -59,13 +59,18 @@ cd ../TACS/Python
 Now launch iPython
 
 ```
+[TERMINAL]
 ipython 
 ```
+
+And run the test file.
 
 ```
 [IPYTHON] 
 run THE_TCS_main.py
 ```
+
+A lot of figures will pop but just check you don't get any error message.
 
 # References
 
