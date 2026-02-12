@@ -1,41 +1,39 @@
 import matplotlib.pylab as plt
 
-import THE_TCS_classes as tcsc
-import THE_TCS_variables as tcsv
-
+import tacs
 
 #USEFUL FUNCTIONS
-starnames = tcsc.get_info_starname('HD16160')
-tcsc.get_info_prot('HD16160')
-tcsc.get_info_binary('HD16160')
-tcsc.plot_binary('HD16160',seeing=0.75,source='COMPOSITE')
-tcsc.plot_ccf('HD16160')
-tcsc.plot_spectrum('HD16160')
-tcsc.plot_magcycle('HD16160')
-tcsc.plot_planetary_system('HD99492')
-tcsc.plot_rv_texp('HD146233',budget='osc')
-tcsc.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
+starnames = tacs.get_info_starname('HD16160')
+tacs.get_info_prot('HD16160')
+tacs.get_info_binary('HD16160')
+tacs.plot_binary('HD16160',seeing=0.75,source='COMPOSITE')
+tacs.plot_ccf('HD16160')
+tacs.plot_spectrum('HD16160')
+tacs.plot_magcycle('HD16160')
+tacs.plot_planetary_system('HD99492')
+tacs.plot_rv_texp('HD146233',budget='osc')
+tacs.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 
-tcsc.plot_planetary_system('HD143761')
-tcsc.plot_summary('HD143761')
+tacs.plot_planetary_system('HD143761')
+tacs.plot_summary('HD143761')
 
 
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
 
-catalog_version = tcsc.last_catalog #last catalog = 5.2 
-presurvey = tcsc.tcs(version=catalog_version) 
+catalog_version = tacs.last_catalog #last catalog = 5.2 
+presurvey = tacs.tcs(version=catalog_version) 
 presurvey.print_sp_stat()
 
-tcsc.plot_summary(
+tacs.plot_summary(
     'HD16160',
     selection=presurvey.info_TA_stars_selected['presurvey'].data.copy(),
     cutoff=presurvey.info_TA_cutoff['RVopti'])
 
-#these lines are already run by default in tcsc.tsc()
-presurvey.func_cutoff(cutoff=tcsv.cutoff_RVopti, tagname='RVopti') 
-presurvey.func_cutoff(cutoff=tcsv.cutoff_megan, tagname='solartwins', protection=False) 
+#these lines are already run by default in tacs.tsc()
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
+presurvey.func_cutoff(cutoff=tacs.cutoff_megan, tagname='solartwins', protection=False) 
 samples = presurvey.union('RVopti','solartwins',union_name='presurvey',Xmarker={'under_review>':0.5},ordering='HD')
 
 #plot sample
@@ -51,46 +49,46 @@ plt.subplots_adjust(left=0.08,right=0.96,top=0.95,bottom=0.09)
 cutoff_rvopti = presurvey.info_TA_cutoff['RVopti'].copy()
 cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
 
-tcsc.which_cutoff('51Peg', cutoff_suntwins)
-tcsc.which_cutoff('51Peg', cutoff_rvopti)
-tcsc.which_cutoff('HD219134',cutoff_rvopti) 
-tcsc.which_cutoff('HD22049', cutoff_rvopti)
+tacs.which_cutoff('51Peg', cutoff_suntwins)
+tacs.which_cutoff('51Peg', cutoff_rvopti)
+tacs.which_cutoff('HD219134',cutoff_rvopti) 
+tacs.which_cutoff('HD22049', cutoff_rvopti)
 
-tcsc.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], cutoff_rvopti)
-tcsc.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], cutoff_rvopti,plot=True)
+tacs.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], cutoff_rvopti)
+tacs.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], cutoff_rvopti,plot=True)
 
-tcsc.which_cutoff(tcsv.catalog_NEID['HD'], cutoff_rvopti, plot=True)
-tcsc.which_cutoff(tcsv.catalog_2ES['GAIA'], cutoff_rvopti,plot=True)
+tacs.which_cutoff(tacs.catalog_NEID['HD'], cutoff_rvopti, plot=True)
+tacs.which_cutoff(tacs.catalog_2ES['GAIA'], cutoff_rvopti,plot=True)
 
 #tracking the K sample
-presurvey.func_cutoff(cutoff=tcsv.cutoff_RVopti, show_sample='K', tagname='dustbin')
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, show_sample='K', tagname='dustbin')
 
 #### EXAMPLE OF CUTOFF VISUALISATION ####
 
-example1 = tcsc.tcs()
+example1 = tacs.tcs()
 #tracking a binary flag
-example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
-example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='PLATO==1', cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
+example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tacs.cutoff_RVopti, tagname='dustbin')
+example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='PLATO==1', cutoff=tacs.cutoff_RVopti, tagname='dustbin')
 
 #tracking a parameter space box
-example1.func_cutoff(par_space='teff&distance', par_box=['4500->5300','0->30'], cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
+example1.func_cutoff(par_space='teff&distance', par_box=['4500->5300','0->30'], cutoff=tacs.cutoff_RVopti, tagname='dustbin')
 
 #### VISUALIZATION OF KNOWN EXOPLANETS #####
 
-summary = tcsc.tcs() 
-summary1 = tcsc.plot_exoplanets2(summary.info_TA_stars_selected['GR8'].data)
-summary2 = tcsc.plot_exoplanets2(summary.info_TA_stars_selected['presurvey'].data)
+summary = tacs.tcs() 
+summary1 = tacs.plot_exoplanets2(summary.info_TA_stars_selected['GR8'].data)
+summary2 = tacs.plot_exoplanets2(summary.info_TA_stars_selected['presurvey'].data)
 
 ### ------- EXAMPLES ------- ###
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
-survey = tcsc.tcs(sun_elevation=-12) #HARPS3 is the default
+survey = tacs.tcs(sun_elevation=-12) #HARPS3 is the default
 survey.func_cutoff(tagname='bright!',cutoff={'gmag<':5.5,'teff<':6000})
 print(survey.info_TA_stars_selected['bright!'].data)
 
 ##### COMPUTE SEASON AND NIGHT LENGTH #####
 
-star = tcsc.tcs(sun_elevation=-18, instrument='HARPS3') #HARPS3 is the default
+star = tacs.tcs(sun_elevation=-18, instrument='HARPS3') #HARPS3 is the default
 star.set_star(starname='HD38858')
 
 plt.figure(figsize=(12,8))
@@ -104,14 +102,14 @@ star.plot_night_length()
 #other instruments
 plt.figure(figsize=(18,5))
 for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF','SOPHIE']):
-    star = tcsc.tcs(sun_elevation=-12, instrument=ins)
+    star = tacs.tcs(sun_elevation=-12, instrument=ins)
     star.set_star(ra=8,dec=5) # change for a DEC vs RA input
     plt.subplot(1,6,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
 plt.subplots_adjust(left=0.05,right=0.96)
 
 ##### COMPUTE 10 YEARS TIME-SERIES #####
 
-star2 = tcsc.tcs(sun_elevation=-12, starname='HD217014')
+star2 = tacs.tcs(sun_elevation=-12, starname='HD217014')
 star2.plot_exoplanets_db(y_var='mass')
 
 star2.create_timeseries(airmass_max=1.75, nb_year=1, texp=15, weather=False)
@@ -124,7 +122,7 @@ star2.compute_exoplanet_rv_signal(y0=2026) #start in 2026
 star2.plot_keplerians()
 
 ##### SG CALENDAR #####
-star3 = tcsc.tcs(sun_elevation=-6, instrument='HARPS3')
+star3 = tacs.tcs(sun_elevation=-6, instrument='HARPS3')
 star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=1, dec_step=5)
 
 star3.compute_SG_month(month=1,plot=True)
@@ -132,7 +130,7 @@ star3.compute_SG_month(month=1,plot=True)
 #OPTIMAL EXPOSURE TIME
 
 # START
-tutorial = tcsc.tcs(sun_elevation=-12) 
+tutorial = tacs.tcs(sun_elevation=-12) 
 # As a recall, Total_time = Nstar * (Texp + overhead) * Nb_obs
 tutorial.plot_survey_stars(Nb_star=100)
 
@@ -177,15 +175,15 @@ tutorial.create_table_scheduler(
 tutorial.info_TA_stars_selected[selection].plot(y='dec_j2000',x='ra_j2000')
 
 #TESS LIGHTCURVES
-star4 = tcsc.tcs(sun_elevation=-12, starname='HD4628')
+star4 = tacs.tcs(sun_elevation=-12, starname='HD4628')
 plt.figure()
 star4.show_lightcurve(rm_gap=True)
 
 #Investigate a pre-determined star list (cross-matched with GR8)
 
-neid = tcsc.tcs(sun_elevation=-12)
-neid.create_star_selection(tcsv.catalog_NEID['HD'],tagname='NEID')
-neid.create_star_selection(tcsv.NEID_standards,tagname='NEID_standards')
+neid = tacs.tcs(sun_elevation=-12)
+neid.create_star_selection(tacs.catalog_NEID['HD'],tagname='NEID')
+neid.create_star_selection(tacs.NEID_standards,tagname='NEID_standards')
 
 neid.info_TA_stars_selected['NEID_standards'].plot(y='dec_j2000',x='ra_j2000')
 neid.info_TA_stars_selected['presurvey'].plot(y='dec_j2000',x='ra_j2000',c='k',GUI=False)
