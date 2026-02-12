@@ -600,7 +600,7 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
 
         mp_stability = np.nanmedian(planets['MP_stability'])
         plt.text(1.5*1e5,0.0,'Stab \n = %.0f %%'%(mp_stability),va='center',ha='left',fontsize=11)
-        offsety = -1.5
+        offsety = -0.0
         for p in np.arange(len(planets)):
             period = planets.loc[p,'period']
             mass = planets.loc[p,'mass']
@@ -608,24 +608,19 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
             plt.plot([period*(1-ecc)**(1.5),period*(1+ecc)**(1.5)],[0,0],color='k',lw=4)
             if mass<10:
                 plt.scatter(period,0,zorder=10,color='g',s=30,ec='k')
-                plt.text(period,0.8+offsety,r'%.0f\n$⊕$'%(mass),ha='center')
-                #plt.text(period,0.4+offsety,r'$⊕$',ha='center')
+                plt.text(period,-0.5+offsety,f"{mass:.0f}\n$\\oplus$",ha='center',va='top')
             elif mass<100:
                 plt.scatter(period,0,zorder=10,color='b',s=100,ec='k')
-                plt.text(period,0.8+offsety,r'%.0f'%(mass/16),ha='center')
-                plt.text(period,0.4+offsety,r'$♆$',ha='center')
+                plt.text(period,-0.5+offsety,f"{mass/16:.1f}\n$♆$",ha='center',va='top')
             elif mass<1000:
                 plt.scatter(period,0,zorder=10,color='pink',s=200,ec='k')
-                plt.text(period,0.8+offsety,r'%.1f'%(mass/318),ha='center')
-                plt.text(period,0.4+offsety,r'$♃$',ha='center')
+                plt.text(period,-0.5+offsety,f"{mass/318:.1f}\n$♃$",ha='center',va='top')
             elif mass<20000:
                 plt.scatter(period,0,zorder=10,color='r',s=400,ec='k')
-                plt.text(period,0.8+offsety,r'%.1f'%(mass/318),ha='center')
-                plt.text(period,0.4+offsety,r'$♃$',ha='center')
+                plt.text(period,-0.5+offsety,f"{mass/318:.1f}\n$♃$",ha='center',va='top')
             elif mass>20000:
                 plt.scatter(period,0,zorder=10,color='white',s=400,ec='k')
-                plt.text(period,0.8+offsety,r'%.1f'%(mass/318),ha='center')
-                plt.text(period,0.4+offsety,r'$♃$',ha='center')
+                plt.text(period,-0.5+offsety,f"{mass/318:.1f}\n$♃$",ha='center',va='top')
 
 
 def plot_season(starname,version=None,newfig=True,verbose=False,selection=None):
