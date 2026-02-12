@@ -11,7 +11,7 @@ import THE_TCS_variables as tcsv
 
 #IMPORT MAIN TABLES
 
-version_tacs = '1.43'
+version_tacs = '1.44'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -67,8 +67,11 @@ db_tess_candidates['name'] = 'TOI'+db_tess_candidates['TOI'].astype('str')
 db_tess_candidates['method'] = 'Transit'
 db_exoplanets = db_exoplanets.merge(db_tess_candidates,how='outer')
 
+db_stability = pd.read_csv(cwd+'/TACS_Material/StabilityCurves.csv',index_col=0)
+
 def format_table(table, verbose=False):
     default = {'PLATO': 0, 'MHN': 0, 'MP_stability': 101}
+    replace_nan = {'HWO':'X'}
 
     new_cols = {}
     for c in tcsv.master_columns:
@@ -569,6 +572,7 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
     master = gr8[version]
     index = get_info_starname(starname, verbose=verbose)
     gaia_name = index['GAIA']
+    hd_name = index['HD']
     planets = db_exoplanets.loc[db_exoplanets['GAIA']==gaia_name].reset_index(drop=True)
 
     if newfig:
@@ -580,7 +584,6 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
     for j in range(0,5):
         plt.plot([10**j]*2,[-0.1,0.1],color='k',zorder=100)
     plt.xscale('log')
-    plt.axvspan(xmin=60,xmax=400,color='gray',alpha=0.3)
 
     if index is not None:
         entry = master.loc[master['GAIA']==gaia_name]
@@ -589,8 +592,14 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
         plt.axvspan(xmin=p1,xmax=p2,color='g',alpha=0.3)
         plt.ylim(-1,1)
     if len(planets):
+
+        if hd_name in db_stability.keys():
+            plt.fill_between(db_stability['period'],db_stability[hd_name],1,color='k',alpha=0.3)
+            plt.plot(db_stability['period'],db_stability[hd_name],color='k',lw=1)
+
         mp_stability = np.nanmedian(planets['MP_stability'])
         plt.text(1.5*1e5,0.0,'Stab \n = %.0f %%'%(mp_stability),va='center',ha='left',fontsize=11)
+        offsety = -1.5
         for p in np.arange(len(planets)):
             period = planets.loc[p,'period']
             mass = planets.loc[p,'mass']
@@ -598,24 +607,24 @@ def plot_planetary_system(starname,verbose=False,version=None,newfig=True):
             plt.plot([period*(1-ecc)**(1.5),period*(1+ecc)**(1.5)],[0,0],color='k',lw=4)
             if mass<10:
                 plt.scatter(period,0,zorder=10,color='g',s=30,ec='k')
-                plt.text(period,0.8,r'%.0f'%(mass),ha='center')
-                plt.text(period,0.4,r'$⊕$',ha='center')
+                plt.text(period,0.8+offsety,r'%.0f\n$⊕$'%(mass),ha='center')
+                #plt.text(period,0.4+offsety,r'$⊕$',ha='center')
             elif mass<100:
                 plt.scatter(period,0,zorder=10,color='b',s=100,ec='k')
-                plt.text(period,0.8,r'%.0f'%(mass/16),ha='center')
-                plt.text(period,0.4,r'$♆$',ha='center')
+                plt.text(period,0.8+offsety,r'%.0f'%(mass/16),ha='center')
+                plt.text(period,0.4+offsety,r'$♆$',ha='center')
             elif mass<1000:
                 plt.scatter(period,0,zorder=10,color='pink',s=200,ec='k')
-                plt.text(period,0.8,r'%.1f'%(mass/318),ha='center')
-                plt.text(period,0.4,r'$♃$',ha='center')
+                plt.text(period,0.8+offsety,r'%.1f'%(mass/318),ha='center')
+                plt.text(period,0.4+offsety,r'$♃$',ha='center')
             elif mass<20000:
                 plt.scatter(period,0,zorder=10,color='r',s=400,ec='k')
-                plt.text(period,0.8,r'%.1f'%(mass/318),ha='center')
-                plt.text(period,0.4,r'$♃$',ha='center')
+                plt.text(period,0.8+offsety,r'%.1f'%(mass/318),ha='center')
+                plt.text(period,0.4+offsety,r'$♃$',ha='center')
             elif mass>20000:
                 plt.scatter(period,0,zorder=10,color='white',s=400,ec='k')
-                plt.text(period,0.8,r'%.1f'%(mass/318),ha='center')
-                plt.text(period,0.4,r'$♃$',ha='center')
+                plt.text(period,0.8+offsety,r'%.1f'%(mass/318),ha='center')
+                plt.text(period,0.4+offsety,r'$♃$',ha='center')
 
 
 def plot_season(starname,version=None,newfig=True,verbose=False,selection=None):

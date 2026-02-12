@@ -64,7 +64,7 @@ stars_under_review = [
     'HD217813',
 ]
 
-THE_standards = ['HD146233','HD4628','HD186408']
+THE_standards = ['HD146233','HD4628','HD186408','HD89269','HD158259']
 
 HARPN_standards = ['HD4628','HD166620','HD122064','HD127334','HD144579','HD151288','HD10476']
 
@@ -139,7 +139,7 @@ cutoff_megan = {
     'SB2<':1,
     'eff_nights_1.75>':180,
     'season_length_1.75>':240,
-    'sky_contam_VIZIER<':0.1,
+    'sky_contam_VIZIER<':0.01,
     'SB_composite<':0.5,
     'vsini<':7,
 #    'ruwe_GAIA<':10,
@@ -160,7 +160,7 @@ cutoff_megan_old = {
     'eff_nights_1.75>':180,
     'season_length_1.75>':240,
     'vsini<':5,
-    'sky_contam_VIZIER<':0.1,
+    'sky_contam_VIZIER<':0.01,
     'OBTP_type<':1.5,
     'sig_rv_arve_phot+osc_texp20<':0.30,
     'gmag<':7.5,
@@ -172,13 +172,13 @@ cutoff_minimal = {
     'logg>':4.15,
     'vsini<':7,
     'SB2<':1,
-    'sky_contam_VIZIER<':0.1,
+    'logRHK<':-4.5,
+    'sky_contam_VIZIER<':0.01,
     'SB_composite<':0.5,
     'OBTP_type<':1.5,
     'eff_nights_1.75>':180,
     'season_length_1.75>':240,
     'gmag<':7.5,
-    'under_review>':-1,
     }
 
 cutoff_tim = {
@@ -646,7 +646,9 @@ master_columns = ['PRIMARY',
 
 
 journal = {
+    '1.40':'• Creation of the journal',
     '1.41':'• Dynamic HZ score metric computed by the .compute_ranking() \n• Add of the minimal and critical exposure time',
     '1.42':'• Planetary systems bug fixed \n• MP stability value displayed',
     '1.43':'• Construction of a minimal cutoff wide sample as a backup pool',
-    }
+    '1.44':'• HWO Tier A,B,C (1,2,3) From Harada+25 and != inequality in func_cutoff()',    
+   }

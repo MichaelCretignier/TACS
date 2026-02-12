@@ -16,6 +16,10 @@ tcsc.plot_planetary_system('HD99492')
 tcsc.plot_rv_texp('HD146233',budget='osc')
 tcsc.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 
+tcsc.plot_planetary_system('HD143761')
+tcsc.plot_summary('HD143761')
+
+
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
@@ -58,17 +62,17 @@ tcsc.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(b
 tcsc.which_cutoff(tcsv.catalog_NEID['HD'], cutoff_rvopti, plot=True)
 tcsc.which_cutoff(tcsv.catalog_2ES['GAIA'], cutoff_rvopti,plot=True)
 
-#following the K sample
+#tracking the K sample
 presurvey.func_cutoff(cutoff=tcsv.cutoff_RVopti, show_sample='K', tagname='dustbin')
 
 #### EXAMPLE OF CUTOFF VISUALISATION ####
 
 example1 = tcsc.tcs()
-#following a binary flag
-example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO==1', cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
+#tracking a binary flag
+example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
 example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='PLATO==1', cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
 
-#following a parameter space box
+#tracking a parameter space box
 example1.func_cutoff(par_space='teff&distance', par_box=['4500->5300','0->30'], cutoff=tcsv.cutoff_RVopti, tagname='dustbin')
 
 #### VISUALIZATION OF KNOWN EXOPLANETS #####

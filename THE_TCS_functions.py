@@ -366,9 +366,14 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     count=0
     nb_rows = (len(cutoff)-1)//7+1
     if par_crit!='':
-        p1c = par_crit.split('==')[0]
-        p1c_val = float(par_crit.split('==')[1])
-        mask_box = (table2[p1c].astype('float')==p1c_val)
+        if len(par_crit.split('=='))>1:
+            p1c = par_crit.split('==')[0]
+            p1c_val = float(par_crit.split('==')[1])
+            mask_box = (table2[p1c].astype('float')==p1c_val)
+        elif len(par_crit.split('!='))>1:
+            p1c = par_crit.split('!=')[0]
+            p1c_val = float(par_crit.split('!=')[1])
+            mask_box = (table2[p1c].astype('float')!=p1c_val)
         old_value = sum(mask_box)
     else:
         old_value = np.nan
@@ -424,9 +429,14 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
                     plt.scatter(np.array(table2[p1])[mask_box],np.array(table2[p2])[mask_box],color='g',ec='k',marker='o',label='%.0f (-%.0f)'%(sum(mask_box),old_value-sum(mask_box)))
                     old_value = sum(mask_box)
                 if par_crit!='':
-                    p1c = par_crit.split('==')[0]
-                    p1c_val = float(par_crit.split('==')[1])
-                    mask_box = (table2[p1c].astype('float')==p1c_val)
+                    if len(par_crit.split('=='))>1:
+                        p1c = par_crit.split('==')[0]
+                        p1c_val = float(par_crit.split('==')[1])
+                        mask_box = (table2[p1c].astype('float')==p1c_val)
+                    elif len(par_crit.split('!='))>1:
+                        p1c = par_crit.split('!=')[0]
+                        p1c_val = float(par_crit.split('!=')[1])
+                        mask_box = (table2[p1c].astype('float')!=p1c_val)
                     mask_box = np.array(mask_box)
                     plt.scatter(np.array(table2[p1])[mask_box],np.array(table2[p2])[mask_box],color='g',ec='k',marker='o',label='%.0f (-%.0f)'%(sum(mask_box),old_value-sum(mask_box)))
                     old_value = sum(mask_box)   
