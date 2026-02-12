@@ -55,7 +55,7 @@ Let's run the main test file containing all the useful features in a iPython she
 ```
 [TERMINAL]
 conda activate env tcs 
-cd ../TACS/Python 
+cd TACS/
 ```
 
 Now launch iPython
