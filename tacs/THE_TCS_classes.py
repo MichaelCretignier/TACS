@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.01'
+version = '2.02'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -929,7 +929,7 @@ class tableXY(object):
         statistic = np.array(statistic)
         return auto_format(statistic)
 
-    def plot(self, alpha=0.5, label=None, ytext=0, figure=None, ls=None, subset=None, color=None):
+    def plot(self, alpha=0.5, label=None, ytext=0, figure=None, ls=None, subset=None, color=None, marker='o'):
         if figure is not None:
             if type(figure)==str:
                 plt.figure(figure)
@@ -938,11 +938,11 @@ class tableXY(object):
         if subset is None:
             subset = np.arange(0,len(self.x)).astype('int')
         
-        if ls=='o':
+        if ls!='-':
             if np.sum(abs(self.yerr))!=0:
-                plt.errorbar(self.x[subset],self.y[subset],yerr=self.yerr, capsize=0, marker='o', ls='', alpha=alpha, label=label, color=color)
+                plt.errorbar(self.x[subset],self.y[subset],yerr=self.yerr, capsize=0, marker=marker, ls='', alpha=alpha, label=label, color=color)
             else:
-                plt.scatter(self.x[subset],self.y[subset],alpha=alpha,label=label,color=color)
+                plt.scatter(self.x[subset],self.y[subset],alpha=alpha,label=label,color=color, marker=marker)
         else:
             plt.plot(self.x,self.y,alpha=alpha,label=label,ls=ls,color='k')
         plt.xlabel(self.xlabel)
@@ -1473,7 +1473,7 @@ class tcs(object):
             self,
             sun_elevation=-12,
             airmass_max=1.8,
-            alpha_step=1, 
+            alpha_step=10, 
             dec_step=1,
             cutoff=None,
             selection='presurvey'):
@@ -1509,7 +1509,7 @@ class tcs(object):
         if button==1:
             output = []
             params = []
-            RA, DEC = np.meshgrid(np.arange(0,30,alpha_step),np.arange(-30,90,dec_step))
+            RA, DEC = np.meshgrid(np.arange(0,400,alpha_step),np.arange(-30,90,dec_step))
             loading = np.round(len(np.ravel(RA))*np.arange(0,101,10)/100,0).astype('int')
             counter=0
             for i,j in zip(np.ravel(RA),np.ravel(DEC)):
@@ -1544,7 +1544,7 @@ class tcs(object):
         for j in range(12):
             plt.subplot(3,4,j+1)
             plt.title(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][j]+' (Bad weather = %.0f%%)'%(downtime[j]))
-            cp = plt.contour(RA,DEC,np.reshape(output[:,j],np.shape(RA)),levels=[6,7,8,9,10])
+            cp = plt.contour(RA/360*24,DEC,np.reshape(output[:,j],np.shape(RA)),levels=[6,7,8,9,10])
             plt.clabel(cp, inline=True, fontsize=8,fmt="%.0f")
             plt.grid()
             plt.xlim(0,24)
@@ -1583,7 +1583,7 @@ class tcs(object):
             fig = plt.figure(figsize=(12,9))
             fig.suptitle('Sun elevation = %.0f \nAirmass max = %.2f \nMonth = %s'%(sun_elevation,airmass_max,month_tag),ha='right',x=0.94)
             #plt.title()
-            cp = plt.contour(RA,DEC,np.reshape(output[:,month-1],np.shape(RA)),levels=[6,7,8,9,10])
+            cp = plt.contour(RA/360*24,DEC,np.reshape(output[:,month-1],np.shape(RA)),levels=[6,7,8,9,10])
             plt.clabel(cp, inline=True, fontsize=8,fmt="%.0f")
             plt.grid()
             plt.xlim(0,24)
@@ -1709,15 +1709,15 @@ class tcs(object):
             jdb_model = np.arange(np.min(jdb),np.max(jdb),np.min(syst['period'])/20)
             for P,K,e,omega,t0 in np.array(syst[['period','k','ecc','peri','Tc']]):
                 signal = tcsf.Keplerian_rv(jdb, P, K, e, omega, t0)
-                self.info_XY_keplerian.append(tableXY(x=jdb-j0, y=signal, xlabel=xlabel,ls='o', ylabel='RV [m/s]'))
+                self.info_XY_keplerian.append(tableXY(x=jdb-j0, y=signal, xlabel=xlabel,ls='', ylabel='RV [m/s]'))
                 signal2 = tcsf.Keplerian_rv(jdb_model, P, K, e, omega, t0)
                 self.info_XY_keplerian_model.append(tableXY(x=jdb_model-j0, y=signal2, xlabel=xlabel,ls='-', ylabel='RV [m/s]'))
             rv_tot = np.sum([k.y for k in self.info_XY_keplerian[1:]],axis=0)
-            self.info_XY_keplerian[0] = tableXY(x=jdb-j0, y=rv_tot, xlabel=xlabel,ls='o', ylabel='RV Kep tot [m/s]')
+            self.info_XY_keplerian[0] = tableXY(x=jdb-j0, y=rv_tot, xlabel=xlabel,ls='', ylabel='RV Kep tot [m/s]')
             rv_tot2 = np.sum([k.y for k in self.info_XY_keplerian_model[1:]],axis=0)
             self.info_XY_keplerian_model[0] = tableXY(x=jdb_model-j0, y=rv_tot2, xlabel=xlabel,ls='-', ylabel='RV tot [m/s]')
         
-            self.info_XY_keplerian.append(tableXY(x=jdb-j0, y=rv_tot+noise_tot, yerr=np.ones(len(jdb))*noise_err, xlabel=xlabel,ls='o', ylabel='RV tot [m/s]'))
+            self.info_XY_keplerian.append(tableXY(x=jdb-j0, y=rv_tot+noise_tot, yerr=np.ones(len(jdb))*noise_err, xlabel=xlabel,ls='', ylabel='RV tot [m/s]'))
             self.info_XY_keplerian_model.append(tableXY(x=jdb_model-j0, y=rv_tot2, xlabel=xlabel,ls='-', ylabel='RV tot [m/s]'))
 
         else:
@@ -1748,13 +1748,20 @@ class tcs(object):
                 plt.axhline(y=axhline,alpha=0.4,color='k',lw=1)
 
 
-    def plot_night_length(self,figure='NightLength',legend=True,airmass_max=[1.5,1.8], sun_elevation=[-18,-6]):
+    def plot_night_length(self,figure='NightLength',legend=True,airmass_max=[1.5,1.8], sun_elevation=[-18,-6],color=None,showname=False):
         backup = np.array([self.info_SC_night_def]).copy()
-        for se in sun_elevation:
-            for am in airmass_max:
+        for n,se in enumerate(sun_elevation):
+            marker = ['.','o','s','x'][n]
+            for m,am in enumerate(airmass_max):
                 self.compute_night_length(sun_elevation=se, verbose=False) 
                 self.compute_nights(airmass_max=am, weather=False, plot=False)
-                self.info_XY_night_duration.plot(figure=figure,label='Z=%.1f | S=%.0f'%(am,se),ytext=-0.5) 
+                self.info_XY_night_duration.plot(figure=figure,label='Z=%.1f | S=%.0f'%(am,se),ytext=-0.5,ls='',marker=marker,color=color) 
+                if (showname)&(n==0)&(m==0):
+                    plt.text(
+                        self.info_XY_night_duration.x[np.argmax(self.info_XY_night_duration.y)],
+                        np.max(self.info_XY_night_duration.y)+1,
+                        self.info_SC_starname['HD'],color=color)
+
         if legend:
             plt.legend()
         self.compute_night_length(sun_elevation=backup[0], verbose=False) 

@@ -656,4 +656,5 @@ journal = {
     '1.44':'• HWO Tier A,B,C (1,2,3) From Harada+25 and != inequality in func_cutoff()',    
     '2.00':'• Clean install and relative paths for TCS variables and material',    
     '2.01':'• Fix minors bugs to run again TCS_presurvey.py',
+    '2.02':'• Fix minors bugs (change RA from hours to deg) to SG calender',
    }
