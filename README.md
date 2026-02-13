@@ -54,7 +54,7 @@ Let's run the main test file containing all the useful features in a iPython she
 
 ```
 [TERMINAL]
-conda activate env tcs 
+conda activate tcs 
 cd TACS/
 ```
 
