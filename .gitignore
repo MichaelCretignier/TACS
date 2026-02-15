@@ -1,2 +1,9 @@
 potatoes*
 TACS_Material/*potatoes.p
+.DS_Store
+*.pyc
+__pycache__/
+dist/
+tacs.egg-info/
+
+
