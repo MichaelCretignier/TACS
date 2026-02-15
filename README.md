@@ -12,26 +12,26 @@ michael.cretignier@physics.ox.ac.uk
 
 ## Installation
 
-Download the directory and try to run ```THE_TCS_main.py``` with your own Python installation.
+Download the directory and try to run `THE_TCS_main.py` with your own Python installation.
 If it crashes, install a Python environment:
 
  [Mac M4 Chip] Python environment (Conda install) (Python 3.12.5)
 
-```
+```bash
 [TERMINAL]
 conda create -n tcs -c conda-forge python=3.12.5 numpy=1.26.4 pandas=2.3.2 scipy=1.16.2 astropy=7.1.0 matplotlib=3.10.6 ipython=9.5.0 colorama=0.4.4 pyqt=5.15 -y 
 ```
 
  [Mac M2 Chip] Python environment (Conda forge install) (Python 3.10)
 
-```
+```bash
 [TERMINAL]
 conda create -n tcs -c conda-forge python=3.10.0 numpy=1.23.5 pandas=1.4.1 scipy=1.8 astropy=5.2.2 matplotlib=3.5 ipython=8.11.0 colorama=0.4.4 pyqt=5.15 -y
 ```
 
  [Mac Intel Chip] Python environment (Conda install) (Python 3.8.8)
 
-```
+```bash
 [TERMINAL]
 conda create -n tcs python=3.8.8 
 conda activate tcs 
@@ -40,7 +40,7 @@ pip install -r requirements_3.8.8.txt
 
 [Alternative to conda] Python environment (Venv install)
 
-```
+```bash
 [TERMINAL]
 python3 -m venv tcs 
 source tcs/bin/activate 
@@ -50,9 +50,9 @@ pip install -r requirements_3.8.8.txt
 
 ## Tutorial
 
-Let's run the main test file ```THE_TCS_main.py``` containing all the useful features in a iPython shell (with the local python environment if needed). Move inside the ```TACS``` directory:
+Let's run the main test file `THE_TCS_main.py` containing all the useful features in a iPython shell (with the local python environment if needed). Move inside the `TACS` directory:
 
-```
+```bash
 [TERMINAL]
 conda activate tcs 
 cd TACS/
@@ -60,14 +60,14 @@ cd TACS/
 
 Now launch iPython:
 
-```
+```bash
 [TERMINAL]
 ipython 
 ```
 
 And run the test file.
 
-```
+```python
 [IPYTHON] 
 run THE_TCS_main.py
 ```
@@ -88,8 +88,7 @@ The computation of the RV budget is made using:
 
 ## Uninstall
 
-
-```
+```bash
 [TERMINAL] 
 conda remove --name tcs --all
 ```
