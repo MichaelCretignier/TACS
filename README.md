@@ -50,7 +50,7 @@ pip install -r requirements_3.8.8.txt
 
 ## Tutorial
 
-Let's run the main test file containing all the useful features in a iPython shell (with the local python environment if needed). Move inside the ```TACS``` directory:
+Let's run the main test file ```THE_TCS_main.py``` containing all the useful features in a iPython shell (with the local python environment if needed). Move inside the ```TACS``` directory:
 
 ```
 [TERMINAL]
