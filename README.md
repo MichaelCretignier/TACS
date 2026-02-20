@@ -132,7 +132,7 @@ table = presurvey.info_TA_stars_selected['presurvey'].data
 print(table)
 ```
 
-### Accessing peculiar star informations
+### Accessing peculiar star-by-star information
 
 
 *Let's start with the most basic information that is the stellar names known by TACS:*
@@ -154,9 +154,11 @@ tacs.which_cutoff('HD217014', cutoff_suntwins)
 
 tacs.which_cutoff('HD16160', cutoff_suntwins)
 
+#Indeed, it's not a solar twins and it has other issue too with it.
+
 ```
 
-*Remark: you can't use the `.which_cutoff()` method on the presurvey since the presurvey is the union of two sample without propre cutoff list.*
+*Remark: you can't use the `.which_cutoff()` method on the presurvey since the presurvey is the union of two samples without a proper cutoff list.*
 
 *Let's plot all the information collected by the TACS for a given target:*
 
