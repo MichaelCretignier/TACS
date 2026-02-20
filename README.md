@@ -116,7 +116,7 @@ print(presurvey.info_TA_stars_selected)
 for kw in presurvey.info_TA_stars_selected.keys():
   print(kw)
 ```
-*A lot of TACS tables already exists! The most important are:*
+*A lot of TACS tables already exists! Those are defined in `THE_TCS_variables.py`. The most important are:*
 
 1) `.info_TA_stars_selected['GR8']`        # the initial sample of 1418 stars
 2) `.info_TA_stars_selected['solartwins']` # the solar twins sample
