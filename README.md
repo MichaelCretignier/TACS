@@ -184,7 +184,7 @@ tacs.plot_summary('HD16160',selection=selection,cutoff=cutoff)
 plt.figure(figsize=(18,5))
 for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF','SOPHIE']):
     star = tacs.tcs(sun_elevation=-12, instrument=ins)
-    star.set_star(ra=8,dec=5) # change for a DEC vs RA input
+    star.set_star(ra=8,dec=5) # specify the RA and DEC in degree
     plt.subplot(1,6,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
 plt.subplots_adjust(left=0.05,right=0.96)
 ```
