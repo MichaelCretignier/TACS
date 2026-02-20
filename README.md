@@ -196,7 +196,20 @@ star3 = tacs.tcs(sun_elevation=-6, instrument='HARPS3')
 star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=5, dec_step=5)
 
 star3.compute_SG_month(month=4,plot=True) # April
+```
 
+*Want to know the standard stars of HARPS3 along the year?*
+
+```python
+standards1 = tacs.THE_standards 
+star1 = tacs.tcs(sun_elevation=-6) 
+plt.figure(figsize=(16,8))
+s1 = plt.subplot(1,1,1)
+for n,s in enumerate(standards1): 
+    star1.set_star(starname=s,verbose=False)
+    star1.plot_night_length(figure=s1,legend=False,airmass_max=[1.5],sun_elevation=[-12, -18],color='C%.0f'%(n),showname=True) #peak in April
+    plt.ylim(-1,10)
+plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
 ```
 
 ## References
