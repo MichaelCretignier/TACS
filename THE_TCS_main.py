@@ -17,7 +17,6 @@ tacs.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 tacs.plot_planetary_system('HD143761')
 tacs.plot_summary('HD143761')
 
-
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
