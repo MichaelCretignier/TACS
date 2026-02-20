@@ -77,7 +77,7 @@ A lot of figures will pop but just check you don't get any error message.
 
 ## ⓸ Tutorial
 
-### Step-by-step
+*Let's enter the TACS Git Clone directory*
 
 ```bash
 cd .../GitHub/TACS/
