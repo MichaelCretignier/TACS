@@ -132,7 +132,7 @@ print(table)
 
 ## References
 
-GR8 table is coming from [Freckelton et al. +25](https://ui.adsabs.harvard.edu/abs/2025yCat..75401786F/abstract)
+GR8 table is coming from [Freckelton et al. +25](https://ui.adsabs.harvard.edu/abs/2025yCat..75401786F/abstract).
 
 The computation of the RV budget is made using:
  
