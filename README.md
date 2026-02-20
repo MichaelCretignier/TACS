@@ -187,8 +187,15 @@ for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF','SOPHIE']):
     star.set_star(ra=8,dec=5) # change for a DEC vs RA input
     plt.subplot(1,6,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
 plt.subplots_adjust(left=0.05,right=0.96)
+```
 
+*Interested to know the stars with the longest night duration in April for HARPS3?:*
 
+```python
+star3 = tacs.tcs(sun_elevation=-6, instrument='HARPS3')
+star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=5, dec_step=5)
+
+star3.compute_SG_month(month=4,plot=True) # April
 
 ```
 
