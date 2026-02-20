@@ -58,7 +58,7 @@ Let's run the main test file `THE_TCS_main.py` containing all the useful feature
 
 ```bash
 conda activate tcs 
-cd TACS/
+cd .../GitHub/TACS/
 ```
 
 Now launch iPython:
@@ -89,13 +89,12 @@ cd .../GitHub/TACS/
 ipython
 ```
 
-*This information is specified by:*
+*Let's initiate the a tacs object:*
 
 ```python
 import tacs
 
-#let's initiate a tacs object
-presurvey = tacs.tcs(version='5.2') 
+presurvey = tacs.tcs(version='5.2') #version of the catalogue 
 ```
 
 *A lot have already be done from here! In `tacs`, all the relevant information are stored in attributes that all started with `.info_`*
