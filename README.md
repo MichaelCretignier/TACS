@@ -143,7 +143,7 @@ starnames = tacs.get_info_starname('51Peg') #aka HD217014
 
 *`tacs` can work with a large variety of names conventions. It's however recommand to use the HD one for simplicity.*
 
-*We can ask the code if a given star still belong to a given selection of stars:*
+*We can ask the code if a given star still belongs to a given selection of stars:*
 
 ```python
 cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
@@ -163,10 +163,8 @@ tacs.which_cutoff('HD16160', cutoff_suntwins)
 ```python
 selection = presurvey.info_TA_stars_selected['presurvey'].data.copy()
 cutoff = presurvey.info_TA_cutoff['RVopti']
-tacs.plot_summary(
-    'HD16160',
-    selection=selection,
-    cutoff=cutoff)
+
+tacs.plot_summary('HD16160',selection=selection,cutoff=cutoff)
 ```
 
 
