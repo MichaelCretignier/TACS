@@ -77,6 +77,8 @@ A lot of figures will pop but just check you don't get any error message.
 
 ## ⓸ Tutorial
 
+### Getting access to the target selection tables
+
 *Let's enter the TACS Git Clone directory*
 
 ```bash
