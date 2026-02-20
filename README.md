@@ -132,15 +132,13 @@ print(table)
 
 ## References
 
-GR8 table is coming from Freckelton et al. +25 (2025yCat..75401786F) \
-https://ui.adsabs.harvard.edu/abs/2025yCat..75401786F/abstract
+GR8 table is coming from [Freckelton et al. +25](https://ui.adsabs.harvard.edu/abs/2025yCat..75401786F/abstract)
 
 The computation of the RV budget is made using:
  
-1) ARVE (Al Moulla + 25, 2025A&A...701A.266A)  \
-(https://ui.adsabs.harvard.edu/abs/2025A%26A...701A.266A/abstract)
-2) GP (O'Sullivan et al. in prep.)
-3) ExTEMPO (https://github.com/BRajkumar041992/ExTEMPO)
+1) ARVE ([Al Moulla + 25](https://ui.adsabs.harvard.edu/abs/2025A%26A...701A.266A/abstract)
+2) GP [O'Sullivan et al. in prep.]()
+3) ExTEMPO [Rajukar et al. in prep.](https://github.com/BRajkumar041992/ExTEMPO)
 
 ## Uninstall
 
