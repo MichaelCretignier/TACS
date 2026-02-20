@@ -100,10 +100,10 @@ presurvey = tacs.tcs(version='5.2') #version of the catalogue
 *A lot have already be done from here! \
 In `tacs`, all the relevant information are stored in attributes that all started with `.info_`*
 
-1) .info_SC (scalars values)
-2) .info_XY (time-series)
-3) .info_IM (images)
-4) .info_TA (tables)
+1) `.info_SC_` (scalars values)
+2) `.info_XY_` (time-series)
+3) `.info_IM_` (images)
+4) `.info_TA_` (tables)
 
 *Let's check the tables for the Terra Hunting available*
 ```python
