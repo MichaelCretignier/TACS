@@ -122,7 +122,7 @@ star2.plot_keplerians()
 
 ##### SG CALENDAR #####
 star3 = tacs.tcs(sun_elevation=-6, instrument='HARPS3')
-star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=1, dec_step=5)
+star3.compute_SG_calendar(sun_elevation=-6, airmass_max=1.75, alpha_step=5, dec_step=5)
 
 star3.compute_SG_month(month=1,plot=True)
 

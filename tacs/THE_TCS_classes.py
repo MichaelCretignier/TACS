@@ -1101,7 +1101,7 @@ class table_star(object):
         leg = plt.legend(loc=3,ncol=3)
         leg.set_zorder(100)
         plt.ylim(np.min(dec)-10,np.max(dec)+10)
-        plt.xlabel('RA [hours]')
+        plt.xlabel('RA [deg]')
         plt.ylabel('Dec [deg]')
 
     def plot(self, x, y, c=None, s=None, print_names=False, GUI=True, alpha=1.0):

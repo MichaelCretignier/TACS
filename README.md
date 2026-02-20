@@ -130,7 +130,12 @@ for kw in presurvey.info_TA_stars_selected.keys():
 ```python
 table = presurvey.info_TA_stars_selected['presurvey'].data
 print(table)
+
+#why not plotting a selection in sky?
+presurvey.info_TA_stars_selected['presurvey'].plot_space_mission(newfig=False)
+
 ```
+
 
 ### Accessing peculiar star-by-star information
 
@@ -169,6 +174,23 @@ cutoff = presurvey.info_TA_cutoff['RVopti']
 tacs.plot_summary('HD16160',selection=selection,cutoff=cutoff)
 ```
 
+### Playing with star visibility
+
+*While `tacs` was primarly developed for THE, it contains useful functions going well beyong THE mission. One of them is the stellar visibility.*
+
+*Let's compute the visibility of a star for different spectrograph:*
+
+```python
+plt.figure(figsize=(18,5))
+for n,ins in enumerate(['HARPS3','HARPS','NEID','ESPRESSO','KPF','SOPHIE']):
+    star = tacs.tcs(sun_elevation=-12, instrument=ins)
+    star.set_star(ra=8,dec=5) # change for a DEC vs RA input
+    plt.subplot(1,6,n+1) ; star.compute_nights(airmass_max=1.5, weather=False, plot=True) ; plt.title(ins)
+plt.subplots_adjust(left=0.05,right=0.96)
+
+
+
+```
 
 ## References
 
