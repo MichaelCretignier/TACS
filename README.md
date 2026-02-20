@@ -98,7 +98,7 @@ presurvey = tacs.tcs(version='5.2') #version of the catalogue
 ```
 
 *A lot have already be done from here! \
-In `tacs`, all the relevant information are stored in attributes that all started with `.info_`*
+In `tacs`, all the relevant information are stored in attributes that all started with the `.info_` prefix:*
 
 1) `.info_SC_` (scalars values)
 2) `.info_XY_` (time-series)
