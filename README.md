@@ -132,6 +132,25 @@ table = presurvey.info_TA_stars_selected['presurvey'].data
 print(table)
 ```
 
+### Accessing peculiar star informations
+
+
+*Let's start with the most basic information that is the stellar names known by TACS:*
+
+```python
+starnames = tacs.get_info_starname('51Peg') #aka HD217014
+```
+
+*`tacs` can work with a large variety of names conventions. It's however recommand to use the HD one for simplicity.*
+
+*We can ask the code if a given star still belong to a given selection of stars:*
+
+```python
+cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
+tacs.which_cutoff('HD217014', cutoff_suntwins)
+```
+
+
 ## References
 
 GR8 table is coming from [Freckelton et al. +25](https://ui.adsabs.harvard.edu/abs/2025yCat..75401786F/abstract).
