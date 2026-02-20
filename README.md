@@ -105,17 +105,30 @@ In `tacs`, all the relevant information are stored in attributes that all starte
 3) `.info_IM_` (images)
 4) `.info_TA_` (tables)
 
-*Let's check the tables for the Terra Hunting available*
+*Let's check the tables for the Terra Hunting available already:*
 ```python
-# presurvey.info_ #and then press "tab"
+# presurvey.info_ #and then press "tab" to see all the products available
 print(presurvey.info_TA_stars_selected)
 ```
-*This is a dictionary that contains several tables initiated by tacs when calling `.tcs()`*
-```python
-# presurvey.info_ #and then press "tab"
-print(presurvey.info_TA_stars_selected)
-```
+*This is a dictionary that contains several tables initiated by `tacs` when calling `.tcs()`*
 
+```python
+for kw in presurvey.info_TA_stars_selected.keys():
+  print(kw)
+```
+*A lot of TACS tables already exists! The most important are:*
+
+1) `.info_TA_stars_selected['GR8']`        # the initial sample of 1418 stars
+2) `.info_TA_stars_selected['solartwins']` # the solar twins sample
+3) `.info_TA_stars_selected['RVopti']`     # RV optimised sample
+4) `.info_TA_stars_selected['presurvey']`  # Union of solartwins and RVopti 
+
+*To access the table, just get the .data attribute:*
+
+```python
+table = presurvey.info_TA_stars_selected['presurvey'].data
+print(table)
+```
 
 ## References
 
