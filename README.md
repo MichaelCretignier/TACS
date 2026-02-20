@@ -148,6 +148,25 @@ starnames = tacs.get_info_starname('51Peg') #aka HD217014
 ```python
 cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
 tacs.which_cutoff('HD217014', cutoff_suntwins)
+
+#Nice!
+#What about this one?
+
+tacs.which_cutoff('HD16160', cutoff_suntwins)
+
+```
+
+*Remark: you can't use the `.which_cutoff()` method on the presurvey since the presurvey is the union of two sample without propre cutoff list.*
+
+*Let's plot all the information collected by the TACS for a given target:*
+
+```python
+selection = presurvey.info_TA_stars_selected['presurvey'].data.copy()
+cutoff = presurvey.info_TA_cutoff['RVopti']
+tacs.plot_summary(
+    'HD16160',
+    selection=selection,
+    cutoff=cutoff)
 ```
 
 
