@@ -91,7 +91,7 @@ cd .../GitHub/TACS/
 ipython
 ```
 
-*Let's initiate the a tacs object:*
+*Let's initiate a `.tcs()` object:*
 
 ```python
 import tacs
