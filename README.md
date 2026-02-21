@@ -174,7 +174,7 @@ tacs.plot_summary('HD16160',selection=selection,cutoff=cutoff)
 
 ### Playing with star visibility
 
-*While `tacs` was primarly developed for THE, it contains useful functions going well beyong THE mission. One of them is the stellar visibility.*
+*While `tacs` was primarly developed for THE, it contains useful functions going well beyond THE mission. One of them is the stellar visibility.*
 
 *Let's compute the visibility of a star for different spectrograph:*
 
