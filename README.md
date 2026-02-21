@@ -107,7 +107,7 @@ In `tacs`, all the relevant information are stored in attributes that all starte
 3) `.info_IM_` (images)
 4) `.info_TA_` (tables)
 
-*Let's check the tables for the Terra Hunting available already:*
+*Let's check the tables for the Terra Hunting Experiment available already:*
 ```python
 # presurvey.info_ #and then press "tab" to see all the products available
 print(presurvey.info_TA_stars_selected)
@@ -125,7 +125,7 @@ for kw in presurvey.info_TA_stars_selected.keys():
 3) `.info_TA_stars_selected['RVopti']`     (the RV optimised sample)
 4) `.info_TA_stars_selected['presurvey']`  (the Union of solartwins and RVopti)
 
-*To access the table, just get the .data attribute:*
+*To access the table, just get the `.data` attribute:*
 
 ```python
 table = presurvey.info_TA_stars_selected['presurvey'].data
@@ -135,7 +135,6 @@ print(table)
 presurvey.info_TA_stars_selected['presurvey'].plot_space_mission(newfig=False)
 
 ```
-
 
 ### Accessing peculiar star-by-star information
 
@@ -155,15 +154,14 @@ cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
 tacs.which_cutoff('HD217014', cutoff_suntwins)
 
 #Nice!
-#What about this one?
+#What about this star?
 
 tacs.which_cutoff('HD16160', cutoff_suntwins)
 
-#Indeed, it's not a solar twins and it has other issue too with it.
-
+#Indeed, it is not a solar twin and it has other issues as well.
 ```
 
-*Remark: you can't use the `.which_cutoff()` method on the presurvey since the presurvey is the union of two samples without a proper cutoff list.*
+*Remark: you can't use the `.which_cutoff()` method on the 'presurvey' since the 'presurvey' is the union of two samples without a proper cutoff list.*
 
 *Let's plot all the information collected by the TACS for a given target:*
 
