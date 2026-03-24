@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.02'
+version = '2.03'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
