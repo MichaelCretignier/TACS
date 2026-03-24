@@ -54,7 +54,7 @@ tacs.which_cutoff('HD219134',cutoff_rvopti)
 tacs.which_cutoff('HD22049', cutoff_rvopti)
 
 tacs.which_cutoff(['HD166620','HD16160','51Peg','61CygB'], cutoff_rvopti)
-tacs.which_cutoff(presurvey.info_TA_stars_selected['minimal'].data.sort_values(by='vmag')['HD'][0:20], cutoff_rvopti,plot=True)
+tacs.which_cutoff(presurvey.info_TA_stars_selected['wide'].data.sort_values(by='vmag')['HD'][0:20], cutoff_rvopti,plot=True)
 
 tacs.which_cutoff(tacs.catalog_NEID['HD'], cutoff_rvopti, plot=True)
 tacs.which_cutoff(tacs.catalog_2ES['GAIA'], cutoff_rvopti,plot=True)

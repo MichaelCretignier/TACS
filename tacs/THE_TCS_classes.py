@@ -139,10 +139,10 @@ def produce_gr8(version=None,verbose=False):
     return gr8, gr8_raw
 
 print('[INFO USER] Downloading Master table...')
-v1 = produce_gr8('1.0',verbose=False)
-v2 = produce_gr8('2.0',verbose=False)
-v3 = produce_gr8('3.0',verbose=False)
-v5 = produce_gr8(last_catalog,verbose=True)
+v1 = produce_gr8('1.0',verbose=False) ; v1[0]['THE_ID'] = [i.zfill(4) for i in np.arange(len(v1[0])).astype('str')]
+v2 = produce_gr8('2.0',verbose=False) ; v2[0]['THE_ID'] = [i.zfill(4) for i in np.arange(len(v2[0])).astype('str')]
+v3 = produce_gr8('3.0',verbose=False) ; v3[0]['THE_ID'] = [i.zfill(4) for i in np.arange(len(v3[0])).astype('str')]
+v5 = produce_gr8(last_catalog,verbose=True) ; v5[0]['THE_ID'] = [i.zfill(4) for i in np.arange(len(v5[0])).astype('str')]
 
 gr8 = {'1.0':v1[0],'2.0':v2[0],'3.0':v3[0],last_catalog:v5[0]}
 gr8_raw = {'1.0':v1[1],'2.0':v2[1],'3.0':v3[1],last_catalog:v5[1]}
@@ -468,13 +468,7 @@ def plot_rv(starname,verbose=False,ins_color=False,newfig=True,show_private=Fals
     index = get_info_starname(starname, verbose=verbose)
     if index is not None:
         hd = index['HD']
-        if show_private:
-            #the_rv = pd.read_csv(cwd+'/TACS_Material/PRIVATE_SNAKY_THE_RV_infos.csv',index_col=0)
-            the_rv2 = pd.read_csv(MATERIAL_DIR+'/PRIVATE_RV_stars_binned_N.csv',index_col=0)
-            ins_color = True
-        else:
-            #the_rv = pd.read_csv(cwd+'/TACS_Material/SNAKY_THE_RV_infos.csv',index_col=0)
-            the_rv2 = pd.read_csv(MATERIAL_DIR+'/RV_stars_binned_N.csv',index_col=0)
+        the_rv2 = pd.read_csv(MATERIAL_DIR+'/RV_stars_binned_N.csv',index_col=0)
         entries = the_rv2.loc[the_rv2['star']==hd]        
         rv_rms = tcsf.mad(entries['rv'])
         entries = entries.loc[abs(entries['rv']-np.median(entries['rv']))<5*rv_rms]
@@ -1098,7 +1092,7 @@ class table_star(object):
         if (protection)&(len(protected)>1):
             plt.scatter(protected['ra_j2000'],protected['dec_j2000'],facecolors="none",edgecolors='k',marker='o',s=100,zorder=10,alpha=0.3,label='Saved (%.0f)'%(len(protected)))   
 
-        leg = plt.legend(loc=3,ncol=3)
+        leg = plt.legend(loc=3,ncol=2)
         leg.set_zorder(100)
         plt.ylim(np.min(dec)-10,np.max(dec)+10)
         plt.xlabel('RA [deg]')
@@ -1193,12 +1187,12 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
-        self.info_TA_cutoff['minimal'] = tcsv.cutoff_minimal
+        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_sample
 
-        self.func_cutoff(tagname='minimal',cutoff=tcsv.cutoff_minimal, verbose=False)
+        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_sample, verbose=False)
         plt.close('cumulative')
 
-        self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000}, protection=False, verbose=False) 
+        self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
         plt.close('cumulative')
 
         self.func_cutoff(tagname='RVopti',cutoff=tcsv.cutoff_RVopti, verbose=False)
@@ -2487,10 +2481,14 @@ class tcs(object):
 
         plt.text(-0,3.7,'[%s]'%(extra)+'   |   '+tag_title+'   |   STARNAME   |   mv   |   # RV OBS',color='k',fontsize=15,ha='center')
 
-        plt.text(-1.42,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p1[extra])]),color='C0',va='top',ha='right')
-        plt.text(-0.35,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p3[extra])]),color='k',va='top',ha='right')
-        plt.text(0.75,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p2[extra])]),color='C1',va='top',ha='right')
-
+        if extra!='THE_ID':
+            plt.text(-1.42,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p1[extra])]),color='C0',va='top',ha='right')
+            plt.text(-0.35,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p3[extra])]),color='k',va='top',ha='right')
+            plt.text(0.75,3.5,'\n'.join(['[%.1f]'%(i) for i in np.array(p2[extra])]),color='C1',va='top',ha='right')
+        else:
+            plt.text(-1.42,3.5,'\n'.join(['[%s]'%(i) for i in np.array(p1[extra])]),color='C0',va='top',ha='right')
+            plt.text(-0.35,3.5,'\n'.join(['[%s]'%(i) for i in np.array(p3[extra])]),color='k',va='top',ha='right')
+            plt.text(0.75,3.5,'\n'.join(['[%s]'%(i) for i in np.array(p2[extra])]),color='C1',va='top',ha='right')            
         plt.text(-1.40,3.5,'\n'.join(['%s'%(['(  )','(X)'][int(i)]) for i in np.array(p1['Xmarker'])]),color='C0',va='top',ha='left')
         plt.text(-0.33,3.5,'\n'.join(['%s'%(['(  )','(X)'][int(i)]) for i in np.array(p3['Xmarker'])]),color='k',va='top',ha='left')
         plt.text(0.79,3.5,'\n'.join(['%s'%(['(  )','(X)'][int(i)]) for i in np.array(p2['Xmarker'])]),color='C1',va='top',ha='left')

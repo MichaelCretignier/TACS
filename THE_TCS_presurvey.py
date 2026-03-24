@@ -143,35 +143,35 @@ tutorial = tacs.tcs()
 
 #TESS SAMPLE
 #2 over 7 rejected
-cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'TESS>':0.5})
+cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['wide'],{'TESS>':0.5})
 dust = tutorial.func_cutoff(tagname='TESS',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 tess = np.array(tutorial.info_TA_stars_selected['TESS'].data['HD'])
 
 #BRIGHT SAMPLE
 #20 over 28 rejected
-cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'gmag<':5.5})
+cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['wide'],{'gmag<':5.5})
 dust = tutorial.func_cutoff(tagname='bright', cutoff=cutoff, protection=False)
 plt.close('cumulative')
 bright = np.array(tutorial.info_TA_stars_selected['bright'].data['HD'])
 
 #HWO SAMPLE
 #33 over 46 rejected
-cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'HWO>':0.5})
+cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['wide'],{'HWO>':0.5})
 dust = tutorial.func_cutoff(tagname='HWO',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 hwo = np.array(tutorial.info_TA_stars_selected['HWO'].data['HD'])
 
 #HIGH DB measurement
 #13 over 26 rejected
-cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'nobs_DB>':200})
+cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['wide'],{'nobs_DB>':200})
 dust = tutorial.func_cutoff(tagname='HDB',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 hdb = np.array(tutorial.info_TA_stars_selected['HDB'].data['HD'])
 
 #LOW DB measurement
 #14 over 20 rejected
-cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'nobs_DB<':1,'logRHK_known<':4.8})
+cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['wide'],{'nobs_DB<':1,'logRHK_known<':4.8})
 dust = tutorial.func_cutoff(tagname='LDB',cutoff=cutoff,protection=False)
 plt.close('cumulative')
 ldb = tutorial.info_TA_stars_selected['LDB'].data.sort_values(by=['HZ_mp_min_osc+gr_texp15'])
@@ -180,7 +180,7 @@ ldb = ldb[ldb!='-']
 
 #SG January-February stars
 
-cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['minimal'],{'logRHK_known<':-4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
+cutoff = tacs.mod_cutoff(tutorial.info_TA_cutoff['wide'],{'logRHK_known<':-4.8,'vsini_known<':5}) # 'known' means we want an existing value in the DB
 dust = tutorial.func_cutoff(tagname='SG',cutoff=cutoff,protection=False)
 
 sg = tutorial.info_TA_stars_selected['SG'].data
@@ -229,7 +229,7 @@ for index in table.index:
     plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/%s_THE%s.png'%(hd,str(index).zfill(4)))
     plt.close('all')
 
-table = presurvey.info_TA_stars_selected['minimal'].data
+table = presurvey.info_TA_stars_selected['wide'].data
 table = table.loc[~np.in1d(table['GAIA'],presurvey.info_TA_stars_selected['presurvey'].data['GAIA'])]
 table = table.sort_values(by='vmag')[0:30]
 cutoff = presurvey.info_TA_cutoff['RVopti']

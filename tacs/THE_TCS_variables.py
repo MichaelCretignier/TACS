@@ -169,7 +169,7 @@ cutoff_megan_old = {
     'gmag<':7.5,
     }
 
-cutoff_minimal = {
+cutoff_wide_sample = {
     'teff<':6100,
     'teff>':3900,
     'logg>':4.15,

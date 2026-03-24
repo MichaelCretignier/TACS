@@ -46,11 +46,11 @@ star3.compute_SG_calendar(
     selection = 'presurvey')
 
 star3.compute_SG_month(month=5, plot=True, selection='presurvey')
-star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_May',print_names=False,GUI=True,alpha=0.2)
+star3.info_TA_stars_selected['wide'].plot('vmag','night_length_May',print_names=False,GUI=True,alpha=0.2)
 star3.info_TA_stars_selected['presurvey'].plot('vmag','night_length_May',print_names=True,GUI=False)
 
 star3.compute_SG_month(month=6, plot=False, selection='SG')
-star3.info_TA_stars_selected['minimal'].plot('vmag','night_length_Jun',print_names=False,GUI=True,alpha=0.2)
+star3.info_TA_stars_selected['wide'].plot('vmag','night_length_Jun',print_names=False,GUI=True,alpha=0.2)
 star3.info_TA_stars_selected['SG'].plot('vmag','night_length_Jun',print_names=True,GUI=False)
 
 # you can also start with your own hardcoded list of stars

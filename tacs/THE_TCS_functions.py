@@ -392,8 +392,11 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
             if (kw[0:-1]!='under_review')&(kw[0:-1]!='HWO')&(kw[0:-1]!='PLATO'):
                 plt.title(kw+str(value))
             else:
-                plt.title(kw[0:-1]+'(%.0f)'%(sum(table2[kw[0:-1]])))
-            plt.hist(table2[kw[0:-1]],cumulative=True,bins=100)
+                plt.title(kw[0:-1]+'(%.0f)'%(sum(table2[kw[0:-1]]!=0)))
+            if kw[0:-1]!='HWO':
+                plt.hist(table2[kw[0:-1]],cumulative=True,bins=100)
+            else:
+                plt.hist(table2[kw[0:-1]],cumulative=True,bins=np.arange(-0.5,4.5,1))
             plt.axvline(x=value,label='%.0f / %.0f'%(sum(mask),len(mask)),color='k')
             if len(table2):
                 xmax = np.nanmax(table2[kw[0:-1]])
