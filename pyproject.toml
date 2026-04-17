@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"] # setuptools and wheel are necessary for the 
 
 [project]
 name = "tacs"
-version = "2.03"
+version = "2.04"
 description = "A package to produce the Terra Hunting Experiment target list"
 authors = [
     {name = "Michael Cretignier", email = "michael.cretignier@physics.ox.ac.uk"}
@@ -14,7 +14,6 @@ license = {text = "MIT"}
 requires-python = ">=3.8,<3.13"
 
 dependencies = [
-
     # ===============================
     # Python 3.12.5 environment
     # ===============================

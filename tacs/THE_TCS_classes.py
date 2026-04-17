@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.03'
+version = '2.04'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -1187,9 +1187,9 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
-        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_sample
+        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_josh
 
-        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_sample, verbose=False)
+        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_josh, verbose=False)
         plt.close('cumulative')
 
         self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
@@ -1566,7 +1566,7 @@ class tcs(object):
         gr8 = self.info_TA_stars_selected['GR8'].data
 
         #add the info column
-        for selections in ['GR8','RVopti','solartwins','presurvey','minimal',selection]:
+        for selections in ['GR8','RVopti','solartwins','presurvey',selection]:
             table = self.info_TA_stars_selected[selections].data
             dist = abs(np.array(table['ra_j2000'])/360*24-ra[:,np.newaxis])+abs(np.array(table['dec_j2000'])-dec[:,np.newaxis])
             loc = np.argmin(dist,axis=0)
@@ -2116,7 +2116,8 @@ class tcs(object):
 
     def print_sp_stat(self,sp=''):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
-        mini = self.info_TA_stars_selected['minimal'].data.copy()
+        #mini = self.info_TA_stars_selected['minimal'].data.copy()
+        mini = self.info_TA_stars_selected['wide'].data.copy()
         twin = self.info_TA_stars_selected['solartwins'].data.copy()
         rvopt = self.info_TA_stars_selected['RVopti'].data.copy()
         pre = self.info_TA_stars_selected['presurvey'].data.copy()

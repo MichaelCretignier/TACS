@@ -309,3 +309,14 @@ for n,s in enumerate(standards):
     star1.plot_night_length(figure=s1,legend=False,airmass_max=[1.5],sun_elevation=[-12]) #peak in April
     plt.ylim(-1,10)
 plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
+
+
+#Josh and Megan solar twins
+# 
+# 
+
+presurvey = tacs.tcs(sun_elevation=-12)
+presurvey.func_cutoff(cutoff=tacs.cutoff_solartwin_josh, tagname='solartwins') 
+
+table = presurvey.info_TA_stars_selected['solartwins'].data
+table.keys()

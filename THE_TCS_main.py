@@ -31,6 +31,7 @@ tacs.plot_summary(
     cutoff=presurvey.info_TA_cutoff['RVopti'])
 
 #these lines are already run by default in tacs.tsc()
+presurvey.func_cutoff(cutoff=tacs.cutoff_wide_josh, tagname='wide') 
 presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
 presurvey.func_cutoff(cutoff=tacs.cutoff_megan, tagname='solartwins', protection=False) 
 samples = presurvey.union('RVopti','solartwins',union_name='presurvey',Xmarker={'under_review>':0.5},ordering='HD')
