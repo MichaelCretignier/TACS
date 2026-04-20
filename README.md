@@ -1,4 +1,4 @@
-# TaCS (Targets Characterisation and Selection) for the Terra Hunting Experiment (v2.04)
+# TaCS (Targets Characterisation and Selection) for the Terra Hunting Experiment (v2.05)
 
 <p align="center">
   <img src="logo.png" alt="Project logo" width="400">

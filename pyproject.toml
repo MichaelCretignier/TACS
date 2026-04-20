@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"] # setuptools and wheel are necessary for the 
 
 [project]
 name = "tacs"
-version = "2.04"
+version = "2.05"
 description = "A package to produce the Terra Hunting Experiment target list"
 authors = [
     {name = "Michael Cretignier", email = "michael.cretignier@physics.ox.ac.uk"}
