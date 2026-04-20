@@ -358,7 +358,7 @@ def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument=
     return hours, airmass
 
 
-def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',''], par_crit='', verbose=True):
+def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',''], par_crit='', verbose=True, suptitle=''):
     'par_space format : P1 & P2'
     'par_box format : P1_min -> P1_max & P2_min -> P2_max'
 
@@ -381,6 +381,7 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     for kw in cutoff.keys():
         count+=1
         value = cutoff[kw]
+        kw = kw.replace('&','')
         if kw[-1]=='<':
             mask = (table2[kw[0:-1]]<value)|(table2['under_review']!=0)
         else:
@@ -452,11 +453,12 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
                 plt.title(kw+str(value))
 
     if plot:
-        plt.figure('cumulative'+tagname,figsize=(18,4*nb_rows))
-        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.93,bottom=0.08,left=0.08,right=0.95)
+        fig = plt.figure('cumulative'+tagname,figsize=(18,4*nb_rows))
+        fig.suptitle(suptitle,fontsize=16,fontweight='bold')
+        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.85,bottom=0.08,left=0.06,right=0.97)
         if par_space!='':
             plt.figure('para'+tagname,figsize=(18,4*nb_rows))
-            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.93,bottom=0.08,left=0.08,right=0.95)
+            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.85,bottom=0.08,left=0.06,right=0.97)
         plt.show()
     ranking = 'HZ_mp_min_osc+gr_texp15'
     table2 = table2.sort_values(by=ranking)

@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.04'
+version = '2.05'
 last_catalog = '5.2'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -1172,6 +1172,7 @@ class tcs(object):
         self.simu_tag_survey = ''
         self.info_SC_starname = None
         self.info_SC_instrument = instrument
+        self.info_SC_catalog_version = version
 
         GR8 = gr8[version]
         protected = starname_resolver(tcsv.stars_under_review)
@@ -1187,9 +1188,9 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
-        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_josh
+        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_josh_paper
 
-        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_josh, verbose=False)
+        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_josh_paper, verbose=False)
         plt.close('cumulative')
 
         self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
@@ -2180,7 +2181,8 @@ class tcs(object):
         if par_box[0]!='':
             tagname_fig=par_box[0]
         
-        table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose)
+        suptitle = 'TaCS v.%s - Stellar catalogue v.%s'%(version, self.info_SC_catalog_version)
+        table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose, suptitle=suptitle)
         if tagname!='dustbin':
             self.info_TA_cutoff[tagname] = cutoff
             self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
