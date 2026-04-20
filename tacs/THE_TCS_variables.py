@@ -135,8 +135,8 @@ cutoff_RVopti = {
     }
 
 cutoff_megan = {
-    'teff<':5927,
-    'teff>':5627,
+    'teff<':5877,
+    'teff>':5677,
     'logg>':4.2,
     'OBTP_type<':1.5,
     'SB2<':1,
@@ -194,6 +194,25 @@ cutoff_wide_josh = {
     'season_length_1.75>':240,
     'teff<':6000,
     'logg>':4.20,
+    'vsini<':5,
+    'Ls>':0.1,
+    'logRHK<':-4.7,
+    'gmag<':7.5,
+    'HWO>':-1,
+    'PLATO>':-1,
+    }
+
+cutoff_solar_cousins = {
+    'eff_nights_1.75>':180,
+    'sky_contam_VIZIER<':0.01,
+    'OBTP_type<':1.5,
+    'SB2<':0.5,
+    'season_length_1.75>':240,
+    'teff<':5877,
+    'teff>':5677,
+    'logg>':4.20,
+    'logg>':4.34,
+    'logg<':4.54,
     'vsini<':5,
     'Ls>':0.1,
     'logRHK<':-4.7,
