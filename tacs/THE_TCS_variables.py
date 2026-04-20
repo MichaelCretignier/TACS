@@ -184,48 +184,32 @@ cutoff_wide_sample = {
     'gmag<':7.5,
     }
 
-cutoff_wide_josh_paper = {
-    'eff_nights_1.75>':160,
-    'sky_contam_VIZIER<':0.01,
-    'OBTP_type<':1.5,
-    'SB2<':0.5,
-    'teff<':6000,
-    'logg>':4.15,
-    'vsini<':5,
-    'Ls>':0.1,
-    'gmag<':8.0,
-    'HWO>':-1,
-    'PLATO>':-1,
-    'under_review>':-1,
-    }
-
 #Based on THE papers
 
-cutoff_wide_josh_new = {
-    'eff_nights_1.75>':160,
+cutoff_wide_josh = {
+    'eff_nights_1.75>':180,
     'sky_contam_VIZIER<':0.01,
     'OBTP_type<':1.5,
     'SB2<':0.5,
+    'season_length_1.75>':240,
     'teff<':6000,
-    'logg>':4.15,
+    'logg>':4.20,
     'vsini<':5,
     'Ls>':0.1,
-    'season_length_1.75>':240,
     'logRHK<':-4.7,
-    'logg&>':4.20,
-    'gmag<':8.0,
+    'gmag<':7.5,
     'HWO>':-1,
     'PLATO>':-1,
     }
 
 cutoff_RVopti_paper = {
-    'eff_nights_1.75>':160,
-    'season_length_1.75>':240,
+    'eff_nights_1.75>':180,
     'sky_contam_VIZIER<':0.01,
     'OBTP_type<':1.5,
     'SB2<':0.5,
+    'season_length_1.75>':240,
     'teff<':6000,
-    'logg>':4.2,
+    'logg>':4.20,
     'vsini<':5,
     'Ls>':0.1,
     'logRHK<':-4.7,
@@ -233,7 +217,7 @@ cutoff_RVopti_paper = {
     'ruwe_GAIA<':1.2,
     'multi_peak_GAIA<':1,
     'rv_trend_kms_DACE<':0.1,
-    'gmag<':7.0,#'gmag<':7.2,
+    'gmag<':7.2,
     'HWO>':-1,
     'PLATO>':-1,
     'under_review>':-1,

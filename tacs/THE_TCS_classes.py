@@ -1188,9 +1188,9 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
-        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_josh_paper
+        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_josh
 
-        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_josh_paper, verbose=False)
+        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_josh, verbose=False)
         plt.close('cumulative')
 
         self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
