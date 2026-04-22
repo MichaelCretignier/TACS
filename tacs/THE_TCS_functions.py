@@ -455,14 +455,13 @@ def func_cutoff(table, cutoff, tagname='', plot=True, par_space='', par_box=['',
     if plot:
         fig = plt.figure('cumulative'+tagname,figsize=(18,4*nb_rows))
         fig.suptitle(suptitle,fontsize=16,fontweight='bold')
-        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.85,bottom=0.08,left=0.06,right=0.97)
+        plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.90,bottom=0.08,left=0.06,right=0.97)
         if par_space!='':
             plt.figure('para'+tagname,figsize=(18,4*nb_rows))
-            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.85,bottom=0.08,left=0.06,right=0.97)
+            plt.subplots_adjust(hspace=0.45,wspace=0.3,top=0.90,bottom=0.08,left=0.06,right=0.97)
         plt.show()
     ranking = 'HZ_mp_min_osc+gr_texp15'
     table2 = table2.sort_values(by=ranking)
-    
     
     #printable table
     print_table = table2[0:30][['ra_j2000','dec_j2000','PRIMARY','vmag','eff_nights_1.5','distance','teff',ranking]]
