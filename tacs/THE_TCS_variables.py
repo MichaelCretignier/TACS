@@ -232,15 +232,15 @@ cutoff_RVopti_paper = {
     'vsini<':5,
     'Ls>':0.1,
     'logRHK<':-4.7,
-    'gmag<':7.2,
-    'vmag<':7.4,
+    'gmag<':7.3,
+    'vmag<':7.3,
     'MP_stability>':50,
     'ruwe_GAIA<':1.2,
     'multi_peak_GAIA<':1,
     'rv_trend_kms_DACE<':0.1,
     'HWO>':-1,
     'PLATO>':-1,
-    'under_review>':-1,
+#    'under_review>':-1,
     }
 
 cutoff_tim = {
