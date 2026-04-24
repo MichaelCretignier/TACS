@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.06'
+version = '2.07'
 last_catalog = '5.3'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -1188,9 +1188,14 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
-        self.info_TA_cutoff['wide'] = tcsv.cutoff_wide_josh
+        self.info_TA_cutoff['solarcousins'] = tcsv.cutoff_josh_solarcousins
+        self.info_TA_cutoff['solartwins'] = tcsv.cutoff_megan_solartwins
+        self.info_TA_cutoff['RVopti_paper'] = tcsv.cutoff_RVopti_paper
 
-        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_wide_josh, verbose=False)
+        self.func_cutoff(tagname='solarcousins',cutoff=tcsv.cutoff_josh_solarcousins, protection=False, verbose=False)
+        plt.close('cumulative')
+
+        self.func_cutoff(tagname='solarcousinsG',cutoff=tcsv.cutoff_josh_G_solarcousins, protection=False, verbose=False)
         plt.close('cumulative')
 
         self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
@@ -1199,10 +1204,13 @@ class tcs(object):
         self.func_cutoff(tagname='RVopti',cutoff=tcsv.cutoff_RVopti, verbose=False)
         plt.close('cumulative')
 
-        self.func_cutoff(tagname='solartwins', cutoff=tcsv.cutoff_megan, protection=False, verbose=False,) 
+        self.func_cutoff(tagname='RVopti_paper', cutoff=tcsv.cutoff_RVopti_paper, protection=False) 
         plt.close('cumulative')
 
-        dustbin = self.union('RVopti','solartwins',union_name='presurvey')
+        self.func_cutoff(tagname='solartwins', cutoff=tcsv.cutoff_megan_solartwins, protection=False, verbose=False,) 
+        plt.close('cumulative')
+        
+        dustbin = self.union('RVopti_paper','solartwins',union_name='presurvey')
         plt.close()
 
         if type(verbose)!=list:
@@ -2187,6 +2195,21 @@ class tcs(object):
             self.info_TA_cutoff[tagname] = cutoff
             self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
 
+    def analyse_func_cutoff(self,cutoff,protection=False):
+        list_dicts = {k:{k2: v2 for k2, v2 in cutoff.items() if k2 != k} for k in cutoff}
+        GR8 = self.info_TA_stars_selected['GR8'].data.copy()
+        if protection is False:
+            GR8['under_review'] = 0
+        
+        table_ref = tcsf.func_cutoff(GR8, cutoff, tagname='dust', verbose=False)
+        print('[INFO] Number of stars in reference table = %.0f'%(len(table_ref)))
+
+        output = []
+        for l in list_dicts.keys():
+            table = tcsf.func_cutoff(GR8, list_dicts[l], tagname='dust', verbose=False)
+            output.append([l,'--->',len(table)-len(table_ref),'unique rejection'])
+            plt.close('cumulativedust')
+        print(pd.DataFrame(output,columns=['condition','','Nstar','']))
 
     def cutoff_ST(self):
         for tagname,cutoff in zip(['Tim','Jean','Sam1','Sam2','Miku','William1','William2','Stefano'],[tcsv.cutoff_tim,tcsv.cutoff_jean,tcsv.cutoff_sam,tcsv.cutoff_sam2,tcsv.cutoff_mick,tcsv.cutoff_william1,tcsv.cutoff_william2,tcsv.cutoff_stefano]):

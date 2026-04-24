@@ -21,8 +21,7 @@ tacs.plot_summary('HD143761')
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
 
-catalog_version = tacs.last_catalog 
-presurvey = tacs.tcs(version=catalog_version) 
+presurvey = tacs.tcs() 
 presurvey.print_sp_stat()
 
 tacs.plot_summary(
@@ -31,20 +30,19 @@ tacs.plot_summary(
     cutoff=presurvey.info_TA_cutoff['RVopti'])
 
 #these lines are already run by default in tacs.tsc()
-presurvey.func_cutoff(cutoff=tacs.cutoff_wide_josh, tagname='wide', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='solarcousins', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_solar_cousins, tagname='solarcousins', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_megan, tagname='solartwins', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
 samples = presurvey.union('RVopti','solartwins',union_name='presurvey',Xmarker={'under_review>':0.5},ordering='HD')
 
 #plot sample
 
 plt.figure(figsize=(12,9))
-plt.subplot(2,2,1) ; presurvey.info_TA_stars_selected['GR8'].plot_space_mission(newfig=False) ; plt.title('GR8 (%.0f)'%(len(presurvey.info_TA_stars_selected['GR8'].data)))
-plt.subplot(2,2,2) ; presurvey.info_TA_stars_selected['RVopti'].plot_space_mission(newfig=False) ; plt.title('RV opti (%.0f)'%(len(presurvey.info_TA_stars_selected['RVopti'].data)))
-plt.subplot(2,2,3) ; presurvey.info_TA_stars_selected['solartwins'].plot_space_mission(newfig=False) ; plt.title('Solar-twins (%.0f)'%(len(presurvey.info_TA_stars_selected['solartwins'].data)))
-plt.subplot(2,2,4) ; presurvey.info_TA_stars_selected['presurvey'].plot_space_mission(newfig=False) ; plt.title('Union (%.0f)'%(len(presurvey.info_TA_stars_selected['presurvey'].data)))
+plt.subplot(2,2,1) ; presurvey.info_TA_stars_selected['GR8'].plot_space_mission(newfig=False) ; plt.title('GR8 (%.0f)'%(len(presurvey.info_TA_stars_selected['GR8'].data))) ; plt.ylim(-25,88)
+plt.subplot(2,2,2) ; presurvey.info_TA_stars_selected['solarcousins'].plot_space_mission(newfig=False) ; plt.title('Solar cousins (%.0f)'%(len(presurvey.info_TA_stars_selected['solarcousins'].data)))
+plt.subplot(2,2,3) ; presurvey.info_TA_stars_selected['RVopti_paper'].plot_space_mission(newfig=False) ; plt.title('RV optimized(%.0f)'%(len(presurvey.info_TA_stars_selected['RVopti_paper'].data)))
+plt.subplot(2,2,4) ; presurvey.info_TA_stars_selected['solartwins'].plot_space_mission(newfig=False) ; plt.title('Solar twins (%.0f)'%(len(presurvey.info_TA_stars_selected['solartwins'].data)))
 plt.subplots_adjust(left=0.08,right=0.96,top=0.95,bottom=0.09)
 
 #testing if a star is in a list (otherwise why not)
@@ -69,7 +67,7 @@ presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, show_sample='K', tagname='dustb
 
 example1 = tacs.tcs()
 #tracking a binary flag
-example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tacs.cutoff_RVopti, tagname='dustbin')
+example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tacs.cutoff_RVopti_paper, tagname='dustbin',protection=False)
 example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='PLATO==1', cutoff=tacs.cutoff_RVopti, tagname='dustbin')
 
 #tracking a parameter space box

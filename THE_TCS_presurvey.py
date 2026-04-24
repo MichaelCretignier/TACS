@@ -315,8 +315,136 @@ plt.subplots_adjust(hspace=0.45,top=0.95,bottom=0.10)
 # 
 # 
 
-presurvey = tacs.tcs(sun_elevation=-12)
-presurvey.func_cutoff(cutoff=tacs.cutoff_solartwin_josh, tagname='solartwins') 
+presurvey = tacs.tcs() 
 
-table = presurvey.info_TA_stars_selected['solartwins'].data
-table.keys()
+presurvey.compute_optimal_texp(snr=250, sig_rv=0.30, budget='_gp_phot+osc', texp_crit=50, selection='RVopti_paper', use_vsini=True)
+df = presurvey.info_TA_stars_selected['RVopti_paper'].data
+
+n_stars = len(df)
+
+teff = df['teff'].values
+Ms = df['Ms'].values
+Rs = df['Rs'].values
+
+texp_snr_250 = np.array(df['texp_snr_250'])
+nu_max_Sun = 3090 * 1e-6
+teff_Sun = 5780.0
+nu_max = Ms * Rs**(-2) * (teff/teff_Sun)**(-0.5) * nu_max_Sun
+# p_max_Sun = 1.0/nu_max_Sun/60.0
+p_max = 1.0/nu_max/60.0
+# plt.plot(teff_Sun, p_max_Sun, 'o',mec='r',color='none')
+# plt.plot(teff_Sun, p_max_Sun, 'r.', ms=1)
+texp_opt = np.ceil(np.maximum(texp_snr_250, p_max)).astype(int)
+
+sig_rv_phot_texp15 = np.array(df['sig_rv_phot_texp15'])
+sig_rv_topt_phot = np.sqrt(15/texp_opt) * sig_rv_phot_texp15
+sig_rv_topt_phot_osc = np.zeros(n_stars) + np.nan
+sig_rv_topt_phot_osc_gr = np.zeros(n_stars) + np.nan
+sig_rv_topt_phot_osc_gr_sg = np.zeros(n_stars) + np.nan
+for i in range(n_stars):
+    if texp_opt[i]>30:
+        continue
+    sig = np.array(df[f'sig_rv_gp_phot+osc_texp{texp_opt[i]}'])
+    sig_rv_topt_phot_osc[i] = sig[i]
+    sig = np.array(df[f'sig_rv_gp_phot+osc+gr_texp{texp_opt[i]}'])
+    sig_rv_topt_phot_osc_gr[i] = sig[i]
+    sig = np.array(df[f'sig_rv_gp_phot+osc+gr+sg_texp{texp_opt[i]}'])
+    sig_rv_topt_phot_osc_gr_sg[i] = sig[i]
+
+HZ_period_inf = np.array(df['HZ_period_inf'])
+HZ_period_sup = np.array(df['HZ_period_sup'])
+HZ_amp_inf = np.array(df['HZ_amp_inf'])
+HZ_amp_sup = np.array(df['HZ_amp_sup'])
+
+HZ_mode = 'mean'
+
+if HZ_mode == 'inner':
+    HZ_period = HZ_period_inf
+    HZ_amp = HZ_amp_sup
+elif HZ_mode == 'outer':    
+    HZ_period = HZ_period_sup
+    HZ_amp = HZ_amp_inf
+elif HZ_mode == 'mean':    
+    HZ_period = 0.5 * (HZ_period_sup + HZ_period_inf)
+    HZ_amp = 0.5 * (HZ_amp_sup + HZ_amp_inf)
+    HZ_amp[:] = 0.1
+
+t_slew = 2
+sig_mode = 'sg_sun'
+maxn = 270
+
+if sig_mode == 'sg_scale':
+    sig_rv = sig_rv_topt_phot_osc_gr_sg + 0.0
+elif sig_mode == 'sg_sun':
+    sig_rv = np.sqrt(sig_rv_topt_phot_osc_gr**2 + 0.68**2)
+elif sig_mode == 'no_sg':
+    sig_rv = sig_rv_topt_phot_osc_gr_sg
+    
+n_obs = np.array(df['eff_nights_1.75'])
+n_obs[n_obs > maxn] = maxn
+
+t_per_year = n_obs * (texp_opt + t_slew) / 60.0
+snr_per_obs = 0.71 * HZ_amp / sig_rv
+snr_per_year = np.sqrt(n_obs) * snr_per_obs
+snr_per_hour = snr_per_obs / texp_opt
+years_to_detect = np.maximum(2*HZ_period/365,5.0/snr_per_year**2)
+
+df['metric'] = snr_per_hour
+rank = np.argsort(df.metric.values)
+
+mask = (df.distance.values<30)&(df.gmag<7.0)
+
+X = 'gmag'
+Y = 'distance'
+Z = 'teff'
+C = 'metric'
+
+x = df[X].values
+y = df[Y].values
+z = df[Z].values
+c = df[C].values
+
+# Create 3D figure
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+# Scatter plot
+sc = ax.scatter(x, y, z, c=c, s=100, marker='o',cmap='seismic',vmin=np.nanpercentile(c,25),vmax=np.nanpercentile(c,75))
+
+# Labels
+ax.set_xlabel(X)
+ax.set_ylabel(Y)
+ax.set_zlabel(Z)
+
+# Optional: colorbar
+plt.colorbar(sc, ax=ax, label=C)
+
+plt.show()
+
+cutoff = {
+    'eff_nights_1.75>':180,
+    'sky_contam_VIZIER<':0.01,
+    'OBTP_type<':1.5,
+    'SB2<':0.5,
+    'season_length_1.75>':240,
+    'teff<':6000,
+    'logg>':4.20,
+    'vsini<':5,
+    'Ls>':0.1,
+    'logRHK<':-4.7,
+    'gmag<':6.8,
+    'distance<':30,
+    'MP_stability>':50,
+    'HWO>&':-1,
+    'PLATO>&':-1,
+    'ruwe_GAIA<':1.2,
+    'multi_peak_GAIA<':1,
+    'rv_trend_kms_DACE<':0.1,
+    'HWO>':-1,
+    'PLATO>':-1,
+#    'under_review>':-1,
+    }
+
+presurvey = tacs.tcs() 
+presurvey.func_cutoff(cutoff=cutoff,tagname='test',protection=False)
+presurvey.analyse_func_cutoff(cutoff=cutoff)
