@@ -213,8 +213,8 @@ cutoff_josh_G_solarcousins = {
     'vsini<':5,
     'Ls>':0.1,
     'logRHK<':-4.7,
+    'teff>':5600,
     'gmag<':7.5,
-    'teff>':5500,
     'HWO>':-1,
     'PLATO>':-1,
     }

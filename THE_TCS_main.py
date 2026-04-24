@@ -17,6 +17,7 @@ tacs.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
 tacs.plot_planetary_system('HD143761')
 tacs.plot_summary('HD143761')
 
+
 #### PRESURVEY CUTOFFF ####
 
 # Twilight -> [0-6] : civil ; [6-12] : nautical ; [12-18] : astronomical
@@ -24,17 +25,17 @@ tacs.plot_summary('HD143761')
 presurvey = tacs.tcs() 
 presurvey.print_sp_stat()
 
+#these lines are already run by default in tacs.tsc()
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='solarcousins', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_G_solarcousins, tagname='G_solarcousins', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
+
 tacs.plot_summary(
     'HD16160',
     selection=presurvey.info_TA_stars_selected['presurvey'].data.copy(),
     cutoff=presurvey.info_TA_cutoff['RVopti'])
-
-#these lines are already run by default in tacs.tsc()
-presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='solarcousins', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
-samples = presurvey.union('RVopti','solartwins',union_name='presurvey',Xmarker={'under_review>':0.5},ordering='HD')
 
 #plot sample
 

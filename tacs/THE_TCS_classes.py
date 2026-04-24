@@ -2126,12 +2126,12 @@ class tcs(object):
     def print_sp_stat(self,sp=''):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         #mini = self.info_TA_stars_selected['minimal'].data.copy()
-        mini = self.info_TA_stars_selected['wide'].data.copy()
+        mini = self.info_TA_stars_selected['solarcousins'].data.copy()
         twin = self.info_TA_stars_selected['solartwins'].data.copy()
-        rvopt = self.info_TA_stars_selected['RVopti'].data.copy()
+        rvopt = self.info_TA_stars_selected['RVopti_paper'].data.copy()
         pre = self.info_TA_stars_selected['presurvey'].data.copy()
         mini = mini.loc[mini['under_review']==0]
-        rvopt = rvopt.loc[pre['under_review']==0]
+        rvopt = rvopt.loc[rvopt['under_review']==0]
         review = gr8.loc[gr8['under_review']==1]
         
         output = []
