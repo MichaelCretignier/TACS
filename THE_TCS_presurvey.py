@@ -390,7 +390,13 @@ snr_per_hour = snr_per_obs / texp_opt
 years_to_detect = np.maximum(2*HZ_period/365,5.0/snr_per_year**2)
 
 df['metric'] = snr_per_hour
-rank = np.argsort(df.metric.values)
+df.sort_values(by='metric')
+df['rank'] = np.arange(1,1+len(df))
+df.loc[df['logRHK']<-5.5,'logRHK'] = np.nan
+plt.figure(figsize=(18,6))
+for n,kw in enumerate(['gmag','vmag','teff','logg','logRHK','distance']):
+    plt.subplot(1,6,n+1)
+    plt.scatter(df['rank'].values,df[kw].values,c=df.gmag.values,cmap='jet')
 
 mask = (df.distance.values<30)&(df.gmag<7.0)
 
@@ -425,21 +431,14 @@ cutoff = {
     'eff_nights_1.75>':180,
     'sky_contam_VIZIER<':0.01,
     'OBTP_type<':1.5,
-    'SB2<':0.5,
     'season_length_1.75>':240,
     'teff<':6000,
-    'logg>':4.20,
-    'vsini<':5,
+    'logg>':4.30,
     'Ls>':0.1,
     'logRHK<':-4.7,
-    'gmag<':6.8,
+    'gmag<':7.0,
     'distance<':30,
     'MP_stability>':50,
-    'HWO>&':-1,
-    'PLATO>&':-1,
-    'ruwe_GAIA<':1.2,
-    'multi_peak_GAIA<':1,
-    'rv_trend_kms_DACE<':0.1,
     'HWO>':-1,
     'PLATO>':-1,
 #    'under_review>':-1,
@@ -448,3 +447,7 @@ cutoff = {
 presurvey = tacs.tcs() 
 presurvey.func_cutoff(cutoff=cutoff,tagname='test',protection=False)
 presurvey.analyse_func_cutoff(cutoff=cutoff)
+
+
+
+
