@@ -26,11 +26,12 @@ presurvey = tacs.tcs()
 presurvey.print_sp_stat()
 
 #these lines are already run by default in tacs.tsc()
-presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='solarcousins', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_josh_G_solarcousins, tagname='G_solarcousins', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='wide', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_G_solarcousins, tagname='solarcousins', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
+presurvey.func_cutoff(cutoff=tacs.cutoff_balanced, tagname='balanced') 
 
 tacs.plot_summary(
     'HD16160',

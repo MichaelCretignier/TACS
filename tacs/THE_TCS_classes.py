@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.07'
+version = '2.08'
 last_catalog = '5.3'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -1188,14 +1188,17 @@ class tcs(object):
         self.info_TA_cutoff = {}
 
         self.info_TA_cutoff['RVopti'] = tcsv.cutoff_RVopti
-        self.info_TA_cutoff['solarcousins'] = tcsv.cutoff_josh_solarcousins
+        self.info_TA_cutoff['wide'] = tcsv.cutoff_josh_solarcousins
+        self.info_TA_cutoff['solarcousins'] = tcsv.cutoff_josh_G_solarcousins
         self.info_TA_cutoff['solartwins'] = tcsv.cutoff_megan_solartwins
         self.info_TA_cutoff['RVopti_paper'] = tcsv.cutoff_RVopti_paper
+        self.info_TA_cutoff['balanced'] = tcsv.cutoff_balanced
 
-        self.func_cutoff(tagname='solarcousins',cutoff=tcsv.cutoff_josh_solarcousins, protection=False, verbose=False)
+
+        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_josh_solarcousins, protection=False, verbose=False)
         plt.close('cumulative')
 
-        self.func_cutoff(tagname='solarcousinsG',cutoff=tcsv.cutoff_josh_G_solarcousins, protection=False, verbose=False)
+        self.func_cutoff(tagname='solarcousins',cutoff=tcsv.cutoff_josh_G_solarcousins, protection=False, verbose=False)
         plt.close('cumulative')
 
         self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
@@ -1209,7 +1212,10 @@ class tcs(object):
 
         self.func_cutoff(tagname='solartwins', cutoff=tcsv.cutoff_megan_solartwins, protection=False, verbose=False,) 
         plt.close('cumulative')
-        
+
+        self.func_cutoff(tagname='balanced',cutoff=tcsv.cutoff_balanced, protection=False, verbose=False)
+        plt.close('cumulative')
+
         dustbin = self.union('RVopti_paper','solartwins',union_name='presurvey')
         plt.close()
 
@@ -2126,7 +2132,7 @@ class tcs(object):
     def print_sp_stat(self,sp=''):
         gr8 = self.info_TA_stars_selected['GR8'].data.copy()
         #mini = self.info_TA_stars_selected['minimal'].data.copy()
-        mini = self.info_TA_stars_selected['solarcousins'].data.copy()
+        mini = self.info_TA_stars_selected['wide'].data.copy()
         twin = self.info_TA_stars_selected['solartwins'].data.copy()
         rvopt = self.info_TA_stars_selected['RVopti_paper'].data.copy()
         pre = self.info_TA_stars_selected['presurvey'].data.copy()
