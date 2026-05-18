@@ -30,26 +30,29 @@ presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='wide', prot
 presurvey.func_cutoff(cutoff=tacs.cutoff_josh_G_solarcousins, tagname='solarcousins', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper', protection=False) 
+presurvey.func_cutoff(cutoff=tacs.cutoff_balanced, tagname='balanced', protection=False) 
 presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
-presurvey.func_cutoff(cutoff=tacs.cutoff_balanced, tagname='balanced') 
 
 tacs.plot_summary(
     'HD16160',
     selection=presurvey.info_TA_stars_selected['presurvey'].data.copy(),
-    cutoff=presurvey.info_TA_cutoff['RVopti'])
+    cutoff=presurvey.info_TA_cutoff['balance'])
 
 #plot sample
 
 plt.figure(figsize=(12,9))
 plt.subplot(2,2,1) ; presurvey.info_TA_stars_selected['GR8'].plot_space_mission(newfig=False) ; plt.title('GR8 (%.0f)'%(len(presurvey.info_TA_stars_selected['GR8'].data))) ; plt.ylim(-25,88)
-plt.subplot(2,2,2) ; presurvey.info_TA_stars_selected['solarcousins'].plot_space_mission(newfig=False) ; plt.title('Solar cousins (%.0f)'%(len(presurvey.info_TA_stars_selected['solarcousins'].data)))
+plt.subplot(2,2,2) ; presurvey.info_TA_stars_selected['wide'].plot_space_mission(newfig=False) ; plt.title('Wide (%.0f)'%(len(presurvey.info_TA_stars_selected['wide'].data)))
 plt.subplot(2,2,3) ; presurvey.info_TA_stars_selected['RVopti_paper'].plot_space_mission(newfig=False) ; plt.title('RV optimized(%.0f)'%(len(presurvey.info_TA_stars_selected['RVopti_paper'].data)))
 plt.subplot(2,2,4) ; presurvey.info_TA_stars_selected['solartwins'].plot_space_mission(newfig=False) ; plt.title('Solar twins (%.0f)'%(len(presurvey.info_TA_stars_selected['solartwins'].data)))
 plt.subplots_adjust(left=0.08,right=0.96,top=0.95,bottom=0.09)
 
 #testing if a star is in a list (otherwise why not)
-cutoff_rvopti = presurvey.info_TA_cutoff['RVopti'].copy()
+cutoff_rvopti = presurvey.info_TA_cutoff['RVopti_paper'].copy()
 cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
+cutoff_balanced = presurvey.info_TA_cutoff['balanced'].copy()
+
+tacs.which_cutoff('', cutoff_balanced)
 
 tacs.which_cutoff('51Peg', cutoff_suntwins)
 tacs.which_cutoff('51Peg', cutoff_rvopti)
@@ -92,7 +95,7 @@ print(survey.info_TA_stars_selected['bright!'].data)
 
 star = tacs.tcs(sun_elevation=-18, instrument='HARPS3') #HARPS3 is the default
 star.set_star(starname='HD38858')
-
+star.set_star(ra=95,dec=-46)
 plt.figure(figsize=(12,8))
 
 plt.subplot(1,2,1) ; star.compute_nights(airmass_max=11, weather=False, plot=True)
@@ -198,3 +201,13 @@ neid.compute_SG_calendar(
     selection='NEID_standards')
 
 neid.compute_SG_month(month=1,plot=True,selection='NEID_standards')
+
+
+star = tacs.tcs(sun_elevation=-18, instrument='HARPS') #HARPS3 is the default
+star.set_star(ra=70,dec=-25)
+star.compute_nights(airmass_max=1.8, weather=False, plot=True)
+print(sum(star.info_XY_night_duration.y!=0))
+
+star.plot_night_length()
+
+

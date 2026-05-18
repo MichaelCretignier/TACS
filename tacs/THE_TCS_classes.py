@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.08'
+version = '2.10'
 last_catalog = '5.3'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -1032,6 +1032,16 @@ class table_star(object):
     def export(self, tablename, outdir=None):
         if outdir is None:
             self.data.sort_index().to_csv(OUTPUT_DIR+'/TAB_STARS/Star_selection_%s.csv'%(tablename))
+
+    def closest_stars_to(self,starname):
+        data = self.data
+        names = get_info_starname(starname,verbose=False)
+        ra1 = names['RA']
+        dec1 = names['DEC']
+        distance = tcsf.sky_distance_vec(ra1,dec1,data.RA.values,data.DEC.values)
+        data['sky_dist'] = distance
+        data = data.sort_values(by='sky_dist')
+        return data
 
     def RA_balance(self,nbins=8, Nstars=None, protection=True):
         data = self.data

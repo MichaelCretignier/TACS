@@ -310,6 +310,21 @@ def airmass_kasten_young(alt_deg):
     airmass[airmass>10] = 10 
     return airmass
 
+def sky_distance_vec(ra1, dec1, ra2, dec2):
+    # convert to radians
+    ra1 = np.radians(ra1)
+    dec1 = np.radians(dec1)
+    ra2 = np.radians(ra2)
+    dec2 = np.radians(dec2)
+
+    d = 2 * np.arcsin(np.sqrt(
+        np.sin((dec2 - dec1)/2)**2 +
+        np.cos(dec1) * np.cos(dec2) *
+        np.sin((ra2 - ra1)/2)**2
+    ))
+    
+    return np.degrees(d)
+
 def star_observability(alpha_h, delta_deg, tstamp_min=1, Plot=False, instrument='HARPS3', day=1, month=1):
     """tstamp_min being the sampling in minute"""
     
