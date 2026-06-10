@@ -199,7 +199,7 @@ for h in np.sort(sg):
 
 catalog_version = tacs.last_catalog #last catalog = 5.2 
 presurvey = tacs.tcs(version=catalog_version)
-table = presurvey.info_TA_stars_selected['presurvey'].data
+table = presurvey.info_TA_stars_selected['balanced'].data
 cutoff = presurvey.info_TA_cutoff['RVopti']
 gr8 = presurvey.info_TA_stars_selected['GR8'].data
 os.system('rm -f /Users/cretignier/Documents/THE/figures/All_summary/*.png')
@@ -215,7 +215,7 @@ for index in gr8.index:
 
 catalog_version = tacs.last_catalog #last catalog = 5.2 
 presurvey = tacs.tcs(version=catalog_version)
-table = presurvey.info_TA_stars_selected['presurvey'].data
+table = presurvey.info_TA_stars_selected['balanced'].data
 cutoff = presurvey.info_TA_cutoff['RVopti']
 gr8 = presurvey.info_TA_stars_selected['GR8'].data
 os.system('rm -f /Users/cretignier/Documents/THE/figures/Presurvey_summary/*.png')

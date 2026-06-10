@@ -14,7 +14,7 @@ OUTPUT_DIR = tcsv.OUTPUT_DIR
 
 #IMPORT MAIN TABLES
 
-version = '2.10'
+version = '2.11'
 last_catalog = '5.3'
 
 print(Fore.GREEN+"""\n[INFO TACS]
@@ -306,6 +306,8 @@ def which_cutoff(starname, cutoff, plot=False, display=None, version=None):
             star = GR8.loc[index['INDEX']]
             for kws in cutoff.keys():
                 kw = kws[:-1]
+                if kw[-1]=='&':
+                    kw = kw[:-1]
                 condition = kws[-1]
                 value = cutoff[kws]
                 if condition=='>':
@@ -339,7 +341,10 @@ def which_cutoff(starname, cutoff, plot=False, display=None, version=None):
             output = pd.DataFrame(output,columns=['starname','!','feature','condition','threshold','value','test','badge','!!'])
             output['value'] = np.round(output['value'],2)
             if len(starname)==1:
-                protection = int(np.array(output.loc[output['feature']=='under_review','value']!=0)[0])
+                if 'under_review' in output['feature'].values:
+                    protection = int(np.array(output.loc[output['feature']=='under_review','value']!=0)[0])
+                else:
+                    protection = 0
                 if (sum(output['test']=='FALSE')!=0)&(protection==0):
                     print(Fore.RED+'[INFO] -- NO -- %s was rejected.\n'%(s)+Fore.RESET)
                 elif (sum(output['test']=='FALSE')!=0)&(protection==1):
@@ -729,6 +734,8 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
 
         plt.figure(figsize=(23,9))
 
+
+
         if selection is not None:
             entry = selection.loc[selection['HD']==index['HD']]
             if len(entry):
@@ -736,8 +743,8 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
                 plt.axes([0.03,0.83,0.25,0.05]) ; plt.ylim(0,1) ; plt.xlim(0,1) ; plt.axis('off')
                 text3 = ' | SP. type = '+entry['SPclass']
                 text3 = text3+' | under review:'+['□','⊠','✪'][int(entry['under_review'])]
-                text3 = text3+' | RV opti:'+['□','⊠'][int(entry['selection_RVopti'])]
-                text3 = text3+' | Sun Twins:'+['□','⊠'][int(entry['selection_solartwins'])]+' |'
+                #text3 = text3+' | RV opti:'+['□','⊠'][int(entry['selection_RVopti'])]
+                #text3 = text3+' | Sun Twins:'+['□','⊠'][int(entry['selection_solartwins'])]+' |'
                 plt.text(0.0,0.5,text3,ha='left',va='center')
                 #print(entry)
 

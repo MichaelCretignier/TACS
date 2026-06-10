@@ -52,8 +52,6 @@ cutoff_rvopti = presurvey.info_TA_cutoff['RVopti_paper'].copy()
 cutoff_suntwins = presurvey.info_TA_cutoff['solartwins'].copy()
 cutoff_balanced = presurvey.info_TA_cutoff['balanced'].copy()
 
-tacs.which_cutoff('', cutoff_balanced)
-
 tacs.which_cutoff('51Peg', cutoff_suntwins)
 tacs.which_cutoff('51Peg', cutoff_rvopti)
 tacs.which_cutoff('HD219134',cutoff_rvopti) 
