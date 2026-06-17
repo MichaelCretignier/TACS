@@ -96,7 +96,7 @@ ipython
 ```python
 import tacs
 
-presurvey = tacs.tcs(version='5.2') #version of the catalogue 
+presurvey = tacs.tcs(version='5.3') #version of the catalogue 
 ```
 
 *A lot have already be done from here! \
