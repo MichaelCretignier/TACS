@@ -45,7 +45,7 @@ stars_to_observe = [
 ]
 
 stars_under_review = [
-    'HD26965',   # [V4.42] S>222 EFF>154
+    'HD26965',   # [V4.42] S>222 EFF>154 
     'HD101501',  # [V5.30] RHK>-4.54
     'HD10780',   # [V5.63] RHK>-4.69
     'HD4628',    # [V5.75] S > 240
@@ -268,10 +268,10 @@ cutoff_balanced = {
     'teff<':5900,
     'logg>':4.30,
     'Ls>':0.1,
-    'logRHK<':-4.7,
     'gmag<':7.0,
     'distance<':30,
     'vmag<':7.20,
+    'logRHK<':-4.7,
 #    'MP_stability>':50,
 #    'vsini<':5,
     'HWO>':-1,

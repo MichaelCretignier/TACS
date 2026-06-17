@@ -1233,6 +1233,9 @@ class tcs(object):
         self.func_cutoff(tagname='balanced',cutoff=tcsv.cutoff_balanced, protection=False, verbose=False)
         plt.close('cumulative')
 
+        self.func_cutoff(tagname='balanced+underreview',cutoff=tcsv.cutoff_balanced, protection=True, verbose=False)
+        plt.close('cumulative')
+
         dustbin = self.union('RVopti_paper','solartwins',union_name='presurvey')
         plt.close()
 
@@ -1848,7 +1851,7 @@ class tcs(object):
         plt.xlim(125,None)
         plt.subplots_adjust(left=0.05,right=0.95,bottom=0.08,top=0.93,hspace=0.30)
 
-    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, texp_extra=2, texp_min=0, budget='_phot', use_vsini=False):
+    def compute_optimal_texp(self, selection=None, snr=250, sig_rv=0.30, texp_crit=20, texp_extra=2, texp_min=0, budget='_phot', use_vsini=False, ordering=None):
         """ budget = '_arve_osc+gr' """
         
         if snr<1:
@@ -1861,6 +1864,9 @@ class tcs(object):
             selection = self.info_TA_stars_selected['GR8'].data.copy()
         else:
             selection = self.info_TA_stars_selected[selection].data
+
+        if ordering is not None:
+            selection = selection.sort_values(by=ordering)
 
         snr_texp15 = np.array(0.5*(selection['snr_420_texp15']+selection['snr_550_texp15'])) #Cretignier et al. +22
         texp_snr_crit = 15*(snr/snr_texp15)**2
@@ -1903,15 +1909,21 @@ class tcs(object):
 
         statistic = np.argmax([texp_snr_crit,texp_sig_rv_crit],axis=0)
 
+        species = selection['under_review']
+
         plt.figure(figsize=(18,6))
         plt.axes([0.03,0.33,0.2,0.8])
         plt.pie([np.sum(statistic==0),np.sum(statistic==1)],labels=['SNR \nlimited','Sig RV \nlimited'], autopct='%.0f%%')
 
         plt.axes([0.32,0.1,0.65,0.8])
-        plt.scatter(np.arange(len(selection)),texp_snr_crit,label=r'SNR > %.0f'%(snr))
-        plt.scatter(np.arange(len(selection)),texp_sig_rv_crit,label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv))
-        plt.scatter(np.arange(len(selection)),optimal_time,color='k',label='Optimal',marker='.')
-        plt.legend()
+        for sp in np.unique(species):
+            mask = (species==sp)
+            marker=['o','x','s'][int(sp)]
+            plt.scatter(np.arange(len(selection))[mask],texp_snr_crit[mask],label=r'SNR > %.0f'%(snr),marker=marker,color='C0')
+            plt.scatter(np.arange(len(selection))[mask],texp_sig_rv_crit[mask],label=r'$\sigma_{RV}$ (%s) < %.2f'%(budget[1:],sig_rv), marker=marker,color='C1')
+            plt.scatter(np.arange(len(selection))[mask],optimal_time[mask],color='k',label='Optimal',marker='.')
+            if int(sp)==0:
+                plt.legend()
         plt.ylabel('Texp [min]') ; plt.ylim(0,50)
         plt.xlabel('Star ID')
         plt.axhline(y=texp_crit,color='r',ls=':')

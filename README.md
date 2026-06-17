@@ -121,18 +121,18 @@ for kw in presurvey.info_TA_stars_selected.keys():
 *A lot of TACS tables already exists! Those are defined in `THE_TCS_variables.py`. The most important are:*
 
 1) `.info_TA_stars_selected['GR8']`        (the initial sample of 1418 stars)
-2) `.info_TA_stars_selected['solartwins']` (the solar twins sample)
+2) `.info_TA_stars_selected['wide']` (the wide sample)
 3) `.info_TA_stars_selected['RVopti']`     (the RV optimised sample)
-4) `.info_TA_stars_selected['presurvey']`  (the Union of solartwins and RVopti)
+4) `.info_TA_stars_selected['balanced']`  (the 60 targets)
 
 *To access the table, just get the `.data` attribute:*
 
 ```python
-table = presurvey.info_TA_stars_selected['presurvey'].data
+table = presurvey.info_TA_stars_selected['balanced'].data
 print(table)
 
 #why not plotting a selection in sky?
-presurvey.info_TA_stars_selected['presurvey'].plot_space_mission(newfig=False)
+presurvey.info_TA_stars_selected['balanced'].plot_space_mission(newfig=False)
 
 ```
 

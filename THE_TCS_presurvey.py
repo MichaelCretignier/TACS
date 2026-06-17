@@ -229,8 +229,11 @@ for index in table.index:
     plt.savefig('/Users/cretignier/Documents/THE/figures/Presurvey_summary_PRIVATE/%s_THE%s.png'%(hd,str(index).zfill(4)))
     plt.close('all')
 
-table = presurvey.info_TA_stars_selected['wide'].data
-table = table.loc[~np.in1d(table['GAIA'],presurvey.info_TA_stars_selected['presurvey'].data['GAIA'])]
+table = presurvey.info_TA_stars_selected['GR8'].data
+table = table.loc[~np.in1d(table['GAIA'],presurvey.info_TA_stars_selected['balanced'].data['GAIA'])]
+table = table.loc[table['teff']<5900]
+table = table.loc[table['logg']>4.3]
+table = table.loc[table['OBTP_type']<1.5]
 table = table.sort_values(by='vmag')[0:30]
 cutoff = presurvey.info_TA_cutoff['RVopti']
 gr8 = presurvey.info_TA_stars_selected['GR8'].data
@@ -239,6 +242,20 @@ for index in table.index:
     hd = gr8.loc[index,'HD']
     tacs.plot_summary(index, show_private=True,cutoff=cutoff)
     plt.savefig('/Users/cretignier/Documents/THE/figures/Bright_summary_PRIVATE/%s_THE%s.png'%(hd,str(index).zfill(4)))
+    plt.close('all')
+    cutoff = presurvey.info_TA_cutoff['RVopti'].copy()
+
+
+indices = [tacs.get_info_starname(s,verbose=False)['INDEX'] for s in tacs.stars_under_review]
+presurvey = tacs.tcs(sun_elevation=-12) 
+table = presurvey.info_TA_stars_selected['GR8'].data
+cutoff = presurvey.info_TA_cutoff['RVopti']
+gr8 = presurvey.info_TA_stars_selected['GR8'].data
+os.system('rm -f /Users/cretignier/Documents/THE/figures/STARS_UNDER_REVIEW/*.png')
+for index in indices:
+    hd = gr8.loc[index,'HD']
+    tacs.plot_summary(index, show_private=True,cutoff=cutoff)
+    plt.savefig('/Users/cretignier/Documents/THE/figures/STARS_UNDER_REVIEW/%s_THE%s.png'%(hd,str(index).zfill(4)))
     plt.close('all')
     cutoff = presurvey.info_TA_cutoff['RVopti'].copy()
 
@@ -450,4 +467,48 @@ presurvey.analyse_func_cutoff(cutoff=cutoff)
 
 
 
+tutorial = tacs.tcs() 
 
+tutorial.compute_optimal_texp(
+    snr=200, 
+    sig_rv=0.30, 
+    budget='_extempo_phot+osc', 
+    texp_crit=50, 
+    texp_min=5,
+    selection='balanced+underreview', 
+    use_vsini=True,
+    ordering=['under_review','vmag'])
+plt.savefig('/Users/cretignier/Documents/THE/figures/Texp_SNR200.pdf')
+
+tutorial.compute_optimal_texp(
+    snr=250, 
+    sig_rv=0.30, 
+    budget='_extempo_phot+osc', 
+    texp_crit=50, 
+    texp_min=5,
+    selection='balanced+underreview', 
+    use_vsini=True,
+    ordering=['under_review','vmag'])
+plt.savefig('/Users/cretignier/Documents/THE/figures/Texp_SNR250.pdf')
+
+tutorial.compute_optimal_texp(
+    snr=300, 
+    sig_rv=0.30, 
+    budget='_extempo_phot+osc', 
+    texp_crit=50, 
+    texp_min=5,
+    selection='balanced+underreview', 
+    use_vsini=True,
+    ordering=['under_review','vmag'])
+plt.savefig('/Users/cretignier/Documents/THE/figures/Texp_SNR300.pdf')
+
+tutorial.compute_optimal_texp(
+    snr=350, 
+    sig_rv=0.30, 
+    budget='_extempo_phot+osc', 
+    texp_crit=50, 
+    texp_min=5,
+    selection='balanced+underreview', 
+    use_vsini=True,
+    ordering=['under_review','vmag'])
+plt.savefig('/Users/cretignier/Documents/THE/figures/Texp_SNR350.pdf')
