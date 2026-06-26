@@ -265,6 +265,8 @@ for index in indices:
 #
 survey = tacs.tcs(sun_elevation=-12) 
 
+selection = 'balanced'
+
 survey.compute_optimal_texp(
     snr = 250, 
     sig_rv = 0.30, 
@@ -273,19 +275,19 @@ survey.compute_optimal_texp(
     texp_extra = 2, # +2min
     texp_min = 8,   #  8min
     use_vsini = True,
-    selection = 'presurvey')
+    selection = selection)
 
-best = survey.compute_ranking(selection='presurvey', budget='arve_phot+osc+gr', use_vsini=True, texp='optimal')
-survey.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C1', figname='texp')
+best = survey.compute_ranking(selection=selection, budget='arve_phot+osc+gr', use_vsini=True, texp='optimal')
+survey.compare_obs_strategy(selection,budget='_arve_phot+osc',color='C1', figname='texp')
 
 config = {
     '100':{'baseline':4,'texp_min':8,'nobs':90},
     '80':{'baseline':5,'texp_min':8,'nobs':130},
-    '60':{'baseline':8,'texp_min':8,'nobs':200},
+    '60':{'baseline':8,'texp_min':8,'nobs':160},
     '40':{'baseline':12,'texp_min':12,'nobs':250},
     }
 
-for N in [100,80,60,40]:
+for N in [60,40]:
     c = config[str(N)]
     texp_min = c['texp_min']
     baseline = c['baseline']
@@ -298,10 +300,10 @@ for N in [100,80,60,40]:
         texp_extra = 2, # +2min
         texp_min = texp_min,   #  8min
         use_vsini=True,
-        selection='presurvey')
-    survey.compare_obs_strategy('presurvey',budget='_arve_phot+osc',color='C0', figname='texp')
+        selection=selection)
+    survey.compare_obs_strategy(selection,budget='_arve_phot+osc',color='C0', figname='texp')
 
-    survey_tab = survey.info_TA_stars_selected['presurvey'].data.copy()
+    survey_tab = survey.info_TA_stars_selected[selection].data.copy()
     survey_tab = survey_tab.loc[survey_tab['texp_optimal']<100]
     survey_tab = survey_tab.sort_values(by='gmag')[0:N]
     survey.create_table_scheduler(

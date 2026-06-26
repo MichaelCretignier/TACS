@@ -476,7 +476,7 @@ def plot_rv(starname,verbose=False,ins_color=False,newfig=True,show_private=Fals
         the_rv2 = pd.read_csv(MATERIAL_DIR+'/RV_stars_binned_N.csv',index_col=0)
         entries = the_rv2.loc[the_rv2['star']==hd]        
         rv_rms = tcsf.mad(entries['rv'])
-        entries = entries.loc[abs(entries['rv']-np.median(entries['rv']))<5*rv_rms]
+        entries = entries.loc[abs(entries['rv']-np.nanmedian(entries['rv']))<5*rv_rms]
 
         if newfig:
             plt.figure('RV_'+starname)
