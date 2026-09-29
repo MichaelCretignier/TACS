@@ -26,7 +26,7 @@ tacs.plot_summary('HD143761')
 presurvey = tacs.tcs() 
 presurvey.print_sp_stat()
 
-presurvey.info_TA_stars_selected['balanced+underreview'].plot_values(['vmag','RA','logRHK'])
+presurvey.info_TA_stars_selected['balanced+underreview'].plot_values(['vmag','season_length_1.75','logRHK'])
 
 #these lines are already run by default in tacs.tsc()
 presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='wide')
