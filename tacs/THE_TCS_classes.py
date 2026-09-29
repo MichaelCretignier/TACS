@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from colorama import Fore
 from scipy.interpolate import interp1d
+import glob as glob
 
 from . import THE_TCS_functions as tcsf
 from . import THE_TCS_variables as tcsv
@@ -181,17 +182,29 @@ def get_info_starname(name,verbose=True):
     button = 0
     if (type(name)!=int)&(type(name)!=np.int64):
         for columns in list(db_starname.keys()):
-            loc =  np.where(np.array(db_starname[columns])==name)[0]
+            col = db_starname[columns]
+
+            if columns == 'CSTL':
+                cols = []
+                for i,c in enumerate(col):
+                    for j in c.split('+'):
+                        cols.append([col.index[i],j])
+                col = pd.DataFrame(cols,columns=['index','CSTL'])
+                col.index = col['index'].values
+
+            loc =  np.where(col.values==name)[0]
             if len(loc):
+                loc = loc[0]
+                loc = np.array(col.index)[loc]
+                button = 1
+                break
+            else:
+                loc = np.where(col.values==name.replace(' ',''))[0]
+                if len(loc):
                     loc = loc[0]
+                    loc = np.array(col.index)[loc]
                     button = 1
                     break
-            else:
-                loc = np.where(np.array(db_starname[columns])==name.replace(' ',''))[0]
-                if len(loc):
-                        loc = loc[0]
-                        button = 1
-                        break
     else:
         button = 1
         loc = name
@@ -427,6 +440,158 @@ def get_info_binary(starname,verbose=False):
         info_binary = None
     return info_binary
 
+def import_finch(starname):
+    index = get_info_starname(starname, verbose=False)
+    entries2 = None
+    offset = 0
+    if index is not None:
+        hd = index['HD']
+        finch_mhk = pd.read_csv(MATERIAL_DIR+'/PRIVATE_SNAKY_THE_FINCH.csv',index_col=0)
+        entries2 = finch_mhk.loc[finch_mhk['star']==index['HD']]
+
+        summaries = glob.glob('/*/*/Documents/THE/SNAKY_DB_SPECTRA/%s/data/s1d/*/WORKSPACE/Analyse_summary.csv'%(hd))
+        if (len(summaries)!=0)&(len(entries2)!=0):
+            proxy_x = [] ; proxy_y = []
+            for s in summaries:
+                tab = pd.read_csv(s)
+                try:
+                    proxy_y.append(tab['MHK'])
+                    proxy_x.append(tab['jdb'])
+                except:
+                    pass
+            proxy_x = np.hstack(proxy_x)
+            proxy_y = np.hstack(proxy_y)
+
+            index = tcsf.find_nearest(entries2['jdb'],proxy_x)[0]
+            offset = np.nanmedian(proxy_y-entries2['proxy'].values[index])
+            
+            entries2['proxy'] = entries2['proxy'] + offset
+        entries2 = entries2.loc[entries2['proxy_std']<50]
+        entries2 = entries2.loc[entries2['proxy']>-20]
+        entries2.loc[entries2['proxy_std']>30,'proxy_std'] = 0
+
+    return entries2, offset
+
+def plot_aladin(starname, newfig=True, fov=5):
+    from astroquery.hips2fits import hips2fits
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+
+    cmap = plt.cm.jet.copy()
+    cmap.set_bad(color="black")
+
+    info = get_info_starname(starname)
+
+    coord = SkyCoord(
+        ra=info['RA']*u.deg,
+        dec=info['DEC']*u.deg,
+        frame="icrs"
+    )
+
+    image = hips2fits.query(
+        hips="CDS/P/2MASS/J",
+        ra=coord.ra,
+        dec=coord.dec,
+        fov=fov*u.arcmin,
+        width=100*fov,
+        height=100*fov,
+        projection="TAN",   # required
+        format="fits")
+    
+    if newfig:
+        plt.figure(figsize=(6,6))
+    size = np.shape(image[0].data)
+    plt.imshow(np.log(image[0].data),cmap=cmap,vmin=-1,vmax=10)
+    for j in list(np.arange(1,int(fov)+1)):
+        plt.plot(j*100*np.sin(np.linspace(0,2*np.pi,100))+(fov*100)*0.5,j*100*np.cos(np.linspace(0,2*np.pi,100))+(fov*100)*0.5,color='white',lw=4)
+        plt.plot(j*100*np.sin(np.linspace(0,2*np.pi,100))+(fov*100)*0.5,j*100*np.cos(np.linspace(0,2*np.pi,100))+(fov*100)*0.5,color='r',lw=2)
+    plt.plot(3/60*100*np.sin(np.linspace(0,2*np.pi,8))+(fov*100)*0.5,3/60*100*np.cos(np.linspace(0,2*np.pi,8))+(fov*100)*0.5,color='white',lw=4)
+    plt.plot(3/60*100*np.sin(np.linspace(0,2*np.pi,8))+(fov*100)*0.5,3/60*100*np.cos(np.linspace(0,2*np.pi,8))+(fov*100)*0.5,color='k',lw=2)
+
+    plt.xlim(0,100*fov)
+    plt.ylim(0,100*fov)
+    plt.tick_params(labelleft=False,labelbottom=False)
+
+def plot_mhk(starname, verbose=False, newfig=True, hide_outliers=True, debug=False, rhk_ref=None):
+    index = get_info_starname(starname, verbose=verbose)
+    entries = []
+    if index is not None:
+        hd = index['HD']
+    else:
+        hd = 'TRASH'
+    summaries = glob.glob('/*/*/Documents/THE/SNAKY_DB_SPECTRA/%s/data/s1d/*/WORKSPACE/Analyse_summary.csv'%(hd))
+
+    if len(summaries):
+        if newfig:
+            plt.figure(figsize=(15,6))
+            plt.axes([0.05,0.09,0.75,0.84])
+        count=-1
+        samples = []
+        for s in summaries:
+            count+=1
+            instrument = s.split('/WORKSPACE')[0].split('/')[-1]
+            tab = pd.read_csv(s,index_col=0)
+            if ('jdb' in tab.keys())&('MHK' in tab.keys()):
+                proxy_x = np.array(tab['jdb'])
+                proxy_y = np.array(tab['MHK'])
+                proxy_yerr = np.array(tab['MHK_std'])
+
+                if hide_outliers:
+                    valid = proxy_yerr<20
+                else:
+                    valid = proxy_yerr>0
+                proxy_x[proxy_x==0] = 43850.0   #minimum of the solar plot
+                proxy_x = tcsf.conv_time(proxy_x)[1]
+                plt.errorbar(proxy_x[valid],proxy_y[valid],yerr=proxy_yerr[valid],marker=['o','s','^'][int(count//10)],ls='',capsize=0,color='C%.0f'%(count),mec='k',zorder=100)
+                plt.scatter(proxy_x[~valid],proxy_y[~valid],marker='X',color='C%.0f'%(count),zorder=100,ec='k')
+                samples.append(np.ravel(np.random.randn(5000,len(proxy_y))*proxy_yerr+proxy_y))
+
+        plt.legend()
+        plt.ylabel('M-index [%]',fontsize=14)
+        plt.xlabel('Jdb - 2,400,000 [days]',fontsize=14)
+
+        sun_mag = pd.read_csv(MATERIAL_DIR+'/Sun_MG2.csv',index_col=0)
+        plt.plot(sun_mag['deciyear'],sun_mag['plage_fill'],color='gold',lw=1,alpha=0.7)
+        plt.fill_between(sun_mag['deciyear'],0,sun_mag['plage_fill'],color='gold',alpha=0.25)
+        if rhk_ref is not None:
+            plt.axhline(y=tcsf.rhk_mhk(rhk_ref),color='k',ls='-.')
+
+        ax = plt.gca()
+        x_ticks = ax.get_xticks()[1:-1]
+        xlim = ax.get_xlim()
+        y_ticks = ax.get_yticks()[1:-1]
+        ylim = plt.gca().get_ylim()
+        plt.xlabel('Date [year]',fontsize=14)
+        if newfig:
+            plt.axes([0.83,0.09,0.10,0.84])
+            plt.tick_params(labelleft=False)
+        if newfig:
+            for n,s in enumerate(samples):
+                a,b = np.histogram(s,np.linspace(ylim[0],ylim[1],100),density=True)
+                b = 0.5*(b[1:]+b[0:-1])
+                plt.fill_betweenx(b,0*a,a,alpha=0.3,color='C%.0f'%(n))
+                plt.plot(a,b,color='C%.0f'%(n),lw=1)
+        if len(samples):
+            a,b = np.histogram(np.hstack(samples),np.linspace(ylim[0],ylim[1],100),density=True)
+            b = 0.5*(b[1:]+b[0:-1])
+            plt.plot(a*[-50,1][int(newfig)]+[2045,0][int(newfig)],b,alpha=1.0,color='k',lw=2)
+        
+        a_sun,b_sun = np.histogram(sun_mag['plage_fill'].values,np.linspace(ylim[0],ylim[1],100),density=True)
+        b_sun = 0.5*(b_sun[1:]+b_sun[0:-1])
+        plt.plot(a_sun*[-25,1][int(newfig)]+[2045,0][int(newfig)],b_sun,alpha=1.0,color='gold',lw=2)
+        plt.fill_betweenx(b_sun,0*a_sun+[2045,0][int(newfig)],a_sun*[-25,1][int(newfig)]+[2045,0][int(newfig)],alpha=0.3,color='gold')
+
+        if newfig:
+            plt.xlim(0,None)
+        else:
+            plt.xlim(None,2045)
+        if newfig:
+            plt.subplots_adjust(top=0.93)
+
+    if rhk_ref is not None:
+        plt.axhline(y=tcsf.rhk_mhk(rhk_ref),color='k',ls='-.')
+    
+
 def plot_magcycle(starname,verbose=False,newfig=True,show_private=False):
     index = get_info_starname(starname, verbose=verbose)
     entries = []
@@ -436,38 +601,49 @@ def plot_magcycle(starname,verbose=False,newfig=True,show_private=False):
         entries = the_mhk.loc[the_mhk['star']==index['HD']]
 
         ylim = (None,None)
+        if newfig:
+            plt.figure('MHK_'+starname,figsize=(14,5))
+            plt.ylabel('MHK [%]',fontsize=14)
+        plt.xlabel('Date [year]',fontsize=14)
+        plt.plot(sun['deciyear'],sun['plage_fill'],color='gold',lw=1,alpha=0.7)
+        plt.fill_between(sun['deciyear'],0,sun['plage_fill'],color='gold',alpha=0.25)
+
+        offset = 0
+        if show_private:
+            entries2,offset = import_finch(starname)
+            for ins in np.unique(entries2['species']):
+                mask = entries2['species']==ins
+                entries2.loc[mask,'deciyear'] = tcsf.conv_time(entries2.loc[mask,'jdb'])[1]
+                plt.errorbar(entries2.loc[mask,'deciyear'],entries2.loc[mask,'proxy'],yerr=entries2.loc[mask,'proxy_std'],ls='',marker='.',zorder=2)
+            plt.ylim(ylim)
+        print(offset)
         if len(entries):
             kws = tcsf.string_contained_in(entries.keys(),'MHK',exclusion=['err'])[-1]
-            mhk = np.array(entries[kws])[0]
+            mhk = np.array(entries[kws])[0]+offset
             mhk_err = np.array(entries[tcsf.string_contained_in(entries.keys(),'MHK_err')[-1]])[0]
             yeartime = np.array([k.split('_')[-1] for k in kws]).astype('float')
 
             Kpred = entries['Kpred'].values[0] ; Lpred = entries['Lpred'].values[0] ; Lside = entries['Lside'].values[0]
             Pmag = entries['Pmag'].values[0] ; Kmean = entries['Kmean'].values[0] ; Kamp= entries['Kamp'].values[0]
 
-            if newfig:
-                plt.figure('MHK_'+starname,figsize=(14,5))
             plt.title('Pmag = %.1f years | <Kmag> = %.1f %% | Kamp = %.1f %%'%(Pmag,Kmean,Kamp))
-            plt.plot(yeartime,mhk,color='C0')
-            plt.fill_between(yeartime,mhk-mhk_err,mhk+mhk_err,color='C0',alpha=0.3)
-            plt.scatter(yeartime,mhk,marker='o',color='C0')
-            plt.scatter(yeartime[0],mhk[0],color='b',label='2026-01-01: MHK=%.1f(%.1f%s)'%(Kpred,Lpred,Lside))
-            for x,y in zip(yeartime[::2],mhk[::2]):
-                plt.text(x,y,'%.1f%%'%(y),color='k',ha='left',va='bottom')
-            plt.ylabel('MHK [%]',fontsize=14)
-            plt.xlabel('Date [year]',fontsize=14)
-            plt.plot(sun['deciyear'],sun['plage_fill'],color='k',label='Sun')
+            if Pmag!=0:
+                plt.plot(yeartime,mhk,color='C0')
+                plt.fill_between(yeartime,mhk-mhk_err,mhk+mhk_err,color='C0',alpha=0.3)
+                plt.scatter(yeartime,mhk,marker='o',color='C0')
+                plt.scatter(yeartime[0],mhk[0],color='b',label='2026-01-01: MHK=%.1f(%.1f%s)'%(Kpred,Lpred,Lside))
+                for x,y in zip(yeartime[::2],mhk[::2]):
+                    plt.text(x,y,'%.0f%%'%(y),color='k',ha='left',va='bottom')
             plt.legend(loc=2)
             ylim = plt.gca().get_ylim()
 
-        if show_private:
-            finch_mhk = pd.read_csv(MATERIAL_DIR+'/PRIVATE_SNAKY_THE_FINCH.csv',index_col=0)
-            entries2 = finch_mhk.loc[finch_mhk['star']==index['HD']]
-            for ins in np.unique(entries2['species']):
-                mask = entries2['species']==ins
-                entries2.loc[mask,'deciyear'] = tcsf.conv_time(entries2.loc[mask,'jdb'])[1]
-                plt.errorbar(entries2.loc[mask,'deciyear'],entries2.loc[mask,'proxy'],yerr=entries2.loc[mask,'proxy_std'],ls='',marker='.')
-            plt.ylim(ylim)
+        ax = plt.gca()
+        y_ticks = ax.get_yticks()[1:-1]
+        ylim = ax.get_ylim()
+        ax.twinx()
+        plt.ylim(ylim)
+        plt.yticks(y_ticks,np.round(tcsf.mhk_rhk(y_ticks),2))
+        plt.ylabel(r'$\log$ $R_{HK}$ [dex]',fontsize=14)
 
 def plot_rv(starname,verbose=False,ins_color=False,newfig=True,show_private=False):
     index = get_info_starname(starname, verbose=verbose)
@@ -717,6 +893,12 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
     if index is not None:
         master = gr8[version]
         entry = master.loc[np.where(master['HD']==index['HD'])[0][0]]
+
+        if entry['logRHK']!=-6:
+            rhk_ref = entry['logRHK']
+        else:
+            rhk_ref = None
+
         text = star_info(entry, format='v3')
         text2 = ''
         for pm,pr,sc in np.array(get_info_prot(starname)[['pmag','prot','origin']]):
@@ -733,8 +915,6 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
         info_binary = get_info_binary(starname)
 
         plt.figure(figsize=(23,9))
-
-
 
         if selection is not None:
             entry = selection.loc[selection['HD']==index['HD']]
@@ -765,7 +945,8 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
         plt.axes([0.73,0.48,0.25,0.18])
         plot_rv(starname,newfig=False,show_private=show_private)
         #plt.axes([0.07,0.07,0.91,0.4])
-        plt.axes([0.07,0.07,0.60,0.30])
+        plt.axes([0.05,0.07,0.60,0.30])
+        plot_mhk(starname,newfig=False,rhk_ref=rhk_ref)
         plot_magcycle(starname,newfig=False,show_private=show_private)
         if len(info_binary):
             if np.sum(info_binary['bibcode']==info_binary['bibcode'])>0:
@@ -780,6 +961,23 @@ def plot_summary(starname, version=None, show_private=False, selection=None, cut
                 del text['starname'] ; del text['!'] ; del text['test'] ; del text['badge'] ; del text['!!']
                 text = text.to_string(index=False)
                 plt.text(0.0, 0.5, text, ha='left', va='top', family='monospace')
+
+def plot_summary2(starname):    
+    index = get_info_starname(starname, verbose=False)
+    if index is not None:
+        plt.figure(figsize=(23,9))
+        plt.axes([0.50,0.1,0.49,0.8])
+        plot_aladin(starname,newfig=False)
+
+        info_binary = get_info_binary(starname)
+
+        if len(info_binary):
+            if np.sum(info_binary['bibcode']==info_binary['bibcode'])>0:
+                plt.axes([0.05,0.1,0.4,0.8])
+                ax2 = plt.gca()
+                plt.axes([1.5,0.1,0.1,0.1])        
+                ax1 = plt.gca()
+                plot_binary(starname,ax1=ax1,ax2=ax2)
 
 
 def plot_exoplanets(y_var='k'):
@@ -1115,6 +1313,97 @@ class table_star(object):
         plt.xlabel('RA [deg]')
         plt.ylabel('Dec [deg]')
 
+    def plot_values(self,kw_list,starname_kw='HD',ref_value=None, argsort=True):
+
+        if type(kw_list) is not list:
+            kw_list = [kw_list]
+
+        zero_value = {
+            'teff':5775,
+            'feh':0.0,
+            'logg':4.44,
+            'Ms':1.0,
+            'Rs':1.0,
+            'vsini':0.0,
+            'prot':13.0,
+            'logRHK':-4.7,
+            'ruwe_GAIA':1.2,
+            'season_length_1.75':240,
+            'gmag':6.0,
+            'vmag':6.0,
+            'DEC':0.0,
+            'age':0.0}
+
+        plt.figure(figsize=(20,10))
+        plt.subplots_adjust(hspace=0.3,bottom=0.07,right=0.97,left=0.08,top=0.95)
+
+        counter = 0
+        for kw in kw_list:
+            counter+=1
+            plt.subplot(len(kw_list),1,counter)
+            plt.ylabel(kw,fontsize=14)
+
+            if type(argsort) is not bool:
+                data = self.data.sort_values(by=argsort)
+            else:
+                if argsort:
+                    data = self.data.sort_values(by=['under_review',kw])
+                else:
+                    data = self.data.copy()
+
+            y1 = data[kw].values
+            if kw+'_std' not in data.columns:
+                y1_err = np.zeros_like(y1)
+            else:
+                y1_err = data[kw+'_std'].values
+
+            starname = data[starname_kw].values
+            species = data['under_review'].values
+
+            if argsort==True:
+                status = data['under_review'].values
+                for j in np.unique(status):
+                    plt.axvline(np.where(status==j)[0][0]-0.5,color='k',linestyle=':',linewidth=1)
+
+            if ref_value is None:
+                if kw in zero_value.keys():
+                    baseline = zero_value[kw]
+                else:
+                    baseline = np.nanmin(y1)-0.1*np.nanstd(y1)
+            else:
+                baseline = ref_value
+
+            plt.axhline(baseline,color='k',linestyle='--',linewidth=1,label='Ref. value = %.2f' % baseline)
+            plt.legend()
+
+            for s in np.unique(species):
+                mask = species==s
+                bars = plt.bar(np.arange(len(y1))[mask],y1[mask]-baseline,yerr=y1_err[mask],bottom=baseline,width=0.8)
+            # Add labels at the outermost of the two bars
+            mask = np.arange(len(y1))
+
+            for i, v1, v1_err, name in zip(mask, y1[mask], y1_err[mask],  starname[mask]):
+
+                # Outer edges of the two error bars, measured relative to baseline
+                y1_edge = v1 + v1_err if v1 >= baseline else v1 - v1_err
+                ypos = y1_edge
+
+                offset = 3 if ypos >= baseline else -3
+                va = 'bottom' if ypos >= baseline else 'top'
+
+                plt.annotate(
+                    name,
+                    xy=(i, ypos),
+                    xytext=(0, offset),
+                    textcoords='offset points',
+                    ha='center',
+                    va=va,
+                    rotation=90,
+                    fontsize=8
+                )
+
+        
+
     def plot(self, x, y, c=None, s=None, print_names=False, GUI=True, alpha=1.0):
         
         if GUI:
@@ -1210,34 +1499,33 @@ class tcs(object):
         self.info_TA_cutoff['solartwins'] = tcsv.cutoff_megan_solartwins
         self.info_TA_cutoff['RVopti_paper'] = tcsv.cutoff_RVopti_paper
         self.info_TA_cutoff['balanced'] = tcsv.cutoff_balanced
+        self.info_TA_cutoff['extended'] = tcsv.cutoff_extended
+        self.info_TA_cutoff['presurvey'] = tcsv.cutoff_balanced.copy()
+        self.info_TA_cutoff['presurvey']['logRHK<'] = 4.0
 
 
-        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_josh_solarcousins, protection=False, verbose=False)
-        plt.close('cumulative')
+        self.func_cutoff(tagname='wide',cutoff=tcsv.cutoff_josh_solarcousins, protection=[], verbose=False, newfig=False) ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='solarcousins',cutoff=tcsv.cutoff_josh_G_solarcousins, protection=False, verbose=False)
-        plt.close('cumulative')
+        self.func_cutoff(tagname='solarcousins',cutoff=tcsv.cutoff_josh_G_solarcousins, protection=[], verbose=False, newfig=False) ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=False, verbose=False) 
-        plt.close('cumulative')
+        self.func_cutoff(tagname='bright!', cutoff={'gmag<':5.5,'teff<':6000,'logg>':4.2}, protection=[], verbose=False, newfig=False)  ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='RVopti',cutoff=tcsv.cutoff_RVopti, verbose=False)
-        plt.close('cumulative')
+        self.func_cutoff(tagname='RVopti',cutoff=tcsv.cutoff_RVopti, protection=[], verbose=False, newfig=False) ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='RVopti_paper', cutoff=tcsv.cutoff_RVopti_paper, protection=False) 
-        plt.close('cumulative')
+        self.func_cutoff(tagname='RVopti_paper', cutoff=tcsv.cutoff_RVopti_paper, protection=[], newfig=False) ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='solartwins', cutoff=tcsv.cutoff_megan_solartwins, protection=False, verbose=False,) 
-        plt.close('cumulative')
+        self.func_cutoff(tagname='solartwins', cutoff=tcsv.cutoff_megan_solartwins, protection=[], verbose=False, newfig=False) ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='balanced',cutoff=tcsv.cutoff_balanced, protection=False, verbose=False)
-        plt.close('cumulative')
+        self.func_cutoff(tagname='balanced',cutoff=tcsv.cutoff_balanced, protection=[2], verbose=False, newfig=False) ; plt.close('cumulative')
 
-        self.func_cutoff(tagname='balanced+underreview',cutoff=tcsv.cutoff_balanced, protection=True, verbose=False)
-        plt.close('cumulative')
+        self.func_cutoff(tagname='balanced+underreview',cutoff=tcsv.cutoff_balanced, protection=[1,2], verbose=False, newfig=False) ; plt.close('cumulative')
 
-        dustbin = self.union('RVopti_paper','solartwins',union_name='presurvey')
-        plt.close()
+        self.func_cutoff(tagname='extended',cutoff=tcsv.cutoff_extended, protection=[], verbose=False, newfig=False) ; plt.close('cumulative')
+
+        self.func_cutoff(tagname='presurvey',cutoff=self.info_TA_cutoff['presurvey'], protection=[1,2], verbose=False, newfig=False) ; plt.close('cumulative')
+
+        #dustbin = self.union('RVopti_paper','solartwins',union_name='presurvey')
+        #plt.close()
 
         if type(verbose)!=list:
             verbose = [verbose]*3
@@ -2188,15 +2476,15 @@ class tcs(object):
         self.info_TA_stars_selected[tagname] = output
 
 
-
-    def func_cutoff(self, tagname='handmade', tagname_fig='', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None, protection=True):
+    def func_cutoff(self, tagname='handmade', tagname_fig='', cutoff=None, par_space='', par_box=['',''], par_crit='', verbose=True, show_sample=None, protection=[], newfig=True):
         """example : table_filtered = func_cutoff(table,cutoff1,par_space='Teff&dist',par_box=['4500->5300','0->30'])"""
         GR8 = self.info_TA_stars_selected['GR8'].data.copy()
         if show_sample is not None:
             GR8 = GR8.loc[GR8['SPclass']==show_sample]
 
-        if protection is False:
-            GR8['under_review'] = 0
+        for species in np.unique(GR8['under_review']):
+            if species not in protection:
+                GR8.loc[GR8['under_review']==species,'under_review'] = 0
 
         if cutoff is None:
             cutoff = self.info_TA_cutoff['presurvey']
@@ -2223,18 +2511,23 @@ class tcs(object):
             tagname_fig = par_space
         if par_box[0]!='':
             tagname_fig=par_box[0]
-        
+
+        if newfig:
+            tagname_fig = str(np.random.choice(np.arange(10000),1)[0])
+
         suptitle = 'TaCS v.%s - Stellar catalogue v.%s'%(version, self.info_SC_catalog_version)
         table_filtered = tcsf.func_cutoff(GR8,cutoff,tagname=tagname_fig,par_space=par_space, par_box=par_box, par_crit=par_crit, verbose=verbose, suptitle=suptitle)
         if tagname!='dustbin':
             self.info_TA_cutoff[tagname] = cutoff
             self.info_TA_stars_selected[tagname] = table_star(table_filtered.copy())
 
-    def analyse_func_cutoff(self,cutoff,protection=False):
+    def analyse_func_cutoff(self,cutoff,protection=[]):
         list_dicts = {k:{k2: v2 for k2, v2 in cutoff.items() if k2 != k} for k in cutoff}
         GR8 = self.info_TA_stars_selected['GR8'].data.copy()
-        if protection is False:
-            GR8['under_review'] = 0
+
+        for species in np.unique(GR8['under_review']):
+            if species not in protection:
+                GR8.loc[GR8['under_review']==species,'under_review'] = 0
         
         table_ref = tcsf.func_cutoff(GR8, cutoff, tagname='dust', verbose=False)
         print('[INFO] Number of stars in reference table = %.0f'%(len(table_ref)))
@@ -2250,7 +2543,7 @@ class tcs(object):
         for tagname,cutoff in zip(['Tim','Jean','Sam1','Sam2','Miku','William1','William2','Stefano'],[tcsv.cutoff_tim,tcsv.cutoff_jean,tcsv.cutoff_sam,tcsv.cutoff_sam2,tcsv.cutoff_mick,tcsv.cutoff_william1,tcsv.cutoff_william2,tcsv.cutoff_stefano]):
             self.func_cutoff(tagname=tagname,cutoff=cutoff)
 
-    def create_table_scheduler(self, selection, year=2026, month_obs_baseline=12, texp=900, t_slew=60, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standards=False):
+    def create_table_scheduler(self, selection, year=2026, tot_years=1, month_obs_baseline=12, texp=900, t_slew=60, N_star=None, n_obs='auto', freq_obs=None, ranking='HZ_mp_min_osc+gr_texp15', tagname='', plot_ranking_priority=False, plot_real_ID=False, need_help=False, standards=False, ramping=True):
         
         # nb sub exposure given to individual exposure to SNR=450 at 550 nm
         # all_output['nb_subexp'] = np.round(np.ceil((all_output['snr_550_texp15']/450)**2),0).astype('int') #SNR=450 SATURATION
@@ -2264,8 +2557,14 @@ class tcs(object):
         table_scheduler['GR8_ID'] = table_scheduler.index
 
         kept = np.array(table_scheduler['texp_optimal']==table_scheduler['texp_optimal'])
-        print('[INFO] %.0f stars in the final table'%(np.sum(kept)))
+        print('[INFO] %.0f stars in the final table over the %.0f'%(np.sum(kept),len(table_scheduler)))
         table_scheduler = table_scheduler.loc[kept]
+
+        if N_star is not None:
+            index = list(table_scheduler.loc[table_scheduler['under_review']!=2].index)
+            index_kept = list(table_scheduler.loc[table_scheduler['under_review']==2].index)
+            index_kept = index_kept + list(np.random.choice(index, N_star-len(index_kept), replace=False))
+            table_scheduler = table_scheduler.loc[index_kept]
 
         table_scheduler = table_scheduler.sort_values(by='ra_j2000').reset_index(drop=True)
 
@@ -2360,7 +2659,7 @@ class tcs(object):
 
         warning = 0
         if type(n_obs)==str:
-            n_obs = nobs_max
+            n_obs = int(nobs_max)
 
         if freq_obs is not None:
             table_scheduler['obsN'] = (season_length*freq_obs).astype('int')
@@ -2387,6 +2686,8 @@ class tcs(object):
         else:
             table_scheduler['ID_table'] = np.arange(len(table_scheduler))+1
 
+        species = []
+        species2 = []
         table_scheduler2 = table_scheduler.copy()
         for n in range(len(table_scheduler)):
             t1 = tyr_rise[1][n]
@@ -2397,21 +2698,43 @@ class tcs(object):
                 f1 = frag1/(frag2+frag1)
                 f2 = frag2/(frag2+frag1)
 
-                table_scheduler.loc[n,'groupEnableTime'] = '%.0f-01-01T00:00:00.000'%(year)
-                table_scheduler.loc[n,'groupDisableTime'] = str(year)+tyr_set[2][n][4:]
+                ramp_offset = 0
+                if (f1>0.5)&(ramping==True)&(standards[n]==False):
+                    ramp_offset = 1
+
+                table_scheduler.loc[n,'groupEnableTime'] = '%.0f-01-01T00:00:00.000'%(year+ramp_offset)
+                table_scheduler.loc[n,'groupDisableTime'] = str(year+ramp_offset)+tyr_set[2][n][4:]
                 table_scheduler.loc[n,'obsN'] = int(f2*table_scheduler.loc[n,'obsN'])
 
                 table_scheduler2.loc[n,'groupEnableTime'] = tyr_rise[2][n]
                 table_scheduler2.loc[n,'groupDisableTime'] = '%.0f-12-31T23:59:00.000'%(year)
                 table_scheduler2.loc[n,'obsN'] = table_scheduler2.loc[n,'obsN'] - table_scheduler.loc[n,'obsN']
+                species.append(standards[n])
+                species2.append(standards[n])
             else:
                 table_scheduler.loc[n,'groupEnableTime'] = tyr_rise[2][n]
                 table_scheduler.loc[n,'groupDisableTime'] = tyr_set[2][n] 
+                species.append(standards[n])
 
+        species = np.hstack([species,species2])
         table_scheduler_final = pd.concat([table_scheduler,table_scheduler2],axis=0)
         table_scheduler_final = table_scheduler_final.loc[table_scheduler_final['obsN']!=0]
 
         table_scheduler_final = table_scheduler_final.dropna(subset=['groupEnableTime']).reset_index(drop=True) 
+
+        template = table_scheduler_final.copy()
+        template_species = species.copy()
+        for i in np.arange(tot_years-1):
+            table_next_year = template.copy()
+
+            for col in ['groupEnableTime', 'groupDisableTime']:
+                table_next_year[col] = (
+                    (table_next_year[col].str[:4].astype(int) + i + 1).astype(str)
+                    + table_next_year[col].str[4:]
+                )
+
+            table_scheduler_final = pd.concat([table_scheduler_final, table_next_year], ignore_index=True)
+            species = np.hstack([species,template_species])
 
         variables = ['priority','GDR3_ID_number','expTime','expN','obsN','groupEnableTime','groupDisableTime',
                      'acqType','schedulingMode','t0','period','delta',
@@ -2421,7 +2744,7 @@ class tcs(object):
         gto_time = np.sum(1-self.info_IM_night.data,axis=0)
 
         t0 = tcsf.conv_time([str(year)+'-01-01T00:00:00.000'])[0]
-        plt.figure(figsize=(10,10))
+        plt.figure(figsize=(9,9))
         plt.axes([0.08,0.1,0.85,0.65])
         jdb1 = tcsf.conv_time(list(table_scheduler_final['groupEnableTime']))[0]
         jdb2 = tcsf.conv_time(list(table_scheduler_final['groupDisableTime']))[0]
@@ -2434,7 +2757,7 @@ class tcs(object):
             days = np.arange(jdb1[n],jdb2[n]+1,1)
             Draw = np.min([N,len(days)])
             obs.append([texp*np.ones(Draw), np.random.choice(days,Draw,replace=False)])
-            plt.scatter(obs[-1][1],ID*np.ones(Draw),s=rank,alpha=rank/10,color='k')
+            plt.scatter(obs[-1][1],ID*np.ones(Draw),s=rank,alpha=rank/10,color=['k','C2'][int(species[n])])
         obs = np.hstack(obs)
         obs[1] = ((obs[1]-t0)/366*12).astype('int')+1
         stat = tcsv.months_specie.copy()
@@ -2455,7 +2778,7 @@ class tcs(object):
         plt.tick_params(top=True,labeltop=True,labelbottom=False)
         plt.plot(t0+self.info_XY_downtime.x,0.60*gto_time,label='GTO')
         plt.plot(t0+self.info_XY_downtime.x,0.60*gto_time*(1-self.info_XY_downtime.y/100),label='GTO + weather')
-        plt.plot(t0+np.arange(0,365,1),stat,marker='.',label='Obs time')
+        plt.plot(t0+np.arange(0,365,1),stat,marker='.',label='Obs time',color='k')
         plt.legend()
         plt.ylabel('Time per night [min]')
         for j in t0+np.array(tcsv.month_border):
@@ -2465,10 +2788,13 @@ class tcs(object):
 
         now = tcsf.now()[0:19].replace(':','-')
 
-        plt.savefig(OUTPUT_DIR+'/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.png'%(now,year,int(month_obs_baseline),tagname))
+        if tagname=='':
+            tagname = '_%s'%(now)
+
+        plt.savefig(OUTPUT_DIR+'/TAB_SCHEDULER/scheduler'+tagname+'_%.0f_B%.0f.png'%(year,int(month_obs_baseline)))
 
         #table_scheduler['texp'] = table_scheduler['texp'].astype('int')
-        table_scheduler_final.to_csv(OUTPUT_DIR+'/TAB_SCHEDULER/scheduler_%s_%.0f_B%.0f%s.csv'%(now,year,int(month_obs_baseline),tagname))
+        table_scheduler_final.to_csv(OUTPUT_DIR+'/TAB_SCHEDULER/scheduler'+tagname+'_%.0f_B%.0f.csv'%(year,int(month_obs_baseline)))
 
 
     def union(self,selection1,selection2,union_name=None,figname=None,ordering='vmag', Xmarker={'under_review>':0.5}, extra='under_review'):

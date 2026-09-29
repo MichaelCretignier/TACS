@@ -10,6 +10,7 @@ tacs.plot_binary('HD16160',seeing=0.75,source='COMPOSITE')
 tacs.plot_ccf('HD16160')
 tacs.plot_spectrum('HD16160')
 tacs.plot_magcycle('HD16160')
+tacs.plot_mhk('HD16160')
 tacs.plot_planetary_system('HD99492')
 tacs.plot_rv_texp('HD146233',budget='osc')
 tacs.plot_rv_texp('HD146233',budget='phot+osc',use_vsini=True)
@@ -25,18 +26,21 @@ tacs.plot_summary('HD143761')
 presurvey = tacs.tcs() 
 presurvey.print_sp_stat()
 
+presurvey.info_TA_stars_selected['balanced+underreview'].plot_values(['vmag','RA','logRHK'])
+
 #these lines are already run by default in tacs.tsc()
-presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='wide', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_josh_G_solarcousins, tagname='solarcousins', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_balanced, tagname='balanced', protection=False) 
-presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti') 
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_solarcousins, tagname='wide')
+presurvey.func_cutoff(cutoff=tacs.cutoff_josh_G_solarcousins, tagname='solarcousins') 
+presurvey.func_cutoff(cutoff=tacs.cutoff_megan_solartwins, tagname='solartwins')  
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti_paper, tagname='RVopti_paper')
+presurvey.func_cutoff(cutoff=tacs.cutoff_balanced, tagname='balanced+underreview', protection=[1,2])
+presurvey.func_cutoff(cutoff=tacs.cutoff_balanced, tagname='balanced')
+presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, tagname='RVopti')
 
 tacs.plot_summary(
     'HD16160',
     selection=presurvey.info_TA_stars_selected['presurvey'].data.copy(),
-    cutoff=presurvey.info_TA_cutoff['balance'])
+    cutoff=presurvey.info_TA_cutoff['balanced'])
 
 #plot sample
 
@@ -70,7 +74,7 @@ presurvey.func_cutoff(cutoff=tacs.cutoff_RVopti, show_sample='K', tagname='dustb
 
 example1 = tacs.tcs()
 #tracking a binary flag
-example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tacs.cutoff_RVopti_paper, tagname='dustbin',protection=False)
+example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='HWO!=0', cutoff=tacs.cutoff_balanced, tagname='dustbin')
 example1.func_cutoff(par_space='ra_j2000&dec_j2000', par_crit='PLATO==1', cutoff=tacs.cutoff_RVopti, tagname='dustbin')
 
 #tracking a parameter space box
@@ -80,7 +84,7 @@ example1.func_cutoff(par_space='teff&distance', par_box=['4500->5300','0->30'], 
 
 summary = tacs.tcs() 
 summary1 = tacs.plot_exoplanets2(summary.info_TA_stars_selected['GR8'].data)
-summary2 = tacs.plot_exoplanets2(summary.info_TA_stars_selected['presurvey'].data)
+summary2 = tacs.plot_exoplanets2(summary.info_TA_stars_selected['balanced+underreview'].data)
 
 ### ------- EXAMPLES ------- ###
 

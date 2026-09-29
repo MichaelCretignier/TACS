@@ -32,6 +32,19 @@ if ipython is not None:
         except:
             pass
 
+mhk_c1 = -4.04840205e+01        #calibration with RHK DRS
+mhk_c2 = 3927259.0994665725
+def mhk_rhk(mhk):
+    mhk = np.array(mhk)
+    mhk[mhk<-40] = -40
+    rhk = np.array(np.log10((mhk-mhk_c1)/mhk_c2))    
+    return rhk
+
+def rhk_mhk(rhk):
+    rhk = np.array(rhk)
+    mhk = mhk_c1 + mhk_c2 * 10**rhk
+    return mhk
+
 def sort_hd(names):
     number = [n[2:] for n in names]
     for n in np.arange(len(number)):
